@@ -5,6 +5,7 @@ import { useState, useRef, KeyboardEvent } from "react";
 interface ChatInputProps {
   onSend: (message: string) => void;
   disabled: boolean;
+  dark: boolean;
 }
 
 const QUICK_PROMPTS = [
@@ -16,7 +17,7 @@ const QUICK_PROMPTS = [
   "Nové nabídky Praha Holešovice",
 ];
 
-export function ChatInput({ onSend, disabled }: ChatInputProps) {
+export function ChatInput({ onSend, disabled, dark }: ChatInputProps) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -45,7 +46,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
   }
 
   return (
-    <div className="border-t border-gray-200 bg-white px-4 py-3">
+    <div className={`border-t px-4 py-3 ${dark ? "bg-gray-900 border-gray-800" : "bg-white border-gray-200"}`}>
       {/* Quick prompts */}
       <div className="flex flex-wrap gap-2 mb-3">
         {QUICK_PROMPTS.map((prompt) => (
@@ -53,7 +54,11 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
             key={prompt}
             onClick={() => onSend(prompt)}
             disabled={disabled}
-            className="text-xs px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className={`text-xs px-3 py-1 rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+              dark
+                ? "bg-gray-800 text-indigo-400 hover:bg-gray-700"
+                : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+            }`}
           >
             {prompt}
           </button>
@@ -71,7 +76,11 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
           disabled={disabled}
           placeholder="Zeptej se Pepa agenta... (Enter pro odeslání)"
           rows={1}
-          className="flex-1 resize-none rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`flex-1 resize-none rounded-xl border px-4 py-3 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed ${
+            dark
+              ? "bg-gray-800 border-gray-700 text-gray-100"
+              : "bg-gray-50 border-gray-300 text-gray-900"
+          }`}
         />
         <button
           onClick={handleSend}

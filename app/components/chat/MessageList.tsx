@@ -39,7 +39,7 @@ export interface Message {
   loadingText?: string;
 }
 
-function TypingIndicator({ text }: { text?: string }) {
+function TypingIndicator({ text, dark }: { text?: string; dark: boolean }) {
   return (
     <div className="flex gap-2 items-center px-1 py-1">
       <div className="flex gap-1 items-center">
@@ -48,13 +48,13 @@ function TypingIndicator({ text }: { text?: string }) {
         <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" />
       </div>
       {text && (
-        <span className="text-xs text-gray-400 italic">{text}</span>
+        <span className={`text-xs italic ${dark ? "text-gray-400" : "text-gray-400"}`}>{text}</span>
       )}
     </div>
   );
 }
 
-export function MessageList({ messages }: { messages: Message[] }) {
+export function MessageList({ messages, dark }: { messages: Message[]; dark: boolean }) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -64,13 +64,13 @@ export function MessageList({ messages }: { messages: Message[] }) {
   if (messages.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-indigo-100 flex items-center justify-center mb-4">
+        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 ${dark ? "bg-gray-800" : "bg-indigo-100"}`}>
           <span className="text-3xl">🏢</span>
         </div>
-        <h2 className="text-xl font-bold text-gray-900 mb-2">
+        <h2 className={`text-xl font-bold mb-2 ${dark ? "text-white" : "text-gray-900"}`}>
           Pepa Agent
         </h2>
-        <p className="text-gray-500 text-sm max-w-sm">
+        <p className={`text-sm max-w-sm ${dark ? "text-gray-400" : "text-gray-500"}`}>
           Tvůj back office asistent pro realitní firmu. Zeptej se na data
           klientů, nemovitostí, leadů nebo požádej o report.
         </p>
@@ -86,7 +86,7 @@ export function MessageList({ messages }: { messages: Message[] }) {
           className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
         >
           {msg.role === "assistant" && (
-            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center mr-2 mt-1">
+            <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-2 mt-1 ${dark ? "bg-gray-800" : "bg-indigo-100"}`}>
               <span className="text-sm">🤖</span>
             </div>
           )}
@@ -95,14 +95,22 @@ export function MessageList({ messages }: { messages: Message[] }) {
             className={`max-w-[85%] ${
               msg.role === "user"
                 ? "bg-indigo-600 text-white rounded-2xl rounded-tr-sm px-4 py-3"
+                : dark
+                ? "bg-gray-800 border border-gray-700 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm"
                 : "bg-white border border-gray-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm"
             }`}
           >
             {msg.loading ? (
-              <TypingIndicator text={msg.loadingText} />
+              <TypingIndicator text={msg.loadingText} dark={dark} />
             ) : (
               <>
-                <div className={`text-sm ${msg.role === "user" ? "text-white" : "prose prose-sm max-w-none prose-p:my-0.5 prose-headings:my-1 prose-li:my-0 prose-table:text-xs"}`}>
+                <div className={`text-sm ${
+                  msg.role === "user"
+                    ? "text-white"
+                    : dark
+                    ? "prose prose-sm prose-invert max-w-none prose-p:my-0.5 prose-headings:my-1 prose-li:my-0 prose-table:text-xs"
+                    : "prose prose-sm max-w-none prose-p:my-0.5 prose-headings:my-1 prose-li:my-0 prose-table:text-xs"
+                }`}>
                   {msg.role === "user" ? (
                     <p>{msg.content}</p>
                   ) : (
@@ -117,7 +125,7 @@ export function MessageList({ messages }: { messages: Message[] }) {
                   <div className="mt-3 space-y-3">
                     {msg.charts.map((chart, i) => (
                       <ErrorBoundary key={i} fallback={<div className="text-xs text-red-400 py-2">Graf se nepodařilo zobrazit.</div>}>
-                        <AgentChart chart={chart} />
+                        <AgentChart chart={chart} dark={dark} />
                       </ErrorBoundary>
                     ))}
                   </div>
@@ -126,7 +134,7 @@ export function MessageList({ messages }: { messages: Message[] }) {
                 {/* Report slidy */}
                 {msg.slides && msg.slides.length > 0 && (
                   <ErrorBoundary fallback={<div className="text-xs text-red-400 py-2">Report se nepodařilo zobrazit.</div>}>
-                    <ReportSlides slides={msg.slides} />
+                    <ReportSlides slides={msg.slides} dark={dark} />
                   </ErrorBoundary>
                 )}
               </>

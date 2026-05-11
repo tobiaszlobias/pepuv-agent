@@ -14,13 +14,13 @@ interface Slide {
   next_steps?: string[];
 }
 
-export function ReportSlides({ slides }: { slides: Slide[] }) {
+export function ReportSlides({ slides, dark }: { slides: Slide[]; dark: boolean }) {
   return (
     <div className="my-3 space-y-3">
       {slides.map((slide, i) => (
         <div
           key={i}
-          className="rounded-xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white overflow-hidden"
+          className={`rounded-xl border overflow-hidden ${dark ? "border-gray-700 bg-gray-900" : "border-indigo-100 bg-gradient-to-br from-indigo-50 to-white"}`}
         >
           {/* Slide header */}
           <div className="bg-indigo-600 px-4 py-3 flex items-center gap-3">
@@ -41,20 +41,20 @@ export function ReportSlides({ slides }: { slides: Slide[] }) {
               {slide.metrics.map((metric, j) => (
                 <div
                   key={j}
-                  className="bg-white rounded-lg border border-indigo-100 p-3"
+                  className={`rounded-lg border p-3 ${dark ? "bg-gray-800 border-gray-700" : "bg-white border-indigo-100"}`}
                 >
-                  <p className="text-xs text-gray-500 mb-1">{metric.label}</p>
+                  <p className={`text-xs mb-1 ${dark ? "text-gray-400" : "text-gray-500"}`}>{metric.label}</p>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-xl font-bold text-gray-900">
+                    <span className={`text-xl font-bold ${dark ? "text-white" : "text-gray-900"}`}>
                       {metric.value}
                     </span>
                     {metric.change && (
                       <span
                         className={`text-xs font-medium ${
                           metric.change.startsWith("+")
-                            ? "text-green-600"
+                            ? "text-green-400"
                             : metric.change.startsWith("-")
-                            ? "text-red-500"
+                            ? "text-red-400"
                             : "text-gray-400"
                         }`}
                       >
@@ -70,12 +70,12 @@ export function ReportSlides({ slides }: { slides: Slide[] }) {
           {/* Highlights */}
           {slide.highlights && (
             <div className="px-4 pb-3">
-              <p className="text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
+              <p className={`text-xs font-semibold mb-2 uppercase tracking-wide ${dark ? "text-gray-400" : "text-gray-600"}`}>
                 Highlights
               </p>
               <ul className="space-y-1.5">
                 {slide.highlights.map((h, j) => (
-                  <li key={j} className="flex items-start gap-2 text-sm text-gray-700">
+                  <li key={j} className={`flex items-start gap-2 text-sm ${dark ? "text-gray-300" : "text-gray-700"}`}>
                     <span className="text-green-500 mt-0.5">✓</span>
                     {h}
                   </li>
@@ -87,13 +87,13 @@ export function ReportSlides({ slides }: { slides: Slide[] }) {
           {/* Next steps */}
           {slide.next_steps && (
             <div className="px-4 pb-4">
-              <p className="text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
+              <p className={`text-xs font-semibold mb-2 uppercase tracking-wide ${dark ? "text-gray-400" : "text-gray-600"}`}>
                 Příští kroky
               </p>
               <ul className="space-y-1.5">
                 {slide.next_steps.map((s, j) => (
-                  <li key={j} className="flex items-start gap-2 text-sm text-gray-700">
-                    <span className="text-indigo-500 mt-0.5">→</span>
+                  <li key={j} className={`flex items-start gap-2 text-sm ${dark ? "text-gray-300" : "text-gray-700"}`}>
+                    <span className="text-indigo-400 mt-0.5">→</span>
                     {s}
                   </li>
                 ))}

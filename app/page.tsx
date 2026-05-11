@@ -23,7 +23,7 @@ const NAV_ITEMS = [
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
-  const [loadingText, setLoadingText] = useState(LOADING_TEXTS[0]);
+  const [dark, setDark] = useState(true);
   const loadingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -31,7 +31,6 @@ export default function Home() {
       let idx = 0;
       loadingTimerRef.current = setInterval(() => {
         idx = (idx + 1) % LOADING_TEXTS.length;
-        setLoadingText(LOADING_TEXTS[idx]);
         setMessages((prev) =>
           prev.map((m) =>
             m.id === "loading" ? { ...m, loadingText: LOADING_TEXTS[idx] } : m
@@ -43,7 +42,6 @@ export default function Home() {
         clearInterval(loadingTimerRef.current);
         loadingTimerRef.current = null;
       }
-      setLoadingText(LOADING_TEXTS[0]);
     }
     return () => {
       if (loadingTimerRef.current) clearInterval(loadingTimerRef.current);
@@ -116,9 +114,9 @@ export default function Home() {
   );
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className={`flex h-screen ${dark ? "bg-gray-950" : "bg-gray-100"}`}>
       {/* Sidebar */}
-      <aside className="w-64 bg-gray-900 flex flex-col">
+      <aside className={`w-64 flex flex-col ${dark ? "bg-gray-900" : "bg-gray-900"}`}>
         {/* Logo */}
         <div className="px-6 py-5 border-b border-gray-800">
           <div className="flex items-center gap-3">
@@ -164,25 +162,35 @@ export default function Home() {
       {/* Main */}
       <main className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+        <header className={`border-b px-6 py-4 flex items-center justify-between ${dark ? "bg-gray-900 border-gray-800" : "bg-white border-gray-200"}`}>
           <div>
-            <h2 className="text-gray-900 font-semibold">Chat s agentem</h2>
-            <p className="text-gray-500 text-xs">
+            <h2 className={`font-semibold ${dark ? "text-white" : "text-gray-900"}`}>Chat s agentem</h2>
+            <p className={`text-xs ${dark ? "text-gray-400" : "text-gray-500"}`}>
               Ptej se na klienty, nemovitosti, leady nebo požádej o report
             </p>
           </div>
-          <button
-            onClick={() => setMessages([])}
-            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            Vyčistit chat
-          </button>
+          <div className="flex items-center gap-3">
+            {/* Dark mode toggle */}
+            <button
+              onClick={() => setDark((d) => !d)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${dark ? "bg-indigo-600" : "bg-gray-300"}`}
+              title={dark ? "Přepnout na světlý režim" : "Přepnout na tmavý režim"}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${dark ? "translate-x-6" : "translate-x-1"}`} />
+            </button>
+            <button
+              onClick={() => setMessages([])}
+              className={`text-xs transition-colors ${dark ? "text-gray-500 hover:text-gray-300" : "text-gray-400 hover:text-gray-600"}`}
+            >
+              Vyčistit chat
+            </button>
+          </div>
         </header>
 
         {/* Messages + Input */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
-          <MessageList messages={messages} />
-          <ChatInput onSend={sendMessage} disabled={loading} />
+        <div className={`flex-1 flex flex-col overflow-hidden ${dark ? "bg-gray-950" : "bg-gray-50"}`}>
+          <MessageList messages={messages} dark={dark} />
+          <ChatInput onSend={sendMessage} disabled={loading} dark={dark} />
         </div>
       </main>
     </div>
