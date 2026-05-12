@@ -4,6 +4,65 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { MessageList, Message } from "@/app/components/chat/MessageList";
 import { ChatInput } from "@/app/components/chat/ChatInput";
 
+function LoginScreen({ onLogin }: { onLogin: () => void }) {
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(false);
+    const res = await fetch("/api/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
+    setLoading(false);
+    if (res.ok) {
+      sessionStorage.setItem("auth", "1");
+      onLogin();
+    } else {
+      setError(true);
+      setPassword("");
+    }
+  };
+
+  return (
+    <div className="flex h-screen items-center justify-center bg-gray-950">
+      <div className="w-full max-w-sm px-8 py-10 bg-gray-900 rounded-2xl shadow-xl border border-gray-800">
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center mb-4">
+            <span className="text-white font-bold text-2xl">P</span>
+          </div>
+          <h1 className="text-white font-bold text-xl">Pepa Agent</h1>
+          <p className="text-gray-400 text-sm mt-1">Back Office Assistant</p>
+        </div>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Zadej heslo..."
+            autoFocus
+            className="w-full px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-700 focus:outline-none focus:border-indigo-500 transition-colors"
+          />
+          {error && (
+            <p className="text-red-400 text-sm text-center">Špatné heslo, zkus to znovu.</p>
+          )}
+          <button
+            type="submit"
+            disabled={loading || !password}
+            className="w-full py-3 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {loading ? "Ověřuji..." : "Přihlásit se"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 const LOADING_TEXTS = [
   "Analyzuji dotaz...",
   "Volám nástroje...",
@@ -21,10 +80,17 @@ const NAV_ITEMS = [
 ];
 
 export default function Home() {
+  const [authenticated, setAuthenticated] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [dark, setDark] = useState(true);
   const loadingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (sessionStorage.getItem("auth") === "1") {
+      setAuthenticated(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (loading) {
@@ -112,6 +178,10 @@ export default function Home() {
     },
     [messages, loading]
   );
+
+  if (!authenticated) {
+    return <LoginScreen onLogin={() => setAuthenticated(true)} />;
+  }
 
   return (
     <div className={`flex h-screen ${dark ? "bg-gray-950" : "bg-gray-100"}`}>

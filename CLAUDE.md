@@ -57,6 +57,7 @@ CUZK_API_KEY=             ← ČÚZK REST API klíč (500 volání/den)
 GOOGLE_SHEETS_ID=         ← ID Google Sheetu
 GOOGLE_SERVICE_ACCOUNT=   ← Google service account JSON (base64)
 APIFY_API_TOKEN=          ← Apify token
+PASSWORD=                 ← Heslo pro přihlašovací obrazovku
 ```
 
 ---
