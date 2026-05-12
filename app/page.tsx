@@ -3,6 +3,9 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { MessageList, Message } from "@/app/components/chat/MessageList";
 import { ChatInput } from "@/app/components/chat/ChatInput";
+import { ClientsView } from "@/app/components/views/ClientsView";
+import { PropertiesView } from "@/app/components/views/PropertiesView";
+import { LeadsView } from "@/app/components/views/LeadsView";
 
 function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [password, setPassword] = useState("");
@@ -91,16 +94,18 @@ const LOADING_TEXTS = [
   "Připravuji odpověď...",
 ];
 
-const NAV_ITEMS = [
-  { icon: "💬", label: "Chat", active: true },
-  { icon: "👥", label: "Klienti", active: false },
-  { icon: "🏠", label: "Nemovitosti", active: false },
-  { icon: "📊", label: "Leady", active: false },
-  { icon: "📧", label: "Emaily", active: false },
+type Page = "chat" | "klienti" | "nemovitosti" | "leady";
+
+const NAV_ITEMS: { icon: string; label: string; page: Page }[] = [
+  { icon: "💬", label: "Chat", page: "chat" },
+  { icon: "👥", label: "Klienti", page: "klienti" },
+  { icon: "🏠", label: "Nemovitosti", page: "nemovitosti" },
+  { icon: "📊", label: "Leady", page: "leady" },
 ];
 
 export default function Home() {
   const [authenticated, setAuthenticated] = useState(false);
+  const [activePage, setActivePage] = useState<Page>("chat");
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [dark, setDark] = useState(true);
@@ -233,26 +238,30 @@ export default function Home() {
 
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-1">
-          {NAV_ITEMS.map((item) => (
-            <button
-              key={item.label}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors"
-              style={
-                item.active
-                  ? { background: "var(--yellow)", color: "#000", fontFamily: "var(--font-display)", fontWeight: 700 }
-                  : { color: "var(--muted)" }
-              }
-              onMouseEnter={(e) => {
-                if (!item.active) e.currentTarget.style.background = "var(--surface-elevated)";
-              }}
-              onMouseLeave={(e) => {
-                if (!item.active) e.currentTarget.style.background = "transparent";
-              }}
-            >
-              <span>{item.icon}</span>
-              <span>{item.label}</span>
-            </button>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const isActive = activePage === item.page;
+            return (
+              <button
+                key={item.label}
+                onClick={() => setActivePage(item.page)}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors"
+                style={
+                  isActive
+                    ? { background: "var(--yellow)", color: "#000", fontFamily: "var(--font-display)", fontWeight: 700 }
+                    : { color: "var(--muted)" }
+                }
+                onMouseEnter={(e) => {
+                  if (!isActive) e.currentTarget.style.background = "var(--surface-elevated)";
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) e.currentTarget.style.background = "transparent";
+                }}
+              >
+                <span>{item.icon}</span>
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
         </nav>
 
         {/* Status */}
@@ -302,10 +311,17 @@ export default function Home() {
           </div>
         </header>
 
-        {/* Messages + Input */}
+        {/* Content */}
         <div className="flex-1 flex flex-col overflow-hidden" style={{ background: "var(--bg)" }}>
-          <MessageList messages={messages} dark={dark} />
-          <ChatInput onSend={sendMessage} disabled={loading} dark={dark} />
+          {activePage === "chat" && (
+            <>
+              <MessageList messages={messages} dark={dark} />
+              <ChatInput onSend={sendMessage} disabled={loading} dark={dark} />
+            </>
+          )}
+          {activePage === "klienti" && <ClientsView />}
+          {activePage === "nemovitosti" && <PropertiesView />}
+          {activePage === "leady" && <LeadsView />}
         </div>
       </main>
     </div>
