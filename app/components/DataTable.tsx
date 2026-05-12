@@ -9,9 +9,10 @@ interface DataTableProps {
   columns: Column[];
   rows: Record<string, string | undefined>[];
   loading: boolean;
+  searchQuery?: string;
 }
 
-export function DataTable({ columns, rows, loading }: DataTableProps) {
+export function DataTable({ columns, rows, loading, searchQuery }: DataTableProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -24,10 +25,18 @@ export function DataTable({ columns, rows, loading }: DataTableProps) {
     );
   }
 
-  if (rows.length === 0) {
+  const filtered = searchQuery
+    ? rows.filter((row) =>
+        columns.some((col) =>
+          (row[col.key] ?? "").toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      )
+    : rows;
+
+  if (filtered.length === 0) {
     return (
       <div className="flex items-center justify-center py-20 text-sm" style={{ color: "var(--muted)" }}>
-        Žádná data.
+        {searchQuery ? `Žádné výsledky pro „${searchQuery}".` : "Žádná data."}
       </div>
     );
   }
@@ -49,7 +58,7 @@ export function DataTable({ columns, rows, loading }: DataTableProps) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, i) => (
+          {filtered.map((row, i) => (
             <tr
               key={i}
               style={{ borderBottom: "1px solid var(--border)" }}

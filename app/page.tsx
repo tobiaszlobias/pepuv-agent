@@ -6,6 +6,7 @@ import { ChatInput } from "@/app/components/chat/ChatInput";
 import { ClientsView } from "@/app/components/views/ClientsView";
 import { PropertiesView } from "@/app/components/views/PropertiesView";
 import { LeadsView } from "@/app/components/views/LeadsView";
+import { getCached, setCached } from "@/lib/cache";
 
 function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [password, setPassword] = useState("");
@@ -117,11 +118,19 @@ export default function Home() {
     if (savedPage) setActivePage(savedPage);
     const savedDark = sessionStorage.getItem("dark");
     if (savedDark !== null) setDark(savedDark === "1");
+    const savedMessages = getCached<Message[]>("messages");
+    if (savedMessages) setMessages(savedMessages);
   }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle("light", !dark);
   }, [dark]);
+
+  useEffect(() => {
+    if (messages.length === 0) return;
+    const toSave = messages.filter((m) => !m.loading).slice(-30);
+    setCached("messages", toSave);
+  }, [messages]);
 
   useEffect(() => {
     if (loading) {
@@ -285,10 +294,16 @@ export default function Home() {
         >
           <div>
             <h2 className="font-display font-bold text-base" style={{ color: "var(--text)" }}>
-              Chat s agentem
+              {activePage === "chat" && "Chat s agentem"}
+              {activePage === "klienti" && "Klienti"}
+              {activePage === "nemovitosti" && "Nemovitosti"}
+              {activePage === "leady" && "Leady"}
             </h2>
             <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>
-              Ptej se na klienty, nemovitosti, leady nebo požádej o report
+              {activePage === "chat" && "Ptej se na klienty, nemovitosti, leady nebo požádej o report"}
+              {activePage === "klienti" && "Přehled všech klientů z Google Sheets"}
+              {activePage === "nemovitosti" && "Přehled všech nemovitostí z Google Sheets"}
+              {activePage === "leady" && "Přehled všech leadů z Google Sheets"}
             </p>
           </div>
           <div className="flex items-center gap-4">
@@ -303,13 +318,15 @@ export default function Home() {
                 style={{ transform: dark ? "translateX(1.375rem)" : "translateX(0.25rem)" }}
               />
             </button>
-            <button
-              onClick={() => setMessages([])}
-              className="text-xs transition-colors hover:opacity-100 opacity-60"
-              style={{ color: "var(--muted)" }}
-            >
-              Vyčistit chat
-            </button>
+            {activePage === "chat" && (
+              <button
+                onClick={() => { setMessages([]); sessionStorage.removeItem("cache:messages"); }}
+                className="text-xs transition-colors hover:opacity-100 opacity-60"
+                style={{ color: "var(--muted)" }}
+              >
+                Vyčistit chat
+              </button>
+            )}
           </div>
         </header>
 

@@ -26,11 +26,15 @@ Pepa je fiktivní postava ze zadání — reprezentuje back office managera real
 
 ✅ Všech 6 use cases ze zadání funguje na live deploymentu  
 ✅ Google Sheets data naseedována (50 klientů, 50 nemovitostí, 50 leadů)  
-✅ Dark mode toggle (výchozí: tmavý)  
+✅ Dark mode + light mode toggle (výchozí: tmavý, perzistuje přes reload)  
 ✅ react-markdown + remark-gfm (tabulky, bold, headings)  
 ✅ ErrorBoundary kolem grafů a slidů  
 ✅ Cycling loading text ("Načítám data...", "Volám nástroje..."...)  
 ✅ Sreality scraper opraven (actor: shahidirfan/sreality-cz-scraper)  
+✅ Redesign UI — Syne + Inter fonty, žlutá hero barva (#FFD600), CSS custom properties  
+✅ Ochrana heslem (LoginScreen + /api/auth, heslo v env PASSWORD)  
+✅ Sidebar stránky: Klienti, Nemovitosti, Leady (tabulky z Sheets, search, cache)  
+✅ SessionStorage persistence — aktivní stránka, dark mode, chat history, data tabulek  
 
 **Zbývá:** Natočit demo video
 
@@ -78,24 +82,35 @@ PASSWORD=                 ← Heslo pro přihlašovací obrazovku
 ```
 /app
   /api
-    /agent/route.ts       ← hlavní API route, Claude tool use loop
-    /cron/route.ts        ← Vercel Cron — ranní monitoring Sreality
+    /agent/route.ts            ← hlavní API route, Claude tool use loop
+    /auth/route.ts             ← POST ověření hesla (env PASSWORD)
+    /cron/route.ts             ← Vercel Cron — ranní monitoring Sreality
+    /sheets/
+      clients/route.ts         ← GET všichni klienti
+      properties/route.ts      ← GET všechny nemovitosti
+      leads/route.ts           ← GET všechny leady
   /components
     /chat/
-      MessageList.tsx     ← react-markdown, ErrorBoundary kolem grafů/slidů
-      ChatInput.tsx       ← textarea, quick prompts, dark mode
+      MessageList.tsx          ← react-markdown, ErrorBoundary kolem grafů/slidů
+      ChatInput.tsx            ← textarea, quick prompts
     /charts/
-      AgentChart.tsx      ← Recharts wrapper (bar/line/pie), dark mode
+      AgentChart.tsx           ← Recharts wrapper (bar/line/pie)
     /slides/
-      ReportSlides.tsx    ← 3 slide komponenty, dark mode
-    ErrorBoundary.tsx     ← React class component, fallback UI
+      ReportSlides.tsx         ← 3 slide komponenty
+    /views/
+      ClientsView.tsx          ← tabulka klientů, search, cache
+      PropertiesView.tsx       ← tabulka nemovitostí, search, cache
+      LeadsView.tsx            ← tabulka leadů, search, cache
+    DataTable.tsx              ← sdílená tabulka, client-side search filtrování
+    ErrorBoundary.tsx          ← React class component, fallback UI
   /lib
-    /tools/definitions.ts ← JSON schema pro 8 nástrojů Claudea
-    sheets.ts             ← Google Sheets helper (getClients/Properties/Leads)
-    cuzk.ts               ← ČÚZK API (searchByAddress, searchByParcel)
-    apify.ts              ← Apify scraper, server-side filtrování locality
+    /tools/definitions.ts      ← JSON schema pro 8 nástrojů Claudea
+    sheets.ts                  ← Google Sheets helper (getClients/Properties/Leads)
+    cache.ts                   ← in-memory + sessionStorage cache (getCached/setCached)
+    cuzk.ts                    ← ČÚZK API (searchByAddress, searchByParcel)
+    apify.ts                   ← Apify scraper, server-side filtrování locality
   /scripts
-    seed-sheets.ts        ← seed skript, valueInputOption: "RAW"
+    seed-sheets.ts             ← seed skript, valueInputOption: "RAW"
 ```
 
 ### Tool use loop
@@ -146,5 +161,5 @@ create_chart(type: 'bar'|'line'|'pie', data, title, x_key?, y_key?)
 
 - Sheets: jen čtení (bez zápisu)
 - Sreality: ~20 náhodných výsledků, filtr server-side — ne cílené vyhledávání
-- Bez autentizace (kdokoliv s URL má přístup)
-- Chat se resetuje při obnovení stránky (bez persistence)
+- Tabulky: jen search, bez row click / detail modalu, bez exportu CSV
+- Cache: sessionStorage — session-scoped, nesdílí se mezi taby
