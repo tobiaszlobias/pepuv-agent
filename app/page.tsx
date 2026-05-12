@@ -113,6 +113,10 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    document.documentElement.classList.toggle("light", !dark);
+  }, [dark]);
+
+  useEffect(() => {
     if (loading) {
       let idx = 0;
       loadingTimerRef.current = setInterval(() => {
@@ -280,7 +284,7 @@ export default function Home() {
             <button
               onClick={() => setDark((d) => !d)}
               className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0"
-              style={{ background: dark ? "var(--yellow)" : "var(--border)" }}
+              style={{ background: dark ? "var(--yellow)" : "var(--surface-elevated)", border: "1px solid var(--border)" }}
               title={dark ? "Přepnout na světlý režim" : "Přepnout na tmavý režim"}
             >
               <span

@@ -12,6 +12,17 @@
   --error: #ff5c5c;
 }
 
+html.light {
+  --bg: #f5f4f0;
+  --surface: #ffffff;
+  --surface-elevated: #f0efe9;
+  --border: #e2e0d8;
+  --yellow: #ffd600;
+  --text: #111111;
+  --muted: #777770;
+  --error: #d93025;
+}
+
 body {
   background: var(--bg);
   color: var(--text);
