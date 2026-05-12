@@ -112,9 +112,11 @@ export default function Home() {
   const loadingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (sessionStorage.getItem("auth") === "1") {
-      setAuthenticated(true);
-    }
+    if (sessionStorage.getItem("auth") === "1") setAuthenticated(true);
+    const savedPage = sessionStorage.getItem("activePage") as Page | null;
+    if (savedPage) setActivePage(savedPage);
+    const savedDark = sessionStorage.getItem("dark");
+    if (savedDark !== null) setDark(savedDark === "1");
   }, []);
 
   useEffect(() => {
@@ -243,7 +245,7 @@ export default function Home() {
             return (
               <button
                 key={item.label}
-                onClick={() => setActivePage(item.page)}
+                onClick={() => { setActivePage(item.page); sessionStorage.setItem("activePage", item.page); }}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors"
                 style={
                   isActive
@@ -291,7 +293,7 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-4">
             <button
-              onClick={() => setDark((d) => !d)}
+              onClick={() => setDark((d) => { const next = !d; sessionStorage.setItem("dark", next ? "1" : "0"); return next; })}
               className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0"
               style={{ background: dark ? "var(--yellow)" : "var(--surface-elevated)", border: "1px solid var(--border)" }}
               title={dark ? "Přepnout na světlý režim" : "Přepnout na tmavý režim"}

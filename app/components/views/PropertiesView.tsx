@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { DataTable } from "@/app/components/DataTable";
+import { getCached, setCached } from "@/lib/cache";
 
 interface Property {
   id: string;
@@ -28,25 +29,25 @@ const COLUMNS = [
 ];
 
 export function PropertiesView() {
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cached = getCached<Property[]>("properties");
+  const [properties, setProperties] = useState<Property[]>(cached ?? []);
+  const [loading, setLoading] = useState(cached === null);
 
   useEffect(() => {
+    if (cached !== null) return;
     fetch("/api/sheets/properties")
       .then((r) => r.json())
-      .then((data) => { setProperties(data); setLoading(false); })
+      .then((data: Property[]) => { setCached("properties", data); setProperties(data); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      <div className="px-6 py-4 flex items-center justify-between flex-shrink-0" style={{ borderBottom: "1px solid var(--border)" }}>
-        <div>
-          <h2 className="font-display font-bold text-base" style={{ color: "var(--text)" }}>Nemovitosti</h2>
-          <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>
-            {loading ? "Načítám..." : `${properties.length} nemovitostí`}
-          </p>
-        </div>
+      <div className="px-6 py-4 flex-shrink-0" style={{ borderBottom: "1px solid var(--border)" }}>
+        <h2 className="font-display font-bold text-base" style={{ color: "var(--text)" }}>Nemovitosti</h2>
+        <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>
+          {loading ? "Načítám..." : `${properties.length} nemovitostí`}
+        </p>
       </div>
       <div className="flex-1 overflow-y-auto">
         <DataTable columns={COLUMNS} rows={properties as unknown as Record<string, string | undefined>[]} loading={loading} />
