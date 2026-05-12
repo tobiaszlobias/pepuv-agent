@@ -21,6 +21,9 @@ export function ChatInput({ onSend, disabled, dark }: ChatInputProps) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // dark prop kept for future light mode extension
+  void dark;
+
   function handleSend() {
     const trimmed = value.trim();
     if (!trimmed || disabled) return;
@@ -46,7 +49,10 @@ export function ChatInput({ onSend, disabled, dark }: ChatInputProps) {
   }
 
   return (
-    <div className={`border-t px-4 py-3 ${dark ? "bg-gray-900 border-gray-800" : "bg-white border-gray-200"}`}>
+    <div
+      className="px-4 py-3 flex-shrink-0"
+      style={{ background: "var(--surface)", borderTop: "1px solid var(--border)" }}
+    >
       {/* Quick prompts */}
       <div className="flex flex-wrap gap-2 mb-3">
         {QUICK_PROMPTS.map((prompt) => (
@@ -54,11 +60,18 @@ export function ChatInput({ onSend, disabled, dark }: ChatInputProps) {
             key={prompt}
             onClick={() => onSend(prompt)}
             disabled={disabled}
-            className={`text-xs px-3 py-1 rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-              dark
-                ? "bg-gray-800 text-indigo-400 hover:bg-gray-700"
-                : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
-            }`}
+            className="text-xs px-3 py-1.5 rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{
+              background: "var(--surface-elevated)",
+              color: "var(--yellow)",
+              border: "1px solid var(--border)",
+            }}
+            onMouseEnter={(e) => {
+              if (!disabled) e.currentTarget.style.borderColor = "var(--yellow)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = "var(--border)";
+            }}
           >
             {prompt}
           </button>
@@ -76,16 +89,20 @@ export function ChatInput({ onSend, disabled, dark }: ChatInputProps) {
           disabled={disabled}
           placeholder="Zeptej se Pepa agenta... (Enter pro odeslání)"
           rows={1}
-          className={`flex-1 resize-none rounded-xl border px-4 py-3 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed ${
-            dark
-              ? "bg-gray-800 border-gray-700 text-gray-100"
-              : "bg-gray-50 border-gray-300 text-gray-900"
-          }`}
+          className="flex-1 resize-none rounded-xl px-4 py-3 text-sm placeholder-[#888880] focus:outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{
+            background: "var(--surface-elevated)",
+            border: "1px solid var(--border)",
+            color: "var(--text)",
+          }}
+          onFocus={(e) => (e.currentTarget.style.borderColor = "var(--yellow)")}
+          onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
         />
         <button
           onClick={handleSend}
           disabled={disabled || !value.trim()}
-          className="flex-shrink-0 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-medium text-white hover:bg-indigo-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="flex-shrink-0 rounded-xl px-4 py-3 text-sm font-bold transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+          style={{ background: "var(--yellow)", color: "#000" }}
         >
           <span className="sr-only">Odeslat</span>
           <svg

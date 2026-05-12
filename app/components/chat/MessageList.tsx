@@ -39,16 +39,27 @@ export interface Message {
   loadingText?: string;
 }
 
-function TypingIndicator({ text, dark }: { text?: string; dark: boolean }) {
+function TypingIndicator({ text }: { text?: string }) {
   return (
     <div className="flex gap-2 items-center px-1 py-1">
       <div className="flex gap-1 items-center">
-        <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce [animation-delay:-0.3s]" />
-        <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce [animation-delay:-0.15s]" />
-        <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" />
+        <span
+          className="w-2 h-2 rounded-full animate-bounce [animation-delay:-0.3s]"
+          style={{ background: "var(--yellow)" }}
+        />
+        <span
+          className="w-2 h-2 rounded-full animate-bounce [animation-delay:-0.15s]"
+          style={{ background: "var(--yellow)" }}
+        />
+        <span
+          className="w-2 h-2 rounded-full animate-bounce"
+          style={{ background: "var(--yellow)" }}
+        />
       </div>
       {text && (
-        <span className={`text-xs italic ${dark ? "text-gray-400" : "text-gray-400"}`}>{text}</span>
+        <span className="text-xs italic" style={{ color: "var(--muted)" }}>
+          {text}
+        </span>
       )}
     </div>
   );
@@ -64,15 +75,18 @@ export function MessageList({ messages, dark }: { messages: Message[]; dark: boo
   if (messages.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 ${dark ? "bg-gray-800" : "bg-indigo-100"}`}>
+        <div
+          className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+          style={{ background: "var(--yellow)" }}
+        >
           <span className="text-3xl">🏢</span>
         </div>
-        <h2 className={`text-xl font-bold mb-2 ${dark ? "text-white" : "text-gray-900"}`}>
+        <h2 className="font-display font-extrabold text-xl mb-2" style={{ color: "var(--text)" }}>
           Pepa Agent
         </h2>
-        <p className={`text-sm max-w-sm ${dark ? "text-gray-400" : "text-gray-500"}`}>
-          Tvůj back office asistent pro realitní firmu. Zeptej se na data
-          klientů, nemovitostí, leadů nebo požádej o report.
+        <p className="text-sm max-w-sm" style={{ color: "var(--muted)" }}>
+          Tvůj back office asistent pro realitní firmu. Zeptej se na data klientů,
+          nemovitostí, leadů nebo požádej o report.
         </p>
       </div>
     );
@@ -86,31 +100,43 @@ export function MessageList({ messages, dark }: { messages: Message[]; dark: boo
           className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
         >
           {msg.role === "assistant" && (
-            <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-2 mt-1 ${dark ? "bg-gray-800" : "bg-indigo-100"}`}>
+            <div
+              className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center mr-2 mt-1"
+              style={{ background: "var(--yellow)" }}
+            >
               <span className="text-sm">🤖</span>
             </div>
           )}
 
           <div
-            className={`max-w-[85%] ${
+            className={`max-w-[85%] px-4 py-3 text-sm ${
               msg.role === "user"
-                ? "bg-indigo-600 text-white rounded-2xl rounded-tr-sm px-4 py-3"
-                : dark
-                ? "bg-gray-800 border border-gray-700 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm"
-                : "bg-white border border-gray-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm"
+                ? "rounded-2xl rounded-tr-sm"
+                : "rounded-2xl rounded-tl-sm"
             }`}
+            style={
+              msg.role === "user"
+                ? { background: "var(--yellow)", color: "#000" }
+                : {
+                    background: "var(--surface)",
+                    border: "1px solid var(--border)",
+                    color: "var(--text)",
+                  }
+            }
           >
             {msg.loading ? (
-              <TypingIndicator text={msg.loadingText} dark={dark} />
+              <TypingIndicator text={msg.loadingText} />
             ) : (
               <>
-                <div className={`text-sm ${
-                  msg.role === "user"
-                    ? "text-white"
-                    : dark
-                    ? "prose prose-sm prose-invert max-w-none prose-p:my-0.5 prose-headings:my-1 prose-li:my-0 prose-table:text-xs"
-                    : "prose prose-sm max-w-none prose-p:my-0.5 prose-headings:my-1 prose-li:my-0 prose-table:text-xs"
-                }`}>
+                <div
+                  className={
+                    msg.role === "user"
+                      ? "text-sm font-medium"
+                      : dark
+                      ? "prose prose-sm prose-invert max-w-none prose-p:my-0.5 prose-headings:my-1 prose-li:my-0 prose-table:text-xs"
+                      : "prose prose-sm max-w-none prose-p:my-0.5 prose-headings:my-1 prose-li:my-0 prose-table:text-xs"
+                  }
+                >
                   {msg.role === "user" ? (
                     <p>{msg.content}</p>
                   ) : (
@@ -120,20 +146,31 @@ export function MessageList({ messages, dark }: { messages: Message[]; dark: boo
                   )}
                 </div>
 
-                {/* Grafy */}
                 {msg.charts && msg.charts.length > 0 && (
                   <div className="mt-3 space-y-3">
                     {msg.charts.map((chart, i) => (
-                      <ErrorBoundary key={i} fallback={<div className="text-xs text-red-400 py-2">Graf se nepodařilo zobrazit.</div>}>
+                      <ErrorBoundary
+                        key={i}
+                        fallback={
+                          <div className="text-xs py-2" style={{ color: "var(--error)" }}>
+                            Graf se nepodařilo zobrazit.
+                          </div>
+                        }
+                      >
                         <AgentChart chart={chart} dark={dark} />
                       </ErrorBoundary>
                     ))}
                   </div>
                 )}
 
-                {/* Report slidy */}
                 {msg.slides && msg.slides.length > 0 && (
-                  <ErrorBoundary fallback={<div className="text-xs text-red-400 py-2">Report se nepodařilo zobrazit.</div>}>
+                  <ErrorBoundary
+                    fallback={
+                      <div className="text-xs py-2" style={{ color: "var(--error)" }}>
+                        Report se nepodařilo zobrazit.
+                      </div>
+                    }
+                  >
                     <ReportSlides slides={msg.slides} dark={dark} />
                   </ErrorBoundary>
                 )}

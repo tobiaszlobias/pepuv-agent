@@ -29,31 +29,51 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
   };
 
   return (
-    <div className="flex h-screen items-center justify-center bg-gray-950">
-      <div className="w-full max-w-sm px-8 py-10 bg-gray-900 rounded-2xl shadow-xl border border-gray-800">
+    <div className="flex h-screen items-center justify-center" style={{ background: "var(--bg)" }}>
+      <div
+        className="w-full max-w-sm px-8 py-10 rounded-3xl"
+        style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+      >
         <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center mb-4">
-            <span className="text-white font-bold text-2xl">P</span>
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
+            style={{ background: "var(--yellow)" }}
+          >
+            <span className="font-display text-black font-extrabold text-2xl">P</span>
           </div>
-          <h1 className="text-white font-bold text-xl">Pepa Agent</h1>
-          <p className="text-gray-400 text-sm mt-1">Back Office Assistant</p>
+          <h1 className="font-display font-extrabold text-2xl" style={{ color: "var(--text)" }}>
+            Pepa Agent
+          </h1>
+          <p className="text-sm mt-1" style={{ color: "var(--muted)" }}>
+            Back Office Assistant
+          </p>
         </div>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Zadej heslo..."
             autoFocus
-            className="w-full px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-700 focus:outline-none focus:border-indigo-500 transition-colors"
+            className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all"
+            style={{
+              background: "var(--surface-elevated)",
+              border: "1px solid var(--border)",
+              color: "var(--text)",
+            }}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--yellow)")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
           />
           {error && (
-            <p className="text-red-400 text-sm text-center">Špatné heslo, zkus to znovu.</p>
+            <p className="text-sm text-center" style={{ color: "var(--error)" }}>
+              Špatné heslo, zkus to znovu.
+            </p>
           )}
           <button
             type="submit"
             disabled={loading || !password}
-            className="w-full py-3 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full py-3 rounded-xl text-sm font-display font-bold transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ background: "var(--yellow)", color: "#000" }}
           >
             {loading ? "Ověřuji..." : "Přihlásit se"}
           </button>
@@ -166,8 +186,7 @@ export default function Home() {
         const errMsg: Message = {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          content:
-            "Omlouvám se, nastala chyba při zpracování dotazu. Zkus to prosím znovu.",
+          content: "Omlouvám se, nastala chyba při zpracování dotazu. Zkus to prosím znovu.",
         };
         setMessages((prev) =>
           prev.filter((m) => m.id !== "loading").concat(errMsg)
@@ -184,20 +203,26 @@ export default function Home() {
   }
 
   return (
-    <div className={`flex h-screen ${dark ? "bg-gray-950" : "bg-gray-100"}`}>
+    <div className="flex h-screen" style={{ background: "var(--bg)" }}>
       {/* Sidebar */}
-      <aside className={`w-64 flex flex-col ${dark ? "bg-gray-900" : "bg-gray-900"}`}>
+      <aside
+        className="w-60 flex flex-col flex-shrink-0"
+        style={{ background: "var(--surface)", borderRight: "1px solid var(--border)" }}
+      >
         {/* Logo */}
-        <div className="px-6 py-5 border-b border-gray-800">
+        <div className="px-5 py-5" style={{ borderBottom: "1px solid var(--border)" }}>
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center">
-              <span className="text-white font-bold text-lg">P</span>
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: "var(--yellow)" }}
+            >
+              <span className="font-display font-extrabold text-base text-black">P</span>
             </div>
             <div>
-              <h1 className="text-white font-bold text-sm leading-tight">
+              <h1 className="font-display font-bold text-sm leading-tight" style={{ color: "var(--text)" }}>
                 Pepa Agent
               </h1>
-              <p className="text-gray-400 text-xs">Back Office Assistant</p>
+              <p className="text-xs" style={{ color: "var(--muted)" }}>Back Office Assistant</p>
             </div>
           </div>
         </div>
@@ -207,11 +232,18 @@ export default function Home() {
           {NAV_ITEMS.map((item) => (
             <button
               key={item.label}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors"
+              style={
                 item.active
-                  ? "bg-indigo-600 text-white"
-                  : "text-gray-400 hover:bg-gray-800 hover:text-white"
-              }`}
+                  ? { background: "var(--yellow)", color: "#000", fontFamily: "var(--font-display)", fontWeight: 700 }
+                  : { color: "var(--muted)" }
+              }
+              onMouseEnter={(e) => {
+                if (!item.active) e.currentTarget.style.background = "var(--surface-elevated)";
+              }}
+              onMouseLeave={(e) => {
+                if (!item.active) e.currentTarget.style.background = "transparent";
+              }}
             >
               <span>{item.icon}</span>
               <span>{item.label}</span>
@@ -220,37 +252,46 @@ export default function Home() {
         </nav>
 
         {/* Status */}
-        <div className="px-4 py-4 border-t border-gray-800">
+        <div className="px-4 py-4" style={{ borderTop: "1px solid var(--border)" }}>
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-400" />
-            <span className="text-gray-400 text-xs">Agent aktivní</span>
+            <div className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0" />
+            <span className="text-xs" style={{ color: "var(--muted)" }}>Agent aktivní</span>
           </div>
-          <p className="text-gray-600 text-xs mt-1">claude-sonnet-4-6</p>
+          <p className="text-xs mt-0.5" style={{ color: "var(--border)" }}>claude-sonnet-4-6</p>
         </div>
       </aside>
 
       {/* Main */}
       <main className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className={`border-b px-6 py-4 flex items-center justify-between ${dark ? "bg-gray-900 border-gray-800" : "bg-white border-gray-200"}`}>
+        <header
+          className="px-6 py-4 flex items-center justify-between flex-shrink-0"
+          style={{ background: "var(--surface)", borderBottom: "1px solid var(--border)" }}
+        >
           <div>
-            <h2 className={`font-semibold ${dark ? "text-white" : "text-gray-900"}`}>Chat s agentem</h2>
-            <p className={`text-xs ${dark ? "text-gray-400" : "text-gray-500"}`}>
+            <h2 className="font-display font-bold text-base" style={{ color: "var(--text)" }}>
+              Chat s agentem
+            </h2>
+            <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>
               Ptej se na klienty, nemovitosti, leady nebo požádej o report
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            {/* Dark mode toggle */}
+          <div className="flex items-center gap-4">
             <button
               onClick={() => setDark((d) => !d)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${dark ? "bg-indigo-600" : "bg-gray-300"}`}
+              className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0"
+              style={{ background: dark ? "var(--yellow)" : "var(--border)" }}
               title={dark ? "Přepnout na světlý režim" : "Přepnout na tmavý režim"}
             >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${dark ? "translate-x-6" : "translate-x-1"}`} />
+              <span
+                className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                style={{ transform: dark ? "translateX(1.375rem)" : "translateX(0.25rem)" }}
+              />
             </button>
             <button
               onClick={() => setMessages([])}
-              className={`text-xs transition-colors ${dark ? "text-gray-500 hover:text-gray-300" : "text-gray-400 hover:text-gray-600"}`}
+              className="text-xs transition-colors hover:opacity-100 opacity-60"
+              style={{ color: "var(--muted)" }}
             >
               Vyčistit chat
             </button>
@@ -258,7 +299,7 @@ export default function Home() {
         </header>
 
         {/* Messages + Input */}
-        <div className={`flex-1 flex flex-col overflow-hidden ${dark ? "bg-gray-950" : "bg-gray-50"}`}>
+        <div className="flex-1 flex flex-col overflow-hidden" style={{ background: "var(--bg)" }}>
           <MessageList messages={messages} dark={dark} />
           <ChatInput onSend={sendMessage} disabled={loading} dark={dark} />
         </div>
