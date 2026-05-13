@@ -38,6 +38,41 @@ interface SrealityListing {
   scraped_at: string;
 }
 
+interface MonitoringConfig {
+  locality: string;
+  propertyType: string;
+  maxPrice: string;
+}
+
+const DEFAULT_CONFIG: MonitoringConfig = {
+  locality: "Praha Holešovice",
+  propertyType: "",
+  maxPrice: "",
+};
+
+const PROPERTY_TYPES = [
+  { value: "", label: "Jakýkoliv typ" },
+  { value: "byt", label: "Byt" },
+  { value: "dům", label: "Dům" },
+  { value: "kancelář", label: "Kancelář" },
+  { value: "pozemek", label: "Pozemek" },
+];
+
+function loadMonitoringConfig(): MonitoringConfig {
+  if (typeof window === "undefined") return DEFAULT_CONFIG;
+  try {
+    const raw = localStorage.getItem("monitoring_config");
+    if (!raw) return DEFAULT_CONFIG;
+    return { ...DEFAULT_CONFIG, ...JSON.parse(raw) };
+  } catch {
+    return DEFAULT_CONFIG;
+  }
+}
+
+function saveMonitoringConfig(cfg: MonitoringConfig) {
+  localStorage.setItem("monitoring_config", JSON.stringify(cfg));
+}
+
 const YELLOW = "#FFD600";
 const COLORS = ["#FFD600", "#888880", "#F0EDE8", "#444440", "#BBBAB6"];
 
@@ -61,7 +96,6 @@ function buildChartData(dates: string[], slot: TimeSlot) {
     ? dates.filter((d) => new Date(d) >= cutoff!)
     : dates;
 
-  // Group by month
   const map: Record<string, number> = {};
   filtered.forEach((d) => {
     const date = new Date(d);
@@ -69,7 +103,6 @@ function buildChartData(dates: string[], slot: TimeSlot) {
     map[key] = (map[key] || 0) + 1;
   });
 
-  // Fill all months in range
   const sorted = Object.keys(map).sort();
   if (sorted.length === 0) return [];
 
@@ -125,6 +158,16 @@ export function DashboardView() {
   const [srealityError, setSrealityError] = useState("");
   const [timeSlot, setTimeSlot] = useState<TimeSlot>("6m");
 
+  const [config, setConfig] = useState<MonitoringConfig>(DEFAULT_CONFIG);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<MonitoringConfig>(DEFAULT_CONFIG);
+
+  useEffect(() => {
+    const loaded = loadMonitoringConfig();
+    setConfig(loaded);
+    setDraft(loaded);
+  }, []);
+
   useEffect(() => {
     if (data !== null) return;
     fetch("/api/dashboard")
@@ -136,7 +179,11 @@ export function DashboardView() {
   function runSreality() {
     setLoadingSreality(true);
     setSrealityError("");
-    fetch("/api/sreality/scan")
+    const params = new URLSearchParams();
+    params.set("locality", config.locality || "Praha Holešovice");
+    if (config.propertyType) params.set("type", config.propertyType);
+    if (config.maxPrice) params.set("maxPrice", config.maxPrice);
+    fetch(`/api/sreality/scan?${params}`)
       .then((r) => r.json())
       .then((d: { listings: SrealityListing[] }) => {
         setCached("sreality_latest", d.listings);
@@ -144,6 +191,15 @@ export function DashboardView() {
         setLoadingSreality(false);
       })
       .catch(() => { setSrealityError("Scan selhal, zkus to znovu."); setLoadingSreality(false); });
+  }
+
+  function saveConfig() {
+    setConfig(draft);
+    saveMonitoringConfig(draft);
+    setEditing(false);
+    // Clear old results when config changes
+    setSreality([]);
+    setCached("sreality_latest", null);
   }
 
   const chartData = useMemo(
@@ -328,52 +384,150 @@ export function DashboardView() {
           </div>
         </Section>
 
-        {/* Sreality scan */}
-        <Section title="Sreality — Praha Holešovice">
-          {sreality.length === 0 ? (
-            <div className="flex flex-col gap-3">
-              <p className="text-xs" style={{ color: "var(--muted)" }}>Poslední scan ještě neproběhl nebo nebyl uložen.</p>
-              {srealityError && <p className="text-xs" style={{ color: "var(--error)" }}>{srealityError}</p>}
+        {/* Monitoring panel */}
+        <Section
+          title="Ranní monitoring"
+          action={
+            !editing ? (
               <button
-                onClick={runSreality}
-                disabled={loadingSreality}
-                className="text-xs px-3 py-2 rounded-lg font-bold transition-opacity disabled:opacity-40"
-                style={{ background: YELLOW, color: "#000" }}
+                onClick={() => { setDraft(config); setEditing(true); }}
+                className="text-xs px-2 py-1 rounded-lg transition-opacity"
+                style={{ background: "var(--surface-elevated)", color: "var(--muted)", border: "1px solid var(--border)" }}
               >
-                {loadingSreality ? "Scanuji..." : "Spustit scan"}
+                Upravit
               </button>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs" style={{ color: "var(--muted)" }}>{sreality.length} nabídek</span>
-                <button
-                  onClick={runSreality}
-                  disabled={loadingSreality}
-                  className="text-xs px-2 py-1 rounded-lg font-bold transition-opacity disabled:opacity-40"
-                  style={{ background: "var(--surface-elevated)", color: "var(--text)", border: "1px solid var(--border)" }}
+            ) : null
+          }
+        >
+          {editing ? (
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs" style={{ color: "var(--muted)" }}>Lokalita</label>
+                <input
+                  type="text"
+                  value={draft.locality}
+                  onChange={(e) => setDraft({ ...draft, locality: e.target.value })}
+                  placeholder="Praha Holešovice"
+                  className="text-xs px-3 py-2 rounded-lg focus:outline-none"
+                  style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)", color: "var(--text)" }}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = YELLOW)}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs" style={{ color: "var(--muted)" }}>Typ nemovitosti</label>
+                <select
+                  value={draft.propertyType}
+                  onChange={(e) => setDraft({ ...draft, propertyType: e.target.value })}
+                  className="text-xs px-3 py-2 rounded-lg focus:outline-none"
+                  style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)", color: "var(--text)" }}
                 >
-                  {loadingSreality ? "..." : "Obnovit"}
+                  {PROPERTY_TYPES.map((t) => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs" style={{ color: "var(--muted)" }}>Max cena (Kč)</label>
+                <input
+                  type="number"
+                  value={draft.maxPrice}
+                  onChange={(e) => setDraft({ ...draft, maxPrice: e.target.value })}
+                  placeholder="bez limitu"
+                  className="text-xs px-3 py-2 rounded-lg focus:outline-none"
+                  style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)", color: "var(--text)" }}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = YELLOW)}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+                />
+              </div>
+              <div className="flex gap-2 mt-1">
+                <button
+                  onClick={saveConfig}
+                  className="flex-1 text-xs py-2 rounded-lg font-bold"
+                  style={{ background: YELLOW, color: "#000" }}
+                >
+                  Uložit
+                </button>
+                <button
+                  onClick={() => setEditing(false)}
+                  className="text-xs px-3 py-2 rounded-lg"
+                  style={{ background: "var(--surface-elevated)", color: "var(--muted)", border: "1px solid var(--border)" }}
+                >
+                  Zrušit
                 </button>
               </div>
-              {sreality.slice(0, 4).map((l, i) => (
-                <a
-                  key={i}
-                  href={l.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block rounded-lg px-3 py-2 text-xs transition-colors"
-                  style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = YELLOW)}
-                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
-                >
-                  <div className="font-bold truncate" style={{ color: "var(--text)" }}>{l.description || l.address}</div>
-                  <div className="flex justify-between mt-0.5">
-                    <span style={{ color: "var(--muted)" }}>{l.address}</span>
-                    <span style={{ color: YELLOW }}>{l.price > 0 ? formatPrice(l.price) : "—"}</span>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {/* Current config summary */}
+              <div className="rounded-lg px-3 py-2.5 flex flex-col gap-1.5" style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)" }}>
+                <div className="flex items-center gap-2 text-xs">
+                  <span style={{ color: "var(--muted)" }}>Lokalita</span>
+                  <span className="ml-auto font-medium truncate" style={{ color: "var(--text)" }}>{config.locality || "—"}</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <span style={{ color: "var(--muted)" }}>Typ</span>
+                  <span className="ml-auto font-medium" style={{ color: "var(--text)" }}>
+                    {PROPERTY_TYPES.find(t => t.value === config.propertyType)?.label || "Jakýkoliv typ"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <span style={{ color: "var(--muted)" }}>Max cena</span>
+                  <span className="ml-auto font-medium" style={{ color: "var(--text)" }}>
+                    {config.maxPrice ? formatPrice(Number(config.maxPrice)) : "bez limitu"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Scan results or empty */}
+              {sreality.length > 0 ? (
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs" style={{ color: "var(--muted)" }}>{sreality.length} nabídek</span>
+                    <button
+                      onClick={runSreality}
+                      disabled={loadingSreality}
+                      className="text-xs px-2 py-1 rounded-lg font-medium transition-opacity disabled:opacity-40"
+                      style={{ background: "var(--surface-elevated)", color: "var(--text)", border: "1px solid var(--border)" }}
+                    >
+                      {loadingSreality ? "..." : "Obnovit"}
+                    </button>
                   </div>
-                </a>
-              ))}
+                  {sreality.slice(0, 3).map((l, i) => (
+                    <a
+                      key={i}
+                      href={l.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block rounded-lg px-3 py-2 text-xs transition-colors"
+                      style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.borderColor = YELLOW)}
+                      onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+                    >
+                      <div className="font-medium truncate" style={{ color: "var(--text)" }}>{l.description || l.address}</div>
+                      <div className="flex justify-between mt-0.5">
+                        <span style={{ color: "var(--muted)" }} className="truncate max-w-[60%]">{l.address}</span>
+                        <span style={{ color: YELLOW }}>{l.price > 0 ? formatPrice(l.price) : "—"}</span>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {srealityError && <p className="text-xs" style={{ color: "var(--error)" }}>{srealityError}</p>}
+                  <p className="text-xs" style={{ color: "var(--muted)" }}>
+                    Automaticky každé ráno v 7:00. Nebo spusť ručně:
+                  </p>
+                  <button
+                    onClick={runSreality}
+                    disabled={loadingSreality}
+                    className="w-full text-xs py-2 rounded-lg font-bold transition-opacity disabled:opacity-40"
+                    style={{ background: YELLOW, color: "#000" }}
+                  >
+                    {loadingSreality ? "Scanuji..." : "Spustit scan"}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </Section>
