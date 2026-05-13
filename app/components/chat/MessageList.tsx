@@ -81,7 +81,7 @@ export function MessageList({ messages, dark }: { messages: Message[]; dark: boo
         >
           <span className="text-3xl">🏢</span>
         </div>
-        <h2 className="font-display font-extrabold text-xl mb-2" style={{ color: "var(--text)" }}>
+        <h2 className="font-semibold text-xl mb-2" style={{ color: "var(--text)" }}>
           Pepa Agent
         </h2>
         <p className="text-sm max-w-sm" style={{ color: "var(--muted)" }}>

@@ -49,7 +49,7 @@ export function DataTable({ columns, rows, loading, searchQuery }: DataTableProp
             {columns.map((col) => (
               <th
                 key={col.key}
-                className="text-left px-4 py-3 font-display font-bold text-xs uppercase tracking-wide"
+                className="text-left px-4 py-3 font-semibold text-xs uppercase tracking-wide"
                 style={{ color: "var(--muted)" }}
               >
                 {col.label}

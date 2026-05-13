@@ -77,7 +77,7 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
           <button
             type="submit"
             disabled={loading || !password}
-            className="w-full py-3 rounded-xl text-sm font-display font-bold transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full py-3 rounded-xl text-sm font-semibold transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ background: "var(--yellow)", color: "#000" }}
           >
             {loading ? "Ověřuji..." : "Přihlásit se"}
@@ -260,7 +260,7 @@ export default function Home() {
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors"
                 style={
                   isActive
-                    ? { background: "var(--yellow)", color: "#000", fontFamily: "var(--font-display)", fontWeight: 700 }
+                    ? { background: "var(--yellow)", color: "#000", fontWeight: 600 }
                     : { color: "var(--muted)" }
                 }
                 onMouseEnter={(e) => {
@@ -295,7 +295,7 @@ export default function Home() {
           style={{ background: "var(--surface)", borderBottom: "1px solid var(--border)" }}
         >
           <div>
-            <h2 className="font-display font-bold text-base" style={{ color: "var(--text)" }}>
+            <h2 className="font-semibold text-base" style={{ color: "var(--text)" }}>
               {activePage === "dashboard" && "Dashboard"}
               {activePage === "chat" && "Chat s agentem"}
               {activePage === "klienti" && "Klienti"}

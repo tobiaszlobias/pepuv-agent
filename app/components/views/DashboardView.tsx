@@ -57,11 +57,11 @@ function KpiCard({
       className="rounded-2xl p-5 flex flex-col gap-1"
       style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
     >
-      <p className="text-xs font-display font-bold uppercase tracking-wide" style={{ color: "var(--muted)" }}>
+      <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>
         {label}
       </p>
       <p
-        className="text-3xl font-display font-extrabold leading-none"
+        className="text-3xl font-bold leading-none"
         style={{ color: highlight ? YELLOW : "var(--text)" }}
       >
         {value}
@@ -77,7 +77,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       className="rounded-2xl p-5"
       style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
     >
-      <p className="text-xs font-display font-bold uppercase tracking-wide mb-4" style={{ color: "var(--muted)" }}>
+      <p className="text-xs font-semibold uppercase tracking-wide mb-4" style={{ color: "var(--muted)" }}>
         {title}
       </p>
       {children}
@@ -232,7 +232,7 @@ export function DashboardView() {
             {data.leads.topMakleri.map((m, i) => (
               <div key={m.name} className="flex items-center gap-3">
                 <span
-                  className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-display font-bold flex-shrink-0"
+                  className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
                   style={{ background: i === 0 ? YELLOW : "var(--surface-elevated)", color: i === 0 ? "#000" : "var(--muted)" }}
                 >
                   {i + 1}

@@ -27,7 +27,7 @@ function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="rounded-xl px-4 py-3 flex flex-col gap-0.5" style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)" }}>
       <p className="text-xs" style={{ color: "var(--muted)" }}>{label}</p>
-      <p className="text-xl font-display font-extrabold leading-none" style={{ color: "var(--text)" }}>{value}</p>
+      <p className="text-xl font-bold leading-none" style={{ color: "var(--text)" }}>{value}</p>
     </div>
   );
 }
