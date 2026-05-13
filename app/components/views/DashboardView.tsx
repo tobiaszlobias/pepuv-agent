@@ -219,11 +219,14 @@ function AnimatedFloat({ target, suffix }: { target: number; suffix: string }) {
   return <>{current}{suffix}</>;
 }
 
-function Section({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
+function Section({ title, children, action, titleNode }: { title: string; children: React.ReactNode; action?: React.ReactNode; titleNode?: React.ReactNode }) {
   return (
     <div className="rounded-2xl p-5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
       <div className="flex items-center justify-between mb-4">
-        <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>{title}</p>
+        {titleNode
+          ? titleNode
+          : <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>{title}</p>
+        }
         {action}
       </div>
       {children}
@@ -361,43 +364,41 @@ export function DashboardView() {
         {/* Area chart */}
         <div className="md:col-span-2">
           <Section
-            title={`${METRIC_LABELS[chartMetric]} — ${totalInSlot} celkem`}
+            title=""
             action={
-              <div className="flex items-center gap-2">
-                {/* Metric switcher */}
-                <div className="flex gap-0.5 rounded-lg p-0.5" style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)" }}>
-                  {(Object.keys(METRIC_LABELS) as ChartMetric[]).map((m) => (
-                    <button
-                      key={m}
-                      onClick={() => setChartMetric(m)}
-                      className="text-xs px-2 py-1 rounded-md transition-colors"
-                      style={
-                        chartMetric === m
-                          ? { background: "var(--surface)", color: "var(--text)", fontWeight: 600 }
-                          : { color: "var(--muted)" }
-                      }
-                    >
-                      {METRIC_LABELS[m]}
-                    </button>
-                  ))}
-                </div>
-                {/* Time slot */}
-                <div className="flex gap-1">
-                  {TIME_SLOTS.map((s) => (
-                    <button
-                      key={s.value}
-                      onClick={() => setTimeSlot(s.value)}
-                      className="text-xs px-2.5 py-1 rounded-lg transition-colors"
-                      style={
-                        timeSlot === s.value
-                          ? { background: YELLOW, color: "#000", fontWeight: 600 }
-                          : { background: "var(--surface-elevated)", color: "var(--muted)", border: "1px solid var(--border)" }
-                      }
-                    >
-                      {s.label}
-                    </button>
-                  ))}
-                </div>
+              <div className="flex gap-1">
+                {TIME_SLOTS.map((s) => (
+                  <button
+                    key={s.value}
+                    onClick={() => setTimeSlot(s.value)}
+                    className="text-xs px-2.5 py-1 rounded-lg transition-colors"
+                    style={
+                      timeSlot === s.value
+                        ? { background: YELLOW, color: "#000", fontWeight: 600 }
+                        : { background: "var(--surface-elevated)", color: "var(--muted)", border: "1px solid var(--border)" }
+                    }
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            }
+            titleNode={
+              <div className="flex gap-0.5 rounded-lg p-0.5" style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)" }}>
+                {(Object.keys(METRIC_LABELS) as ChartMetric[]).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setChartMetric(m)}
+                    className="text-xs px-2.5 py-1 rounded-md transition-colors"
+                    style={
+                      chartMetric === m
+                        ? { background: "var(--surface)", color: "var(--text)", fontWeight: 600 }
+                        : { color: "var(--muted)" }
+                    }
+                  >
+                    {METRIC_LABELS[m]}
+                  </button>
+                ))}
               </div>
             }
           >

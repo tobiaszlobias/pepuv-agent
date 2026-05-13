@@ -68,17 +68,24 @@ export async function GET() {
     .slice(0, 5)
     .map(([name, count]) => ({ name, count }));
 
+  const clientDates = clients
+    .filter((c) => !!c.datum_pridani)
+    .map((c) => c.datum_pridani)
+    .sort();
+
   return NextResponse.json({
     clients: {
       total: clients.length,
       newThisMonth: newClientsThisMonth,
       bySource: clientsBySource,
+      dates: clientDates,
     },
     properties: {
       total: properties.length,
       forSale,
       missingRekonstrukce,
       avgPrice,
+      dates: [] as string[],
     },
     leads: {
       total: leads.length,
