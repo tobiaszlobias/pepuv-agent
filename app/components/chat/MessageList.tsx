@@ -205,7 +205,7 @@ export function MessageList({ messages, dark, onSend }: { messages: Message[]; d
                       </div>
                     }
                   >
-                    <ReportSlides slides={msg.slides} dark={dark} />
+                    <ReportSlides slides={msg.slides} />
                   </ErrorBoundary>
                 )}
               </>
