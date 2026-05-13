@@ -223,11 +223,11 @@ export function DashboardView() {
               </div>
             }
           >
-            <ResponsiveContainer width="100%" height={180}>
-              <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
+            <ResponsiveContainer width="100%" height={240}>
+              <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 4, bottom: 0 }}>
                 <defs>
                   <linearGradient id="leadGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={YELLOW} stopOpacity={0.25} />
+                    <stop offset="5%" stopColor={YELLOW} stopOpacity={0.2} />
                     <stop offset="95%" stopColor={YELLOW} stopOpacity={0} />
                   </linearGradient>
                 </defs>
@@ -242,8 +242,9 @@ export function DashboardView() {
                   tick={{ fontSize: 11, fill: "var(--muted)" }}
                   axisLine={false}
                   tickLine={false}
-                  width={28}
+                  width={32}
                   allowDecimals={false}
+                  tickCount={5}
                 />
                 <Tooltip
                   contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
@@ -252,7 +253,7 @@ export function DashboardView() {
                   cursor={{ stroke: "var(--border)", strokeWidth: 1 }}
                 />
                 <Area
-                  type="monotone"
+                  type="linear"
                   dataKey="count"
                   stroke={YELLOW}
                   strokeWidth={2}
@@ -268,9 +269,9 @@ export function DashboardView() {
 
         {/* Klienti podle zdroje */}
         <Section title="Klienti podle zdroje">
-          <ResponsiveContainer width="100%" height={180}>
+          <ResponsiveContainer width="100%" height={200}>
             <PieChart>
-              <Pie data={sourceData} cx="50%" cy="50%" innerRadius={45} outerRadius={75} paddingAngle={3} dataKey="value">
+              <Pie data={sourceData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3} dataKey="value">
                 {sourceData.map((_, i) => (
                   <Cell key={i} fill={COLORS[i % COLORS.length]} />
                 ))}
