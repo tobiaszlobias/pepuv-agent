@@ -82,9 +82,12 @@ export function AgentChart({ chart }: { chart: ChartData }) {
     borderRadius: "8px",
     border: "1px solid var(--border)",
     fontSize: "12px",
-    backgroundColor: "var(--surface)",
+    backgroundColor: "var(--surface-elevated)",
     color: "var(--text)",
   };
+
+  const tooltipLabelStyle = { color: "var(--text)", fontWeight: 500 };
+  const tooltipItemStyle = { color: "var(--muted)" };
 
   const xAxisProps = longLabels && !isHorizontal
     ? { tick: { fontSize: 10, fill: "var(--muted)" }, axisLine: false, tickLine: false, angle: -35, textAnchor: "end" as const, height: 60, interval: 0 }
@@ -132,7 +135,7 @@ export function AgentChart({ chart }: { chart: ChartData }) {
               {chart.reference_line && (
                 <ReferenceLine x={chart.reference_line.value} stroke="var(--muted)" strokeDasharray="4 4" strokeWidth={1.5} />
               )}
-              <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "var(--border)", opacity: 0.25 }} formatter={(value: unknown) => [formatTooltipValue(Number(value)), ""]} />
+              <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={{ fill: "var(--border)", opacity: 0.25 }} formatter={(value: unknown) => [formatTooltipValue(Number(value)), ""]} />
               <Bar dataKey={yKey} radius={[0, 4, 4, 0]}>
                 {chart.data.map((item, i) => <Cell key={i} fill={getCellColor(item, i)} />)}
                 <LabelList dataKey={yKey} position="right" style={{ fontSize: 10, fill: "var(--muted)" }} formatter={(v: unknown) => formatYTick(Number(v))} />
@@ -146,7 +149,7 @@ export function AgentChart({ chart }: { chart: ChartData }) {
               {chart.reference_line && (
                 <ReferenceLine y={chart.reference_line.value} stroke="var(--muted)" strokeDasharray="4 4" strokeWidth={1.5} label={{ value: chart.reference_line.label, position: "insideTopRight", fontSize: 10, fill: "var(--muted)" }} />
               )}
-              <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "var(--border)", opacity: 0.4 }} formatter={(value: unknown) => [formatTooltipValue(Number(value)), ""]} />
+              <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={{ fill: "var(--border)", opacity: 0.4 }} formatter={(value: unknown) => [formatTooltipValue(Number(value)), ""]} />
               <Bar dataKey={yKey} radius={[4, 4, 0, 0]}>
                 {chart.data.map((item, i) => <Cell key={i} fill={getCellColor(item, i)} />)}
               </Bar>
@@ -160,7 +163,7 @@ export function AgentChart({ chart }: { chart: ChartData }) {
             {chart.reference_line && (
               <ReferenceLine y={chart.reference_line.value} stroke="var(--muted)" strokeDasharray="4 4" strokeWidth={1.5} label={{ value: chart.reference_line.label, position: "insideTopRight", fontSize: 10, fill: "var(--muted)" }} />
             )}
-            <Tooltip contentStyle={tooltipStyle} cursor={{ stroke: "var(--border)", strokeWidth: 1 }} formatter={(value: unknown) => [formatTooltipValue(Number(value)), ""]} />
+            <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={{ stroke: "var(--border)", strokeWidth: 1 }} formatter={(value: unknown) => [formatTooltipValue(Number(value)), ""]} />
             <Line type="linear" dataKey={yKey} stroke={YELLOW} strokeWidth={2} dot={{ fill: YELLOW, r: 3, strokeWidth: 0 }} activeDot={{ r: 5, fill: YELLOW, strokeWidth: 0 }} />
           </LineChart>
         ) : (
@@ -170,7 +173,7 @@ export function AgentChart({ chart }: { chart: ChartData }) {
                 <Cell key={i} fill={hasZones ? (getCellColor(item, i)) : PIE_COLORS[i % PIE_COLORS.length]} />
               ))}
             </Pie>
-            <Tooltip contentStyle={tooltipStyle} formatter={(value: unknown) => [formatTooltipValue(Number(value)), ""]} />
+            <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} formatter={(value: unknown) => [formatTooltipValue(Number(value)), ""]} />
             <Legend wrapperStyle={{ fontSize: "12px" }} formatter={(value) => <span style={{ color: "var(--text)" }}>{value}</span>} />
           </PieChart>
         )}
