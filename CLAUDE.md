@@ -22,7 +22,7 @@ Pepa je fiktivní postava ze zadání — reprezentuje back office managera real
 
 ---
 
-## Aktuální stav (14. 5. 2026 — večer)
+## Aktuální stav (14. 5. 2026 — noc)
 
 ✅ Všech 6 use cases ze zadání funguje na live deploymentu  
 ✅ Google Sheets data naseedována (50 klientů, 50 nemovitostí, 50 leadů)  
@@ -39,13 +39,22 @@ Pepa je fiktivní postava ze zadání — reprezentuje back office managera real
 ✅ Tabulky — formátované ceny (8 M Kč), datum (cs-CZ), status/stav color badges  
 ✅ AgentChart — bar/line/pie, horizontal layout, color zones (green/yellow/red/gray), reference line, color legend  
 ✅ SVG nav ikony (bez emoji), tooltip bez dvojtečky, user-select: none na dashboardu  
-✅ Mobilní layout — bottom nav, responzivní dashboard grid (2 cols KPI, stacking sekcí), h-[100dvh]  
+✅ Mobilní layout — bottom nav, responzivní dashboard grid, h-[100dvh], viewport user-scalable=no  
+✅ Chat input přesunut nad bottom nav (nebyl schovaný)  
 ✅ KPI cards count-up animace (ease-out cubic, 900ms) při prvním loadu  
 ✅ Area chart animace při změně timeslotu (key={timeSlot}, 500ms ease-out)  
-✅ Dashboard — metric switcher (Leady/Nemovitosti/Klienti) vlevo jako title, prázdný stav grafu  
-✅ Makléři progress bary + podíl %, statusy progress bary + uzavřeno celkem  
+✅ Dashboard chart: adaptive x-axis labels (zkrácené na mobilu), CartesianGrid horizontální čáry  
+✅ Dashboard metric/timeslot switcher — stejný pill styl, stacked na mobilu  
+✅ Dashboard property dates opraveny (byly hardcoded []), cache invalidace přes isValidDashboardData()  
+✅ Dashboard sekce "Leady podle statusu" odstraněna, monitoring rozšířen (2-col grid nabídek)  
+✅ Makléři progress bary + podíl %, uzavřeno celkem  
 ✅ AgentChart line → AreaChart s gradientem (konzistentní s dashboardem)  
-✅ Chat empty state — hero + 2×3 quick prompt grid, prompts kompaktní scrollable řada po prvním chatu  
+✅ ReportSlides redesign — CSS vars, žlutá, bez indigo, bez dark prop  
+✅ Systémový prompt s pevnými šablonami pro known query types (report, trend, email, monitoring...)  
+✅ Model picker dropdown — Haiku/Sonnet/Opus, sidebar + chat header (mobil i desktop)  
+✅ Quick prompts → dropdown s celými texty ze zadání (ne zkrácené)  
+✅ DataTable card layout na mobilu — žádný horizontální scroll  
+✅ User avatar v chatu — prasepepa.png  
 ✅ Theme toggle se slunce/měsíc ikonami  
 ✅ Sidebar/header výška srovnána (65px)  
 
