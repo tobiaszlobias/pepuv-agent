@@ -15,6 +15,7 @@ interface ChartData {
   data: Record<string, unknown>[];
   x_key?: string;
   y_key?: string;
+  horizontal?: boolean;
 }
 
 const YELLOW = "#FFD600";
@@ -47,8 +48,13 @@ export function AgentChart({ chart }: { chart: ChartData }) {
   const xKey = chart.x_key || "name";
   const yKey = chart.y_key || "value";
 
+  // Auto-detect horizontal: více než 6 položek nebo dlouhé labely
   const longLabels = hasLongXLabels(chart.data, xKey);
+  const isHorizontal = chart.horizontal ?? (chart.type === "bar" && (chart.data.length > 6 || longLabels));
   const yWidth = getYAxisWidth(chart.data, yKey);
+
+  // Pro horizontal: výška podle počtu položek (min 200, max 500)
+  const horizontalHeight = Math.max(200, Math.min(500, chart.data.length * 28));
 
   const tooltipStyle = {
     borderRadius: "8px",
@@ -58,16 +64,7 @@ export function AgentChart({ chart }: { chart: ChartData }) {
     color: "var(--text)",
   };
 
-  const yAxisProps = {
-    tick: { fontSize: 11, fill: "var(--muted)" },
-    axisLine: false,
-    tickLine: false,
-    width: yWidth,
-    allowDecimals: false,
-    tickFormatter: formatYTick,
-  };
-
-  const xAxisProps = longLabels
+  const xAxisProps = longLabels && !isHorizontal
     ? {
         tick: { fontSize: 10, fill: "var(--muted)" },
         axisLine: false,
@@ -91,12 +88,43 @@ export function AgentChart({ chart }: { chart: ChartData }) {
       <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: "var(--muted)" }}>
         {chart.title}
       </p>
-      <ResponsiveContainer width="100%" height={longLabels ? 260 : 220}>
+      <ResponsiveContainer width="100%" height={isHorizontal ? horizontalHeight : (longLabels ? 260 : 220)}>
         {chart.type === "bar" ? (
+          isHorizontal ? (
+            <BarChart
+              data={chart.data}
+              layout="vertical"
+              margin={{ top: 4, right: 48, left: 4, bottom: 4 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
+              <XAxis
+                type="number"
+                tick={{ fontSize: 11, fill: "var(--muted)" }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={formatYTick}
+                allowDecimals={false}
+              />
+              <YAxis
+                type="category"
+                dataKey={xKey}
+                tick={{ fontSize: 11, fill: "var(--muted)" }}
+                axisLine={false}
+                tickLine={false}
+                width={140}
+              />
+              <Tooltip
+                contentStyle={tooltipStyle}
+                cursor={{ fill: "var(--border)", opacity: 0.3 }}
+                formatter={(value: unknown) => [formatTooltipValue(Number(value)), ""]}
+              />
+              <Bar dataKey={yKey} fill={YELLOW} radius={[0, 4, 4, 0]} label={{ position: "right", fontSize: 10, fill: "var(--muted)", formatter: (v: unknown) => formatYTick(Number(v)) }} />
+            </BarChart>
+          ) : (
           <BarChart data={chart.data} margin={{ top: 4, right: 8, left: 4, bottom: longLabels ? 8 : 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
             <XAxis dataKey={xKey} {...xAxisProps} />
-            <YAxis {...yAxisProps} />
+            <YAxis tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} width={yWidth} allowDecimals={false} tickFormatter={formatYTick} />
             <Tooltip
               contentStyle={tooltipStyle}
               cursor={{ fill: "var(--border)", opacity: 0.4 }}
@@ -104,11 +132,12 @@ export function AgentChart({ chart }: { chart: ChartData }) {
             />
             <Bar dataKey={yKey} fill={YELLOW} radius={[4, 4, 0, 0]} />
           </BarChart>
+          )
         ) : chart.type === "line" ? (
           <LineChart data={chart.data} margin={{ top: 4, right: 8, left: 4, bottom: longLabels ? 8 : 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
             <XAxis dataKey={xKey} {...xAxisProps} />
-            <YAxis {...yAxisProps} />
+            <YAxis tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} width={yWidth} allowDecimals={false} tickFormatter={formatYTick} />
             <Tooltip
               contentStyle={tooltipStyle}
               cursor={{ stroke: "var(--border)", strokeWidth: 1 }}
