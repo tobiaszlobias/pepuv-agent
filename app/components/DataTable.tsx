@@ -6,6 +6,8 @@ interface Column {
   key: string;
   label: string;
   render?: (value: string | undefined, row: Record<string, string | undefined>) => React.ReactNode;
+  mobileHide?: boolean;
+  mobilePrimary?: boolean;
 }
 
 interface DataTableProps {
@@ -13,9 +15,10 @@ interface DataTableProps {
   rows: Record<string, string | undefined>[];
   loading: boolean;
   searchQuery?: string;
+  isMobile?: boolean;
 }
 
-export function DataTable({ columns, rows, loading, searchQuery }: DataTableProps) {
+export function DataTable({ columns, rows, loading, searchQuery, isMobile }: DataTableProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -44,42 +47,72 @@ export function DataTable({ columns, rows, loading, searchQuery }: DataTableProp
     );
   }
 
+  // Mobile: card list
+  if (isMobile) {
+    const primaryCol = columns[0];
+    const restCols = columns.slice(1);
+    return (
+      <div className="divide-y" style={{ borderColor: "var(--border)" }}>
+        {filtered.map((row, i) => (
+          <div key={i} className="px-4 py-3 flex flex-col gap-1.5">
+            <div className="text-sm font-medium" style={{ color: "var(--text)" }}>
+              {primaryCol.render
+                ? primaryCol.render(row[primaryCol.key], row)
+                : row[primaryCol.key] || <span style={{ color: "var(--muted)" }}>—</span>}
+            </div>
+            <div className="flex flex-wrap gap-x-4 gap-y-1">
+              {restCols.map((col) => (
+                <div key={col.key} className="flex items-center gap-1.5 text-xs">
+                  <span style={{ color: "var(--muted)" }}>{col.label}:</span>
+                  <span style={{ color: "var(--text)" }}>
+                    {col.render
+                      ? col.render(row[col.key], row)
+                      : row[col.key] || <span style={{ color: "var(--muted)" }}>—</span>}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // Desktop: table
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm border-collapse">
-        <thead>
-          <tr style={{ borderBottom: "1px solid var(--border)" }}>
+    <table className="w-full text-sm border-collapse">
+      <thead>
+        <tr style={{ borderBottom: "1px solid var(--border)" }}>
+          {columns.map((col) => (
+            <th
+              key={col.key}
+              className="text-left px-4 py-3 font-medium text-xs uppercase tracking-wide"
+              style={{ color: "var(--muted)" }}
+            >
+              {col.label}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {filtered.map((row, i) => (
+          <tr
+            key={i}
+            style={{ borderBottom: "1px solid var(--border)" }}
+            className="transition-colors"
+            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-elevated)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+          >
             {columns.map((col) => (
-              <th
-                key={col.key}
-                className="text-left px-4 py-3 font-medium text-xs uppercase tracking-wide"
-                style={{ color: "var(--muted)" }}
-              >
-                {col.label}
-              </th>
+              <td key={col.key} className="px-4 py-3" style={{ color: "var(--text)" }}>
+                {col.render
+                  ? col.render(row[col.key], row)
+                  : row[col.key] || <span style={{ color: "var(--muted)" }}>—</span>}
+              </td>
             ))}
           </tr>
-        </thead>
-        <tbody>
-          {filtered.map((row, i) => (
-            <tr
-              key={i}
-              style={{ borderBottom: "1px solid var(--border)" }}
-              className="transition-colors"
-              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-elevated)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-            >
-              {columns.map((col) => (
-                <td key={col.key} className="px-4 py-3" style={{ color: "var(--text)" }}>
-                  {col.render
-                    ? col.render(row[col.key], row)
-                    : row[col.key] || <span style={{ color: "var(--muted)" }}>—</span>}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+        ))}
+      </tbody>
+    </table>
   );
 }

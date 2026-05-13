@@ -155,10 +155,67 @@ const NAV_ITEMS: { icon: (active: boolean) => React.ReactNode; label: string; pa
 type ModelId = "claude-haiku-4-5-20251001" | "claude-sonnet-4-6" | "claude-opus-4-7";
 
 const MODELS: { id: ModelId; label: string; sub: string }[] = [
-  { id: "claude-haiku-4-5-20251001", label: "Haiku", sub: "Rychlý" },
-  { id: "claude-sonnet-4-6",        label: "Sonnet", sub: "Vyvážený" },
-  { id: "claude-opus-4-7",          label: "Opus",   sub: "Nejlepší" },
+  { id: "claude-haiku-4-5-20251001", label: "Haiku",  sub: "Rychlý" },
+  { id: "claude-sonnet-4-6",         label: "Sonnet", sub: "Vyvážený" },
+  { id: "claude-opus-4-7",           label: "Opus",   sub: "Nejlepší" },
 ];
+
+function ModelDropdown({ model, setModel }: { model: ModelId; setModel: (m: ModelId) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const current = MODELS.find((m) => m.id === model)!;
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg transition-all"
+        style={{
+          background: "var(--surface-elevated)",
+          border: `1px solid ${open ? "var(--yellow)" : "var(--border)"}`,
+          color: "var(--text)",
+        }}
+      >
+        <span className="font-semibold">{current.label}</span>
+        <svg width="10" height="10" viewBox="0 0 12 12" fill="none" style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform 0.15s", color: "var(--muted)" }}>
+          <path d="M2.5 4.5L6 8l3.5-3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      {open && (
+        <div
+          className="absolute right-0 mt-1 rounded-xl overflow-hidden z-50 w-36"
+          style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)", boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }}
+        >
+          {MODELS.map((m) => (
+            <button
+              key={m.id}
+              onClick={() => { setModel(m.id); setOpen(false); }}
+              className="w-full flex items-center justify-between px-3 py-2.5 text-xs transition-colors"
+              style={{
+                background: model === m.id ? "rgba(255,214,0,0.1)" : "transparent",
+                borderBottom: "1px solid var(--border)",
+                color: model === m.id ? "var(--yellow)" : "var(--text)",
+              }}
+              onMouseEnter={(e) => { if (model !== m.id) e.currentTarget.style.background = "var(--surface)"; }}
+              onMouseLeave={(e) => { if (model !== m.id) e.currentTarget.style.background = "transparent"; }}
+            >
+              <span className="font-semibold">{m.label}</span>
+              <span style={{ color: "var(--muted)" }}>{m.sub}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Home() {
   const [authenticated, setAuthenticated] = useState(false);
@@ -333,30 +390,12 @@ export default function Home() {
         </nav>
 
         {/* Model picker */}
-        <div className="px-3 py-3" style={{ borderTop: "1px solid var(--border)" }}>
-          <div className="flex items-center gap-2 mb-2 px-1">
+        <div className="px-4 py-3 flex items-center justify-between" style={{ borderTop: "1px solid var(--border)" }}>
+          <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0" />
-            <span className="text-xs font-medium" style={{ color: "var(--muted)" }}>Model</span>
+            <span className="text-xs" style={{ color: "var(--muted)" }}>Model</span>
           </div>
-          <div className="flex flex-col gap-1">
-            {MODELS.map((m) => (
-              <button
-                key={m.id}
-                onClick={() => setModel(m.id)}
-                className="flex items-center justify-between px-3 py-2 rounded-xl text-left transition-all"
-                style={
-                  model === m.id
-                    ? { background: "var(--yellow)", color: "#000" }
-                    : { background: "transparent", color: "var(--muted)" }
-                }
-                onMouseEnter={(e) => { if (model !== m.id) e.currentTarget.style.background = "var(--surface-elevated)"; }}
-                onMouseLeave={(e) => { if (model !== m.id) e.currentTarget.style.background = "transparent"; }}
-              >
-                <span className="text-xs font-semibold">{m.label}</span>
-                <span className="text-xs opacity-70">{m.sub}</span>
-              </button>
-            ))}
-          </div>
+          <ModelDropdown model={model} setModel={setModel} />
         </div>
       </aside>
 
@@ -378,14 +417,14 @@ export default function Home() {
             <div>
               <h2 className="font-semibold text-sm md:text-base" style={{ color: "var(--text)" }}>
                 {activePage === "dashboard" && "Dashboard"}
-                {activePage === "chat" && "Chat s agentem"}
+                {activePage === "chat" && "Pepův Agent"}
                 {activePage === "klienti" && "Klienti"}
                 {activePage === "nemovitosti" && "Nemovitosti"}
                 {activePage === "leady" && "Leady"}
               </h2>
               <p className="hidden md:block text-xs mt-0.5" style={{ color: "var(--muted)" }}>
                 {activePage === "dashboard" && "Přehled klíčových čísel a aktivit"}
-                {activePage === "chat" && "Ptej se na klienty, nemovitosti, leady nebo požádej o report"}
+                {activePage === "chat" && "Back office asistent"}
                 {activePage === "klienti" && "Přehled všech klientů z Google Sheets"}
                 {activePage === "nemovitosti" && "Přehled všech nemovitostí z Google Sheets"}
                 {activePage === "leady" && "Přehled všech leadů z Google Sheets"}
@@ -423,22 +462,7 @@ export default function Home() {
               </span>
             </button>
             {activePage === "chat" && (
-              <div className="md:hidden flex gap-0.5 rounded-lg p-0.5" style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)" }}>
-                {MODELS.map((m) => (
-                  <button
-                    key={m.id}
-                    onClick={() => setModel(m.id)}
-                    className="text-xs px-2 py-1 rounded-md transition-colors"
-                    style={
-                      model === m.id
-                        ? { background: "var(--yellow)", color: "#000", fontWeight: 600 }
-                        : { color: "var(--muted)" }
-                    }
-                  >
-                    {m.label}
-                  </button>
-                ))}
-              </div>
+              <ModelDropdown model={model} setModel={setModel} />
             )}
             {activePage === "chat" && (
               <button

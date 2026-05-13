@@ -56,22 +56,15 @@ function StavBadge({ stav }: { stav: string | undefined }) {
   );
 }
 
-const COLUMNS_DESKTOP = [
+const COLUMNS = [
   { key: "adresa",           label: "Adresa" },
   { key: "ctvrt",            label: "Čtvrť" },
-  { key: "typ",              label: "Typ",    render: (v: string | undefined) => capitalize(v) },
-  { key: "cena",             label: "Cena",   render: (v: string | undefined) => <span style={{ color: "var(--text)", fontVariantNumeric: "tabular-nums" }}>{formatPrice(v)}</span> },
-  { key: "stav",             label: "Stav",   render: (v: string | undefined) => <StavBadge stav={v} /> },
+  { key: "typ",              label: "Typ",       render: (v: string | undefined) => capitalize(v) },
+  { key: "cena",             label: "Cena",      render: (v: string | undefined) => <span style={{ color: "var(--text)", fontVariantNumeric: "tabular-nums" }}>{formatPrice(v)}</span> },
+  { key: "stav",             label: "Stav",      render: (v: string | undefined) => <StavBadge stav={v} /> },
   { key: "rok_rekonstrukce", label: "Rekonstr." },
   { key: "makler",           label: "Makléř" },
-  { key: "datum_pridani",    label: "Přidáno", render: (v: string | undefined) => <span style={{ color: "var(--muted)" }}>{formatDate(v)}</span> },
-];
-
-const COLUMNS_MOBILE = [
-  { key: "adresa", label: "Adresa" },
-  { key: "cena",   label: "Cena", render: (v: string | undefined) => <span style={{ fontVariantNumeric: "tabular-nums" }}>{formatPrice(v)}</span> },
-  { key: "stav",   label: "Stav", render: (v: string | undefined) => <StavBadge stav={v} /> },
-  { key: "typ",    label: "Typ",  render: (v: string | undefined) => capitalize(v) },
+  { key: "datum_pridani",    label: "Přidáno",   render: (v: string | undefined) => <span style={{ color: "var(--muted)" }}>{formatDate(v)}</span> },
 ];
 
 function StatCard({ label, value, warn }: { label: string; value: string | number; warn?: boolean }) {
@@ -153,10 +146,11 @@ export function PropertiesView() {
 
       <div className="flex-1 overflow-y-auto" style={{ borderTop: "1px solid var(--border)" }}>
         <DataTable
-          columns={isMobile ? COLUMNS_MOBILE : COLUMNS_DESKTOP}
+          columns={COLUMNS}
           rows={properties as unknown as Record<string, string | undefined>[]}
           loading={loading}
           searchQuery={search}
+          isMobile={isMobile}
         />
       </div>
     </div>

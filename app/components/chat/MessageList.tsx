@@ -66,12 +66,12 @@ function TypingIndicator({ text }: { text?: string }) {
 }
 
 const QUICK_PROMPTS = [
-  { label: "Noví klienti Q1", prompt: "Jací noví klienti za Q1 2025?" },
-  { label: "Vývoj leadů", prompt: "Ukáž vývoj leadů za posledních 6 měsíců" },
-  { label: "Email zájemci", prompt: "Napiš email zájemci o prohlídku" },
-  { label: "Chybějící data", prompt: "Nemovitosti bez dat o rekonstrukci" },
-  { label: "Týdenní report", prompt: "Shrň výsledky minulého týdne" },
-  { label: "Sreality monitoring", prompt: "Nové nabídky Praha Holešovice" },
+  { label: "Noví klienti Q1", prompt: "Jaké nové klienty máme za 1. kvartál? Odkud přišli? Můžeš to znázornit graficky?" },
+  { label: "Vývoj leadů a prodejů", prompt: "Vytvoř graf vývoje počtu leadů a prodaných nemovitostí za posledních 6 měsíců." },
+  { label: "Email zájemci", prompt: "Napiš e-mail pro zájemce o moji nemovitost a doporuč mu termín prohlídky na základě mé dostupnosti v kalendáři." },
+  { label: "Chybějící rekonstrukce", prompt: "Najdi nemovitosti, u kterých nám v systému chybí data o rekonstrukci a stavebních úpravách a připrav jejich seznam k doplnění." },
+  { label: "Týdenní report", prompt: "Shrň výsledky minulého týdne do krátkého reportu pro vedení a připrav k tomu prezentaci se třemi slidy." },
+  { label: "Sreality Holešovice", prompt: "Sleduj všechny hlavní realitní servery a každé ráno mě informuj o nových nabídkách v lokalitě Praha Holešovice." },
 ];
 
 export function MessageList({ messages, dark, onSend }: { messages: Message[]; dark: boolean; onSend?: (text: string) => void }) {

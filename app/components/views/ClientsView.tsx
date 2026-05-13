@@ -44,21 +44,14 @@ function StatusBadge({ status }: { status: string | undefined }) {
   );
 }
 
-const COLUMNS_DESKTOP = [
-  { key: "jmeno",        label: "Jméno" },
-  { key: "email",        label: "Email",   render: (v: string | undefined) => <span style={{ color: "var(--muted)" }}>{v || "—"}</span> },
-  { key: "telefon",      label: "Telefon", render: (v: string | undefined) => <span style={{ color: "var(--muted)", fontVariantNumeric: "tabular-nums" }}>{v || "—"}</span> },
-  { key: "zdroj",        label: "Zdroj" },
-  { key: "status",       label: "Status",  render: (v: string | undefined) => <StatusBadge status={v} /> },
-  { key: "makler",       label: "Makléř" },
-  { key: "datum_pridani", label: "Přidán", render: (v: string | undefined) => <span style={{ color: "var(--muted)" }}>{formatDate(v)}</span> },
-];
-
-const COLUMNS_MOBILE = [
-  { key: "jmeno",  label: "Jméno" },
-  { key: "zdroj",  label: "Zdroj" },
-  { key: "status", label: "Status", render: (v: string | undefined) => <StatusBadge status={v} /> },
-  { key: "makler", label: "Makléř" },
+const COLUMNS = [
+  { key: "jmeno",         label: "Jméno" },
+  { key: "email",         label: "Email",   render: (v: string | undefined) => <span style={{ color: "var(--muted)" }}>{v || "—"}</span> },
+  { key: "telefon",       label: "Telefon", render: (v: string | undefined) => <span style={{ color: "var(--muted)", fontVariantNumeric: "tabular-nums" }}>{v || "—"}</span> },
+  { key: "zdroj",         label: "Zdroj" },
+  { key: "status",        label: "Status",  render: (v: string | undefined) => <StatusBadge status={v} /> },
+  { key: "makler",        label: "Makléř" },
+  { key: "datum_pridani", label: "Přidán",  render: (v: string | undefined) => <span style={{ color: "var(--muted)" }}>{formatDate(v)}</span> },
 ];
 
 function StatCard({ label, value }: { label: string; value: string | number }) {
@@ -137,10 +130,11 @@ export function ClientsView() {
 
       <div className="flex-1 overflow-y-auto" style={{ borderTop: "1px solid var(--border)" }}>
         <DataTable
-          columns={isMobile ? COLUMNS_MOBILE : COLUMNS_DESKTOP}
+          columns={COLUMNS}
           rows={clients as unknown as Record<string, string | undefined>[]}
           loading={loading}
           searchQuery={search}
+          isMobile={isMobile}
         />
       </div>
     </div>

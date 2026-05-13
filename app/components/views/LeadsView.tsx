@@ -51,20 +51,13 @@ function StatusBadge({ status }: { status: string | undefined }) {
   );
 }
 
-const COLUMNS_DESKTOP = [
-  { key: "datum",            label: "Datum",    render: (v: string | undefined) => <span style={{ color: "var(--muted)" }}>{formatDate(v)}</span> },
-  { key: "zdroj",            label: "Zdroj" },
-  { key: "typ_nemovitosti",  label: "Typ" },
-  { key: "budget",           label: "Budget",   render: (v: string | undefined) => <span style={{ fontVariantNumeric: "tabular-nums" }}>{formatPrice(v)}</span> },
-  { key: "status",           label: "Status",   render: (v: string | undefined) => <StatusBadge status={v} /> },
-  { key: "makler",           label: "Makléř" },
-];
-
-const COLUMNS_MOBILE = [
+const COLUMNS = [
   { key: "datum",           label: "Datum",   render: (v: string | undefined) => <span style={{ color: "var(--muted)" }}>{formatDate(v)}</span> },
+  { key: "zdroj",           label: "Zdroj" },
   { key: "typ_nemovitosti", label: "Typ" },
   { key: "budget",          label: "Budget",  render: (v: string | undefined) => <span style={{ fontVariantNumeric: "tabular-nums" }}>{formatPrice(v)}</span> },
   { key: "status",          label: "Status",  render: (v: string | undefined) => <StatusBadge status={v} /> },
+  { key: "makler",          label: "Makléř" },
 ];
 
 function StatCard({ label, value }: { label: string; value: string | number }) {
@@ -152,10 +145,11 @@ export function LeadsView() {
 
       <div className="flex-1 overflow-y-auto" style={{ borderTop: "1px solid var(--border)" }}>
         <DataTable
-          columns={isMobile ? COLUMNS_MOBILE : COLUMNS_DESKTOP}
+          columns={COLUMNS}
           rows={leads as unknown as Record<string, string | undefined>[]}
           loading={loading}
           searchQuery={search}
+          isMobile={isMobile}
         />
       </div>
     </div>

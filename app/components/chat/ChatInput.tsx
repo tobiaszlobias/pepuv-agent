@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, KeyboardEvent } from "react";
+import { useState, useRef, KeyboardEvent, useEffect } from "react";
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -10,26 +10,27 @@ interface ChatInputProps {
 }
 
 const QUICK_PROMPTS = [
-  "Noví klienti Q1",
-  "Vývoj leadů 6 měs",
-  "Email zájemci",
-  "Chybějící rekonstrukce",
-  "Týdenní report",
-  "Sreality Holešovice",
+  { label: "Noví klienti Q1", prompt: "Jaké nové klienty máme za 1. kvartál? Odkud přišli? Můžeš to znázornit graficky?" },
+  { label: "Vývoj leadů a prodejů", prompt: "Vytvoř graf vývoje počtu leadů a prodaných nemovitostí za posledních 6 měsíců." },
+  { label: "Email zájemci", prompt: "Napiš e-mail pro zájemce o moji nemovitost a doporuč mu termín prohlídky na základě mé dostupnosti v kalendáři." },
+  { label: "Chybějící rekonstrukce", prompt: "Najdi nemovitosti, u kterých nám v systému chybí data o rekonstrukci a stavebních úpravách a připrav jejich seznam k doplnění." },
+  { label: "Týdenní report", prompt: "Shrň výsledky minulého týdne do krátkého reportu pro vedení a připrav k tomu prezentaci se třemi slidy." },
+  { label: "Sreality Holešovice", prompt: "Sleduj všechny hlavní realitní servery a každé ráno mě informuj o nových nabídkách v lokalitě Praha Holešovice." },
 ];
 
-const QUICK_PROMPTS_FULL = [
-  "Jací noví klienti za Q1 2025?",
-  "Ukáž vývoj leadů za posledních 6 měsíců",
-  "Napiš email zájemci o prohlídku",
-  "Nemovitosti bez dat o rekonstrukci",
-  "Shrň výsledky minulého týdne",
-  "Nové nabídky Praha Holešovice",
-];
+function ChevronDown() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+      <path d="M2.5 4.5L6 8l3.5-3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 export function ChatInput({ onSend, disabled, hasMessages }: ChatInputProps) {
   const [value, setValue] = useState("");
+  const [promptOpen, setPromptOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const promptRef = useRef<HTMLDivElement>(null);
 
   function handleSend() {
     const trimmed = value.trim();
@@ -55,39 +56,62 @@ export function ChatInput({ onSend, disabled, hasMessages }: ChatInputProps) {
     el.style.height = Math.min(el.scrollHeight, 160) + "px";
   }
 
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (promptRef.current && !promptRef.current.contains(e.target as Node)) {
+        setPromptOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   return (
     <div
       className="px-4 pt-2 pb-3 flex-shrink-0 flex flex-col gap-2"
       style={{ background: "var(--surface)", borderTop: "1px solid var(--border)" }}
     >
-      {/* Quick prompts — single scrollable row */}
+      {/* Quick prompts dropdown */}
       {hasMessages && (
-        <div className="flex gap-1.5 overflow-x-auto">
-          {QUICK_PROMPTS.map((label, i) => (
-            <button
-              key={label}
-              onClick={() => onSend(QUICK_PROMPTS_FULL[i])}
-              disabled={disabled}
-              className="flex-shrink-0 text-xs px-3 py-1.5 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{
-                background: "var(--surface-elevated)",
-                color: "var(--muted)",
-                border: "1px solid var(--border)",
-              }}
-              onMouseEnter={(e) => {
-                if (!disabled) {
-                  e.currentTarget.style.borderColor = "var(--yellow)";
-                  e.currentTarget.style.color = "var(--text)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "var(--border)";
-                e.currentTarget.style.color = "var(--muted)";
-              }}
+        <div ref={promptRef} className="relative">
+          <button
+            onClick={() => setPromptOpen((o) => !o)}
+            disabled={disabled}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-all disabled:opacity-40"
+            style={{
+              background: "var(--surface-elevated)",
+              border: `1px solid ${promptOpen ? "var(--yellow)" : "var(--border)"}`,
+              color: "var(--muted)",
+            }}
+          >
+            <span>Návrhy dotazů</span>
+            <span style={{ transform: promptOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s" }}>
+              <ChevronDown />
+            </span>
+          </button>
+
+          {promptOpen && (
+            <div
+              className="absolute bottom-full left-0 mb-1.5 rounded-xl overflow-hidden z-10 min-w-[280px] max-w-[90vw]"
+              style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)", boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }}
             >
-              {label}
-            </button>
-          ))}
+              {QUICK_PROMPTS.map((item) => (
+                <button
+                  key={item.label}
+                  onClick={() => { onSend(item.prompt); setPromptOpen(false); }}
+                  disabled={disabled}
+                  className="w-full text-left px-4 py-3 text-xs transition-colors flex flex-col gap-0.5"
+                  style={{ borderBottom: "1px solid var(--border)", color: "var(--text)" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                >
+                  <span className="font-semibold text-xs" style={{ color: "var(--yellow)" }}>{item.label}</span>
+                  <span style={{ color: "var(--muted)", lineHeight: 1.4 }}>{item.prompt}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
