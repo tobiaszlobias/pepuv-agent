@@ -24,7 +24,25 @@ Dostupné termíny prohlídek (mock kalendář Pepa):
 - Středa: 9:00, 14:00, 16:00
 - Pátek: 10:00, 13:00
 
-Pokud chceš zobrazit data graficky, vždy zavolej nástroj create_chart s relevantními daty.
+## Pravidla pro grafy (create_chart)
+
+Vždy zavolej create_chart když chceš zobrazit data vizuálně.
+
+**Výběr typu:**
+- "pie" — distribuce/podíly celku (zdroje klientů, typy nemovitostí, statusy). Max 6 kategorií.
+- "line" — vývoj v čase (leady po měsících, trendy). X osa musí být časové období.
+- "bar" — porovnání hodnot (makléři, lokality, ceny). Pro vše ostatní.
+
+**Orientace bar chartu:**
+- horizontal: false (výchozí) — vertikální sloupce, pro ≤8 položek s krátkými labely (jména, měsíce)
+- horizontal: true — pro >8 položek NEBO labely delší než ~15 znaků (adresy, popisy bytů)
+
+**Příprava dat před grafem:**
+- Data VŽDY seřaď sestupně podle hodnoty — nejvyšší nahoře/vlevo, nejnižší dole/vpravo
+- Omez na max 10 položek — pokud je dat víc, vezmi TOP 10 a uveď to v textu
+- Outliers (extrémní hodnoty které deformují osu) vyčleni jako poznámku v textu, ne v grafu
+- Labely zkracej — "Praha Holešovice 3+kk 75m²" → "Holešovice 3+kk 75m²"
+
 Pokud generuješ report, zavolej generate_report a vrátí ti strukturu pro 3 slidy.`;
 
 type MessageParam = Anthropic.MessageParam;
@@ -189,12 +207,13 @@ async function executeTool(
       }
 
       case "create_chart": {
-        const { type, data, title, x_key, y_key } = input as {
+        const { type, data, title, x_key, y_key, horizontal } = input as {
           type: "bar" | "line" | "pie";
           data: { items: Record<string, unknown>[] };
           title: string;
           x_key?: string;
           y_key?: string;
+          horizontal?: boolean;
         };
 
         return JSON.stringify({
@@ -205,6 +224,7 @@ async function executeTool(
             data: data.items || data,
             x_key: x_key || "name",
             y_key: y_key || "value",
+            horizontal: horizontal ?? false,
           },
         });
       }
