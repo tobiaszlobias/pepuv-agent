@@ -319,6 +319,7 @@ export function DashboardView() {
                   name="Leady"
                   dot={false}
                   activeDot={{ r: 4, fill: YELLOW, strokeWidth: 0 }}
+                  isAnimationActive={false}
                 />
               </AreaChart>
             </ResponsiveContainer>
