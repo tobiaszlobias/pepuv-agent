@@ -73,6 +73,11 @@ export async function GET() {
     .map((c) => c.datum_pridani)
     .sort();
 
+  const propertyDates = properties
+    .filter((p) => !!p.datum_pridani)
+    .map((p) => p.datum_pridani)
+    .sort();
+
   return NextResponse.json({
     clients: {
       total: clients.length,
@@ -85,7 +90,7 @@ export async function GET() {
       forSale,
       missingRekonstrukce,
       avgPrice,
-      dates: [] as string[],
+      dates: propertyDates,
     },
     leads: {
       total: leads.length,

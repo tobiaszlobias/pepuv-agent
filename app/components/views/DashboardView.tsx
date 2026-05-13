@@ -366,16 +366,16 @@ export function DashboardView() {
           <Section
             title=""
             action={
-              <div className="flex gap-1">
+              <div className="flex gap-0.5 rounded-lg p-0.5" style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)" }}>
                 {TIME_SLOTS.map((s) => (
                   <button
                     key={s.value}
                     onClick={() => setTimeSlot(s.value)}
-                    className="text-xs px-2.5 py-1 rounded-lg transition-colors"
+                    className="text-xs px-2.5 py-1 rounded-md transition-colors"
                     style={
                       timeSlot === s.value
                         ? { background: YELLOW, color: "#000", fontWeight: 600 }
-                        : { background: "var(--surface-elevated)", color: "var(--muted)", border: "1px solid var(--border)" }
+                        : { color: "var(--muted)" }
                     }
                   >
                     {s.label}
