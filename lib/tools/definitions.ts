@@ -179,15 +179,25 @@ export const agentTools: Anthropic.Tool[] = [
   },
   {
     name: "create_chart",
-    description:
-      "Vytvoří datovou strukturu pro vizualizaci grafu (bar, line nebo pie chart). Vrátí JSON s daty pro Recharts komponentu. Používej vždy, když uživatel chce vidět data graficky.",
+    description: `Vytvoří graf z dat. Vyber typ grafu podle obsahu:
+
+- "pie" — podíly celku, distribuce (zdroje klientů, rozdělení podle statusu, typy nemovitostí). Max 6 položek.
+- "line" — vývoj v čase, trendy (leady za měsíce, prodeje za rok). X osa = časové období.
+- "bar" — porovnání hodnot mezi kategoriemi (makléři, lokality, ceny). Použij pro vše ostatní.
+
+Pravidla pro "bar":
+- Pokud má X osa dlouhé textové labely (adresy, popisy >15 znaků) nebo >8 položek, nastav horizontal: true.
+- Jinak nech horizontal: false (výchozí = vertikální sloupce).
+
+Nepoužívej "bar" pro časové řady — na to je "line".
+Nepoužívej "pie" pro více než 6 kategorií nebo pro srovnání čísel.`,
     input_schema: {
       type: "object",
       properties: {
         type: {
           type: "string",
           enum: ["bar", "line", "pie"],
-          description: "Typ grafu: bar (sloupcový), line (liniový), pie (koláčový)",
+          description: "Typ grafu. Viz pravidla v description.",
         },
         data: {
           type: "object",
@@ -195,15 +205,19 @@ export const agentTools: Anthropic.Tool[] = [
         },
         title: {
           type: "string",
-          description: "Nadpis grafu",
+          description: "Krátký nadpis grafu",
         },
         x_key: {
           type: "string",
-          description: "Klíč pro osu X, např. 'měsíc', 'zdroj'",
+          description: "Klíč pro osu X (kategorie/čas), např. 'měsíc', 'makléř', 'lokalita'",
         },
         y_key: {
           type: "string",
-          description: "Klíč pro osu Y, např. 'počet', 'hodnota'",
+          description: "Klíč pro osu Y (hodnota), např. 'počet', 'cena_m2', 'budget'",
+        },
+        horizontal: {
+          type: "boolean",
+          description: "true = horizontální bar chart (labely vlevo, sloupce doprava). Použij pro dlouhé labely nebo >8 položek.",
         },
       },
       required: ["type", "data", "title"],

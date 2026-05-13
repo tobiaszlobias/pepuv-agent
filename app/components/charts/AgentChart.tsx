@@ -7,6 +7,7 @@ import {
   XAxis, YAxis,
   CartesianGrid, Tooltip, Legend,
   ResponsiveContainer,
+  LabelList,
 } from "recharts";
 
 interface ChartData {
@@ -19,7 +20,10 @@ interface ChartData {
 }
 
 const YELLOW = "#FFD600";
-const COLORS = ["#FFD600", "#888880", "#F0EDE8", "#444440", "#BBBAB6", "#555550", "#CCCC00"];
+// Odstíny pro bar chart — od plné žluté po tmavší, stále v žluté paletě
+const BAR_COLORS = ["#FFD600", "#E6C200", "#CCAA00", "#B39200", "#997A00", "#806400", "#664E00"];
+// Pie chart — žlutá + neutrální odstíny pro kontrast
+const PIE_COLORS = ["#FFD600", "#888880", "#F0EDE8", "#444440", "#BBBAB6", "#555550"];
 
 function formatYTick(value: number): string {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
@@ -48,9 +52,8 @@ export function AgentChart({ chart }: { chart: ChartData }) {
   const xKey = chart.x_key || "name";
   const yKey = chart.y_key || "value";
 
-  // Auto-detect horizontal: více než 6 položek nebo dlouhé labely
   const longLabels = hasLongXLabels(chart.data, xKey);
-  const isHorizontal = chart.horizontal ?? (chart.type === "bar" && (chart.data.length > 6 || longLabels));
+  const isHorizontal = chart.horizontal ?? false;
   const yWidth = getYAxisWidth(chart.data, yKey);
 
   // Pro horizontal: výška podle počtu položek (min 200, max 500)
@@ -118,7 +121,10 @@ export function AgentChart({ chart }: { chart: ChartData }) {
                 cursor={{ fill: "var(--border)", opacity: 0.3 }}
                 formatter={(value: unknown) => [formatTooltipValue(Number(value)), ""]}
               />
-              <Bar dataKey={yKey} fill={YELLOW} radius={[0, 4, 4, 0]} label={{ position: "right", fontSize: 10, fill: "var(--muted)", formatter: (v: unknown) => formatYTick(Number(v)) }} />
+              <Bar dataKey={yKey} radius={[0, 4, 4, 0]}>
+                {chart.data.map((_, i) => <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />)}
+                <LabelList dataKey={yKey} position="right" style={{ fontSize: 10, fill: "var(--muted)" }} formatter={(v: unknown) => formatYTick(Number(v))} />
+              </Bar>
             </BarChart>
           ) : (
           <BarChart data={chart.data} margin={{ top: 4, right: 8, left: 4, bottom: longLabels ? 8 : 0 }}>
@@ -130,7 +136,9 @@ export function AgentChart({ chart }: { chart: ChartData }) {
               cursor={{ fill: "var(--border)", opacity: 0.4 }}
               formatter={(value: unknown) => [formatTooltipValue(Number(value)), ""]}
             />
-            <Bar dataKey={yKey} fill={YELLOW} radius={[4, 4, 0, 0]} />
+            <Bar dataKey={yKey} radius={[4, 4, 0, 0]}>
+              {chart.data.map((_, i) => <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />)}
+            </Bar>
           </BarChart>
           )
         ) : chart.type === "line" ? (
@@ -165,7 +173,7 @@ export function AgentChart({ chart }: { chart: ChartData }) {
               nameKey={xKey}
             >
               {chart.data.map((_, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
               ))}
             </Pie>
             <Tooltip
