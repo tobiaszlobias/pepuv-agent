@@ -362,9 +362,9 @@ export function DashboardView() {
         <Section title="Klienti podle zdroje">
           <ResponsiveContainer width="100%" height={200}>
             <PieChart>
-              <Pie data={sourceData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3} dataKey="value">
-                {sourceData.map((s, i) => (
-                  <Cell key={i} fill={getSourceColor(s.name, i)} />
+              <Pie data={sourceData} cx="50%" cy="50%" innerRadius={52} outerRadius={82} paddingAngle={0} dataKey="value" strokeWidth={0}>
+                {sourceData.map((_, i) => (
+                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
                 ))}
               </Pie>
               <Tooltip
@@ -377,7 +377,7 @@ export function DashboardView() {
           <div className="flex flex-col gap-1 mt-2">
             {sourceData.map((s, i) => (
               <div key={s.name} className="flex items-center gap-2 text-xs">
-                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: getSourceColor(s.name, i) }} />
+                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
                 <span style={{ color: "var(--muted)" }}>{s.name}</span>
                 <span className="ml-auto font-bold" style={{ color: "var(--text)" }}>{s.value}</span>
               </div>
