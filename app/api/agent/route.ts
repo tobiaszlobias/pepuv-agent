@@ -232,14 +232,22 @@ async function executeTool(
           color_legend?: { color: string; label: string }[];
         };
 
+        const resolvedYKey = y_key || "value";
+        const rawItems: Record<string, unknown>[] = data.items || (data as unknown as Record<string, unknown>[]);
+
+        // Sort ascending by value so lowest (best value) appears first / at top in horizontal charts
+        const sortedItems = [...rawItems].sort(
+          (a, b) => Number(a[resolvedYKey] ?? 0) - Number(b[resolvedYKey] ?? 0)
+        );
+
         return JSON.stringify({
           success: true,
           chart: {
             type,
             title,
-            data: data.items || data,
+            data: sortedItems,
             x_key: x_key || "name",
-            y_key: y_key || "value",
+            y_key: resolvedYKey,
             horizontal: horizontal ?? false,
             ...(reference_line ? { reference_line } : {}),
             ...(color_legend ? { color_legend } : {}),
