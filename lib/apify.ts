@@ -15,6 +15,14 @@ interface SrealityListing {
   scraped_at: string;
 }
 
+// Normalize Czech strings for fuzzy matching (remove diacritics, lowercase)
+function normalize(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "");
+}
+
 export async function scrapeSreality(params: {
   locality: string;
   property_type?: string;
@@ -41,35 +49,44 @@ export async function scrapeSreality(params: {
 
   const items: Record<string, unknown>[] = await runRes.json();
 
-  // Filtruj podle lokality (case-insensitive, partial match)
-  const localityLower = params.locality.toLowerCase()
-    .replace("holešovice", "holešovic")
-    .replace("holesovice", "holešovic");
+  // --- Lokalita ---
+  // Rozbij na slova, matchuj každé slovo zvlášť (bez diakritiky)
+  const localityWords = normalize(params.locality)
+    .split(/[\s,]+/)
+    .filter((w) => w.length > 2); // ignoruj "v", "na" apod.
 
-  const filtered = items.filter((item) => {
-    const locality = ((item.locality_text as string) || "").toLowerCase();
-    const city = ((item.location_city as string) || "").toLowerCase();
-    const district = ((item.location_district as string) || "").toLowerCase();
+  let filtered = items.filter((item) => {
+    const fields = [
+      (item.locality_text as string) || "",
+      (item.location_city as string) || "",
+      (item.location_district as string) || "",
+      (item.location_region as string) || "",
+      (item.title as string) || "",
+    ].map(normalize).join(" ");
 
-    const localityWords = localityLower.split(/[\s,]+/).filter(Boolean);
-    return localityWords.some(
-      (w) => locality.includes(w) || city.includes(w) || district.includes(w)
-    );
+    return localityWords.every((w) => fields.includes(w));
   });
 
-  // Filtruj podle max ceny
-  const priceFiltered =
-    params.max_price
-      ? filtered.filter((item) => {
-          const p = (item.price_czk as number) || (item.price as number) || 0;
-          return p === 0 || p <= params.max_price!;
-        })
-      : filtered;
+  // --- Typ nemovitosti ---
+  if (params.property_type) {
+    const typNorm = normalize(params.property_type);
+    filtered = filtered.filter((item) => {
+      const mainCat = normalize((item.category_main as string) || "");
+      const subCat = normalize((item.category_sub as string) || "");
+      const title = normalize((item.title as string) || "");
+      return mainCat.includes(typNorm) || subCat.includes(typNorm) || title.includes(typNorm);
+    });
+  }
 
-  // Pokud nic neodpovídá filtraci, vrať prvních 10 výsledků bez filtru jako fallback
-  const result = priceFiltered.length > 0 ? priceFiltered : items.slice(0, 10);
+  // --- Max cena ---
+  if (params.max_price) {
+    filtered = filtered.filter((item) => {
+      const p = (item.price_czk as number) || (item.price as number) || 0;
+      return p === 0 || p <= params.max_price!;
+    });
+  }
 
-  return result.slice(0, 20).map((item) => ({
+  return filtered.slice(0, 20).map((item) => ({
     address: (item.locality_text as string) || "",
     price: (item.price_czk as number) || (item.price as number) || 0,
     price_czk: item.price_czk as number,

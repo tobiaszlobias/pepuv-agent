@@ -156,6 +156,7 @@ export function DashboardView() {
   const [loadingData, setLoadingData] = useState(data === null);
   const [loadingSreality, setLoadingSreality] = useState(false);
   const [srealityError, setSrealityError] = useState("");
+  const [srealityScanned, setSrealityScanned] = useState(false);
   const [timeSlot, setTimeSlot] = useState<TimeSlot>("6m");
 
   const [config, setConfig] = useState<MonitoringConfig>(DEFAULT_CONFIG);
@@ -188,6 +189,7 @@ export function DashboardView() {
       .then((d: { listings: SrealityListing[] }) => {
         setCached("sreality_latest", d.listings);
         setSreality(d.listings);
+        setSrealityScanned(true);
         setLoadingSreality(false);
       })
       .catch(() => { setSrealityError("Scan selhal, zkus to znovu."); setLoadingSreality(false); });
@@ -483,7 +485,7 @@ export function DashboardView() {
               {sreality.length > 0 ? (
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs" style={{ color: "var(--muted)" }}>{sreality.length} nabídek</span>
+                    <span className="text-xs" style={{ color: "var(--muted)" }}>{sreality.length} nabídek · {config.locality}</span>
                     <button
                       onClick={runSreality}
                       disabled={loadingSreality}
@@ -515,16 +517,23 @@ export function DashboardView() {
               ) : (
                 <div className="flex flex-col gap-2">
                   {srealityError && <p className="text-xs" style={{ color: "var(--error)" }}>{srealityError}</p>}
-                  <p className="text-xs" style={{ color: "var(--muted)" }}>
-                    Automaticky každé ráno v 7:00. Nebo spusť ručně:
-                  </p>
+                  {srealityScanned && !srealityError && (
+                    <p className="text-xs" style={{ color: "var(--muted)" }}>
+                      Pro lokalitu „{config.locality}" nebyly nalezeny žádné nabídky. Zkus širší lokalitu.
+                    </p>
+                  )}
+                  {!srealityScanned && !srealityError && (
+                    <p className="text-xs" style={{ color: "var(--muted)" }}>
+                      Automaticky každé ráno v 7:00. Nebo spusť ručně:
+                    </p>
+                  )}
                   <button
                     onClick={runSreality}
                     disabled={loadingSreality}
                     className="w-full text-xs py-2 rounded-lg font-bold transition-opacity disabled:opacity-40"
                     style={{ background: YELLOW, color: "#000" }}
                   >
-                    {loadingSreality ? "Scanuji..." : "Spustit scan"}
+                    {loadingSreality ? "Scanuji..." : srealityScanned ? "Zkusit znovu" : "Spustit scan"}
                   </button>
                 </div>
               )}
