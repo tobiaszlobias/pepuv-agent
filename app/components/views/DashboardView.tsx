@@ -486,33 +486,67 @@ export function DashboardView() {
 
         {/* Top makléři */}
         <Section title="Top makléři — leady">
-          <div className="flex flex-col gap-2">
-            {data.leads.topMakleri.map((m, i) => (
-              <div key={m.name} className="flex items-center gap-3">
-                <span
-                  className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                  style={{ background: i === 0 ? YELLOW : "var(--surface-elevated)", color: i === 0 ? "#000" : "var(--muted)" }}
-                >
-                  {i + 1}
-                </span>
-                <span className="flex-1 text-sm truncate" style={{ color: "var(--text)" }}>{m.name}</span>
-                <span className="text-sm font-bold" style={{ color: "var(--muted)" }}>{m.count}</span>
+          {(() => {
+            const maxCount = data.leads.topMakleri[0]?.count || 1;
+            const totalLeads = data.leads.total || 1;
+            const closedCount = data.leads.byStatus["uzavřen"] ?? 0;
+            return (
+              <div className="flex flex-col gap-3">
+                {data.leads.topMakleri.map((m, i) => {
+                  const share = Math.round((m.count / totalLeads) * 100);
+                  const barW = Math.round((m.count / maxCount) * 100);
+                  return (
+                    <div key={m.name} className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                          style={{ background: i === 0 ? YELLOW : "var(--surface-elevated)", color: i === 0 ? "#000" : "var(--muted)" }}
+                        >
+                          {i + 1}
+                        </span>
+                        <span className="flex-1 text-sm truncate" style={{ color: "var(--text)" }}>{m.name}</span>
+                        <span className="text-xs font-bold tabular-nums" style={{ color: "var(--muted)" }}>{m.count} <span style={{ color: "var(--border)" }}>·</span> {share}%</span>
+                      </div>
+                      <div className="ml-7 h-1 rounded-full overflow-hidden" style={{ background: "var(--surface-elevated)" }}>
+                        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${barW}%`, background: i === 0 ? YELLOW : "var(--muted)" }} />
+                      </div>
+                    </div>
+                  );
+                })}
+                <div className="mt-1 pt-2 flex items-center justify-between text-xs" style={{ borderTop: "1px solid var(--border)", color: "var(--muted)" }}>
+                  <span>Uzavřeno celkem</span>
+                  <span className="font-bold" style={{ color: YELLOW }}>{closedCount} obchodů</span>
+                </div>
               </div>
-            ))}
-          </div>
+            );
+          })()}
         </Section>
 
         {/* Status leadů */}
         <Section title="Leady podle statusu">
-          <div className="flex flex-col gap-2">
-            {statusData.map((s) => (
-              <div key={s.name} className="flex items-center gap-2 text-sm">
-                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: getStatusColor(s.name) }} />
-                <span className="flex-1 truncate" style={{ color: "var(--muted)" }}>{s.name}</span>
-                <span className="font-bold" style={{ color: "var(--text)" }}>{s.value}</span>
+          {(() => {
+            const total = statusData.reduce((a, b) => a + b.value, 0) || 1;
+            return (
+              <div className="flex flex-col gap-2.5">
+                {statusData.map((s) => {
+                  const pct = Math.round((s.value / total) * 100);
+                  return (
+                    <div key={s.name} className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: getStatusColor(s.name) }} />
+                        <span className="flex-1 truncate" style={{ color: "var(--muted)" }}>{s.name}</span>
+                        <span className="text-xs tabular-nums" style={{ color: "var(--muted)" }}>{pct}%</span>
+                        <span className="font-bold w-5 text-right" style={{ color: "var(--text)" }}>{s.value}</span>
+                      </div>
+                      <div className="ml-4 h-1 rounded-full overflow-hidden" style={{ background: "var(--surface-elevated)" }}>
+                        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: getStatusColor(s.name), opacity: 0.7 }} />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            ))}
-          </div>
+            );
+          })()}
         </Section>
 
         {/* Monitoring panel */}
