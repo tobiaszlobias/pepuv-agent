@@ -39,3 +39,12 @@ body {
   user-select: none;
   -webkit-user-select: none;
 }
+
+/* Hide scrollbars everywhere — layout uses overflow for clipping, not navigation */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+}

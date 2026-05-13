@@ -228,7 +228,7 @@ export function DashboardView() {
   const totalInSlot = chartData.reduce((a, b) => a + b.count, 0);
 
   return (
-    <div className="flex-1 overflow-y-auto px-6 py-5" style={{ background: "var(--bg)" }}>
+    <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-6 py-5" style={{ background: "var(--bg)", scrollbarWidth: "none" }}>
 
       {/* KPI row */}
       <div className="grid grid-cols-4 gap-4 mb-5">
@@ -282,7 +282,7 @@ export function DashboardView() {
             }
           >
             <ResponsiveContainer width="100%" height={240}>
-              <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 4, bottom: 0 }}>
+              <AreaChart data={chartData.length > 0 ? chartData : [{ month: "", count: 0 }]} margin={{ top: 8, right: 8, left: 4, bottom: 0 }}>
                 <defs>
                   <linearGradient id="leadGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor={YELLOW} stopOpacity={0.2} />
