@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
-  BarChart, Bar, LineChart, Line,
+  AreaChart, Area,
   PieChart, Pie, Cell,
   XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from "recharts";
@@ -23,7 +23,7 @@ interface DashboardData {
   leads: {
     total: number;
     active: number;
-    byMonth: { month: string; count: number }[];
+    dates: string[];
     byStatus: Record<string, number>;
     topMakleri: { name: string; count: number }[];
   };
@@ -41,45 +41,71 @@ interface SrealityListing {
 const YELLOW = "#FFD600";
 const COLORS = ["#FFD600", "#888880", "#F0EDE8", "#444440", "#BBBAB6"];
 
-function KpiCard({
-  label,
-  value,
-  sub,
-  highlight,
-}: {
-  label: string;
-  value: string | number;
-  sub?: string;
-  highlight?: boolean;
+type TimeSlot = "3m" | "6m" | "12m" | "all";
+
+const TIME_SLOTS: { label: string; value: TimeSlot }[] = [
+  { label: "3 měs", value: "3m" },
+  { label: "6 měs", value: "6m" },
+  { label: "12 měs", value: "12m" },
+  { label: "Vše", value: "all" },
+];
+
+function buildChartData(dates: string[], slot: TimeSlot) {
+  const now = new Date();
+  let cutoff: Date | null = null;
+  if (slot === "3m") cutoff = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+  else if (slot === "6m") cutoff = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+  else if (slot === "12m") cutoff = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+
+  const filtered = cutoff
+    ? dates.filter((d) => new Date(d) >= cutoff!)
+    : dates;
+
+  // Group by month
+  const map: Record<string, number> = {};
+  filtered.forEach((d) => {
+    const date = new Date(d);
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    map[key] = (map[key] || 0) + 1;
+  });
+
+  // Fill all months in range
+  const sorted = Object.keys(map).sort();
+  if (sorted.length === 0) return [];
+
+  const start = new Date(sorted[0] + "-01");
+  const end = new Date(now.getFullYear(), now.getMonth(), 1);
+  const result: { month: string; count: number }[] = [];
+
+  const cur = new Date(start);
+  while (cur <= end) {
+    const key = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}`;
+    const label = cur.toLocaleString("cs-CZ", { month: "short", year: cur.getFullYear() !== now.getFullYear() ? "2-digit" : undefined });
+    result.push({ month: label, count: map[key] || 0 });
+    cur.setMonth(cur.getMonth() + 1);
+  }
+  return result;
+}
+
+function KpiCard({ label, value, sub, highlight }: {
+  label: string; value: string | number; sub?: string; highlight?: boolean;
 }) {
   return (
-    <div
-      className="rounded-2xl p-5 flex flex-col gap-1"
-      style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
-    >
-      <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>
-        {label}
-      </p>
-      <p
-        className="text-3xl font-bold leading-none"
-        style={{ color: highlight ? YELLOW : "var(--text)" }}
-      >
-        {value}
-      </p>
+    <div className="rounded-2xl p-5 flex flex-col gap-1" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+      <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>{label}</p>
+      <p className="text-3xl font-bold leading-none" style={{ color: highlight ? YELLOW : "var(--text)" }}>{value}</p>
       {sub && <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>{sub}</p>}
     </div>
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
   return (
-    <div
-      className="rounded-2xl p-5"
-      style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
-    >
-      <p className="text-xs font-semibold uppercase tracking-wide mb-4" style={{ color: "var(--muted)" }}>
-        {title}
-      </p>
+    <div className="rounded-2xl p-5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>{title}</p>
+        {action}
+      </div>
       {children}
     </div>
   );
@@ -97,15 +123,14 @@ export function DashboardView() {
   const [loadingData, setLoadingData] = useState(data === null);
   const [loadingSreality, setLoadingSreality] = useState(false);
   const [srealityError, setSrealityError] = useState("");
+  const [timeSlot, setTimeSlot] = useState<TimeSlot>("6m");
 
   useEffect(() => {
     if (data !== null) return;
     fetch("/api/dashboard")
       .then((r) => r.json())
-      .then((d: DashboardData) => { setCached("dashboard", d); setData(d); setLoading(false); })
-      .catch(() => setLoading(false));
-
-    function setLoading(v: boolean) { setLoadingData(v); }
+      .then((d: DashboardData) => { setCached("dashboard", d); setData(d); setLoadingData(false); })
+      .catch(() => setLoadingData(false));
   }, []);
 
   function runSreality() {
@@ -120,6 +145,11 @@ export function DashboardView() {
       })
       .catch(() => { setSrealityError("Scan selhal, zkus to znovu."); setLoadingSreality(false); });
   }
+
+  const chartData = useMemo(
+    () => data ? buildChartData(data.leads.dates, timeSlot) : [],
+    [data, timeSlot]
+  );
 
   if (loadingData) {
     return (
@@ -137,6 +167,7 @@ export function DashboardView() {
 
   const sourceData = Object.entries(data.clients.bySource).map(([name, value]) => ({ name, value }));
   const statusData = Object.entries(data.leads.byStatus).map(([name, value]) => ({ name, value }));
+  const totalInSlot = chartData.reduce((a, b) => a + b.count, 0);
 
   return (
     <div className="flex-1 overflow-y-auto px-6 py-5" style={{ background: "var(--bg)" }}>
@@ -169,21 +200,68 @@ export function DashboardView() {
       {/* Charts row */}
       <div className="grid grid-cols-3 gap-4 mb-5">
 
-        {/* Leady po měsících */}
+        {/* Area chart leadů */}
         <div className="col-span-2">
-          <Section title="Leady — posledních 6 měsíců">
+          <Section
+            title={`Leady — ${totalInSlot} celkem`}
+            action={
+              <div className="flex gap-1">
+                {TIME_SLOTS.map((s) => (
+                  <button
+                    key={s.value}
+                    onClick={() => setTimeSlot(s.value)}
+                    className="text-xs px-2.5 py-1 rounded-lg transition-colors"
+                    style={
+                      timeSlot === s.value
+                        ? { background: YELLOW, color: "#000", fontWeight: 600 }
+                        : { background: "var(--surface-elevated)", color: "var(--muted)", border: "1px solid var(--border)" }
+                    }
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            }
+          >
             <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={data.leads.byMonth} barSize={28}>
-                <XAxis dataKey="month" tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} width={24} />
+              <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="leadGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={YELLOW} stopOpacity={0.25} />
+                    <stop offset="95%" stopColor={YELLOW} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis
+                  dataKey="month"
+                  tick={{ fontSize: 11, fill: "var(--muted)" }}
+                  axisLine={false}
+                  tickLine={false}
+                  interval="preserveStartEnd"
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: "var(--muted)" }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={28}
+                  allowDecimals={false}
+                />
                 <Tooltip
                   contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
                   labelStyle={{ color: "var(--text)" }}
                   itemStyle={{ color: YELLOW }}
-                  cursor={{ fill: "var(--surface-elevated)" }}
+                  cursor={{ stroke: "var(--border)", strokeWidth: 1 }}
                 />
-                <Bar dataKey="count" fill={YELLOW} radius={[4, 4, 0, 0]} name="Leady" />
-              </BarChart>
+                <Area
+                  type="monotone"
+                  dataKey="count"
+                  stroke={YELLOW}
+                  strokeWidth={2}
+                  fill="url(#leadGradient)"
+                  name="Leady"
+                  dot={false}
+                  activeDot={{ r: 4, fill: YELLOW, strokeWidth: 0 }}
+                />
+              </AreaChart>
             </ResponsiveContainer>
           </Section>
         </div>
@@ -192,15 +270,7 @@ export function DashboardView() {
         <Section title="Klienti podle zdroje">
           <ResponsiveContainer width="100%" height={180}>
             <PieChart>
-              <Pie
-                data={sourceData}
-                cx="50%"
-                cy="50%"
-                innerRadius={45}
-                outerRadius={75}
-                paddingAngle={3}
-                dataKey="value"
-              >
+              <Pie data={sourceData} cx="50%" cy="50%" innerRadius={45} outerRadius={75} paddingAngle={3} dataKey="value">
                 {sourceData.map((_, i) => (
                   <Cell key={i} fill={COLORS[i % COLORS.length]} />
                 ))}
@@ -261,9 +331,7 @@ export function DashboardView() {
         <Section title="Sreality — Praha Holešovice">
           {sreality.length === 0 ? (
             <div className="flex flex-col gap-3">
-              <p className="text-xs" style={{ color: "var(--muted)" }}>
-                Poslední scan ještě neproběhl nebo nebyl uložen.
-              </p>
+              <p className="text-xs" style={{ color: "var(--muted)" }}>Poslední scan ještě neproběhl nebo nebyl uložen.</p>
               {srealityError && <p className="text-xs" style={{ color: "var(--error)" }}>{srealityError}</p>}
               <button
                 onClick={runSreality}
@@ -277,9 +345,7 @@ export function DashboardView() {
           ) : (
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs" style={{ color: "var(--muted)" }}>
-                  {sreality.length} nabídek
-                </span>
+                <span className="text-xs" style={{ color: "var(--muted)" }}>{sreality.length} nabídek</span>
                 <button
                   onClick={runSreality}
                   disabled={loadingSreality}
@@ -310,7 +376,6 @@ export function DashboardView() {
             </div>
           )}
         </Section>
-
       </div>
     </div>
   );

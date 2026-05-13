@@ -41,22 +41,11 @@ export async function GET() {
     ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length)
     : 0;
 
-  // Leady — posledních 6 měsíců po měsících
-  const leadsByMonth: { month: string; count: number }[] = [];
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(thisYear, thisMonth - i, 1);
-    const m = d.getMonth();
-    const y = d.getFullYear();
-    const count = leads.filter((l) => {
-      if (!l.datum) return false;
-      const ld = new Date(l.datum);
-      return ld.getMonth() === m && ld.getFullYear() === y;
-    }).length;
-    leadsByMonth.push({
-      month: d.toLocaleString("cs-CZ", { month: "short" }),
-      count,
-    });
-  }
+  // Leady — všechna data pro client-side timeslot picker
+  const leadDates = leads
+    .filter((l) => !!l.datum)
+    .map((l) => l.datum)
+    .sort();
 
   const activeLeads = leads.filter((l) =>
     l.status.toLowerCase().includes("aktivní") || l.status.toLowerCase().includes("nový")
@@ -94,7 +83,7 @@ export async function GET() {
     leads: {
       total: leads.length,
       active: activeLeads,
-      byMonth: leadsByMonth,
+      dates: leadDates,
       byStatus: leadsByStatus,
       topMakleri,
     },
