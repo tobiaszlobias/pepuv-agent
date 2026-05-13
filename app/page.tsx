@@ -6,6 +6,7 @@ import { ChatInput } from "@/app/components/chat/ChatInput";
 import { ClientsView } from "@/app/components/views/ClientsView";
 import { PropertiesView } from "@/app/components/views/PropertiesView";
 import { LeadsView } from "@/app/components/views/LeadsView";
+import { DashboardView } from "@/app/components/views/DashboardView";
 import { getCached, setCached } from "@/lib/cache";
 
 function LoginScreen({ onLogin }: { onLogin: () => void }) {
@@ -95,18 +96,19 @@ const LOADING_TEXTS = [
   "Připravuji odpověď...",
 ];
 
-type Page = "chat" | "klienti" | "nemovitosti" | "leady";
+type Page = "dashboard" | "chat" | "klienti" | "nemovitosti" | "leady";
 
 const NAV_ITEMS: { icon: string; label: string; page: Page }[] = [
+  { icon: "🏠", label: "Dashboard", page: "dashboard" },
   { icon: "💬", label: "Chat", page: "chat" },
   { icon: "👥", label: "Klienti", page: "klienti" },
-  { icon: "🏠", label: "Nemovitosti", page: "nemovitosti" },
+  { icon: "🏢", label: "Nemovitosti", page: "nemovitosti" },
   { icon: "📊", label: "Leady", page: "leady" },
 ];
 
 export default function Home() {
   const [authenticated, setAuthenticated] = useState(false);
-  const [activePage, setActivePage] = useState<Page>("chat");
+  const [activePage, setActivePage] = useState<Page>("dashboard");
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [dark, setDark] = useState(true);
@@ -294,12 +296,14 @@ export default function Home() {
         >
           <div>
             <h2 className="font-display font-bold text-base" style={{ color: "var(--text)" }}>
+              {activePage === "dashboard" && "Dashboard"}
               {activePage === "chat" && "Chat s agentem"}
               {activePage === "klienti" && "Klienti"}
               {activePage === "nemovitosti" && "Nemovitosti"}
               {activePage === "leady" && "Leady"}
             </h2>
             <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>
+              {activePage === "dashboard" && "Přehled klíčových čísel a aktivit"}
               {activePage === "chat" && "Ptej se na klienty, nemovitosti, leady nebo požádej o report"}
               {activePage === "klienti" && "Přehled všech klientů z Google Sheets"}
               {activePage === "nemovitosti" && "Přehled všech nemovitostí z Google Sheets"}
@@ -332,6 +336,7 @@ export default function Home() {
 
         {/* Content */}
         <div className="flex-1 flex flex-col overflow-hidden" style={{ background: "var(--bg)" }}>
+          {activePage === "dashboard" && <DashboardView />}
           {activePage === "chat" && (
             <>
               <MessageList messages={messages} dark={dark} />
