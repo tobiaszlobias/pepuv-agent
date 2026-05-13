@@ -86,12 +86,12 @@ export function MessageList({ messages, dark, onSend }: { messages: Message[]; d
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-10 gap-8">
         {/* Hero */}
         <div className="flex flex-col items-center text-center gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/Gemini_Generated_Image_p5o2v7p5o2v7p5o2.png"
-            alt="Pepův agent"
-            className="w-14 h-14 rounded-2xl object-cover"
-          />
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center"
+            style={{ background: "var(--yellow)" }}
+          >
+            <span className="font-display font-extrabold text-2xl text-black">P</span>
+          </div>
           <div>
             <h2 className="font-display font-bold text-2xl" style={{ color: "var(--text)" }}>
               Pepův Agent
@@ -134,12 +134,12 @@ export function MessageList({ messages, dark, onSend }: { messages: Message[]; d
           className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
         >
           {msg.role === "assistant" && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src="/Gemini_Generated_Image_p5o2v7p5o2v7p5o2.png"
-              alt="Pepův agent"
-              className="flex-shrink-0 w-8 h-8 rounded-xl object-cover mr-2 mt-1"
-            />
+            <div
+              className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center mr-2 mt-1 font-display font-extrabold text-sm text-black"
+              style={{ background: "var(--yellow)" }}
+            >
+              P
+            </div>
           )}
 
           <div
@@ -213,14 +213,12 @@ export function MessageList({ messages, dark, onSend }: { messages: Message[]; d
           </div>
 
           {msg.role === "user" && (
-            <div
-              className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center ml-2 mt-1"
-              style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)" }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4" style={{ color: "var(--muted)" }}>
-                <path d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.074.003z" />
-              </svg>
-            </div>
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src="/Gemini_Generated_Image_p5o2v7p5o2v7p5o2.png"
+              alt="Ty"
+              className="flex-shrink-0 w-8 h-8 rounded-xl object-cover ml-2 mt-1"
+            />
           )}
         </div>
       ))}
