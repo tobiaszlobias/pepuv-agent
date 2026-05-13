@@ -13,12 +13,14 @@ interface DashboardData {
     total: number;
     newThisMonth: number;
     bySource: Record<string, number>;
+    dates?: string[];
   };
   properties: {
     total: number;
     forSale: number;
     missingRekonstrukce: number;
     avgPrice: number;
+    dates?: string[];
   };
   leads: {
     total: number;
@@ -102,6 +104,7 @@ function getSourceColor(name: string, index: number): string {
 }
 
 type TimeSlot = "3m" | "6m" | "12m" | "all";
+type ChartMetric = "leady" | "nemovitosti" | "klienti";
 
 const TIME_SLOTS: { label: string; value: TimeSlot }[] = [
   { label: "3 měs", value: "3m" },
@@ -109,6 +112,12 @@ const TIME_SLOTS: { label: string; value: TimeSlot }[] = [
   { label: "12 měs", value: "12m" },
   { label: "Vše", value: "all" },
 ];
+
+const METRIC_LABELS: Record<ChartMetric, string> = {
+  leady: "Leady",
+  nemovitosti: "Nemovitosti",
+  klienti: "Klienti",
+};
 
 function buildChartData(dates: string[], slot: TimeSlot) {
   const now = new Date();
@@ -236,6 +245,7 @@ export function DashboardView() {
   const [srealityError, setSrealityError] = useState("");
   const [srealityScanned, setSrealityScanned] = useState(false);
   const [timeSlot, setTimeSlot] = useState<TimeSlot>("6m");
+  const [chartMetric, setChartMetric] = useState<ChartMetric>("leady");
 
   const [config, setConfig] = useState<MonitoringConfig>(DEFAULT_CONFIG);
   const [editing, setEditing] = useState(false);
@@ -282,10 +292,14 @@ export function DashboardView() {
     setCached("sreality_latest", null);
   }
 
-  const chartData = useMemo(
-    () => data ? buildChartData(data.leads.dates, timeSlot) : [],
-    [data, timeSlot]
-  );
+  const chartData = useMemo(() => {
+    if (!data) return [];
+    const dates =
+      chartMetric === "leady" ? data.leads.dates :
+      chartMetric === "klienti" ? data.clients.dates ?? [] :
+      data.properties.dates ?? [];
+    return buildChartData(dates, timeSlot);
+  }, [data, timeSlot, chartMetric]);
 
   if (loadingData) {
     return (
@@ -304,6 +318,7 @@ export function DashboardView() {
   const sourceData = Object.entries(data.clients.bySource).map(([name, value]) => ({ name, value }));
   const statusData = Object.entries(data.leads.byStatus).map(([name, value]) => ({ name, value }));
   const totalInSlot = chartData.reduce((a, b) => a + b.count, 0);
+  const isEmpty = chartData.length === 0 || chartData.every((d) => d.count === 0);
 
   return (
     <div
@@ -343,31 +358,56 @@ export function DashboardView() {
       {/* Charts row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
 
-        {/* Area chart leadů */}
+        {/* Area chart */}
         <div className="md:col-span-2">
           <Section
-            title={`Leady — ${totalInSlot} celkem`}
+            title={`${METRIC_LABELS[chartMetric]} — ${totalInSlot} celkem`}
             action={
-              <div className="flex gap-1">
-                {TIME_SLOTS.map((s) => (
-                  <button
-                    key={s.value}
-                    onClick={() => setTimeSlot(s.value)}
-                    className="text-xs px-2.5 py-1 rounded-lg transition-colors"
-                    style={
-                      timeSlot === s.value
-                        ? { background: YELLOW, color: "#000", fontWeight: 600 }
-                        : { background: "var(--surface-elevated)", color: "var(--muted)", border: "1px solid var(--border)" }
-                    }
-                  >
-                    {s.label}
-                  </button>
-                ))}
+              <div className="flex items-center gap-2">
+                {/* Metric switcher */}
+                <div className="flex gap-0.5 rounded-lg p-0.5" style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)" }}>
+                  {(Object.keys(METRIC_LABELS) as ChartMetric[]).map((m) => (
+                    <button
+                      key={m}
+                      onClick={() => setChartMetric(m)}
+                      className="text-xs px-2 py-1 rounded-md transition-colors"
+                      style={
+                        chartMetric === m
+                          ? { background: "var(--surface)", color: "var(--text)", fontWeight: 600 }
+                          : { color: "var(--muted)" }
+                      }
+                    >
+                      {METRIC_LABELS[m]}
+                    </button>
+                  ))}
+                </div>
+                {/* Time slot */}
+                <div className="flex gap-1">
+                  {TIME_SLOTS.map((s) => (
+                    <button
+                      key={s.value}
+                      onClick={() => setTimeSlot(s.value)}
+                      className="text-xs px-2.5 py-1 rounded-lg transition-colors"
+                      style={
+                        timeSlot === s.value
+                          ? { background: YELLOW, color: "#000", fontWeight: 600 }
+                          : { background: "var(--surface-elevated)", color: "var(--muted)", border: "1px solid var(--border)" }
+                      }
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             }
           >
+            {isEmpty ? (
+              <div className="flex items-center justify-center" style={{ height: 240 }}>
+                <p className="text-sm" style={{ color: "var(--muted)" }}>Žádné záznamy v tomto období</p>
+              </div>
+            ) : (
             <ResponsiveContainer width="100%" height={240}>
-              <AreaChart key={timeSlot} data={chartData.length > 0 ? chartData : [{ month: "", count: 0 }]} margin={{ top: 8, right: 8, left: 4, bottom: 0 }}>
+              <AreaChart key={`${chartMetric}-${timeSlot}`} data={chartData} margin={{ top: 8, right: 8, left: 4, bottom: 0 }}>
                 <defs>
                   <linearGradient id="leadGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor={YELLOW} stopOpacity={0.2} />
@@ -409,6 +449,7 @@ export function DashboardView() {
                 />
               </AreaChart>
             </ResponsiveContainer>
+            )}
           </Section>
         </div>
 
