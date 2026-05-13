@@ -99,8 +99,8 @@ const LOADING_TEXTS = [
 type Page = "dashboard" | "chat" | "klienti" | "nemovitosti" | "leady";
 
 const NAV_ITEMS: { icon: string; label: string; page: Page }[] = [
-  { icon: "🏠", label: "Dashboard", page: "dashboard" },
   { icon: "💬", label: "Chat", page: "chat" },
+  { icon: "🏠", label: "Dashboard", page: "dashboard" },
   { icon: "👥", label: "Klienti", page: "klienti" },
   { icon: "🏢", label: "Nemovitosti", page: "nemovitosti" },
   { icon: "📊", label: "Leady", page: "leady" },
@@ -108,7 +108,7 @@ const NAV_ITEMS: { icon: string; label: string; page: Page }[] = [
 
 export default function Home() {
   const [authenticated, setAuthenticated] = useState(false);
-  const [activePage, setActivePage] = useState<Page>("dashboard");
+  const [activePage, setActivePage] = useState<Page>("chat");
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [dark, setDark] = useState(true);
