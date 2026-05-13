@@ -219,6 +219,25 @@ Nepoužívej "pie" pro více než 6 kategorií nebo pro srovnání čísel.`,
           type: "boolean",
           description: "true = horizontální bar chart (labely vlevo, sloupce doprava). Použij pro dlouhé labely nebo >8 položek.",
         },
+        reference_line: {
+          type: "object",
+          description: "Zobrazí referenční čáru (průměr, medián...). Např. { value: 37000, label: 'Průměr okresu ~37k' }",
+          properties: {
+            value: { type: "number" },
+            label: { type: "string" },
+          },
+        },
+        color_legend: {
+          type: "array",
+          description: "Legenda pro barevné zóny. Každá položka: { color: 'green'|'yellow'|'red'|'blue'|'gray', label: string }",
+          items: {
+            type: "object",
+            properties: {
+              color: { type: "string" },
+              label: { type: "string" },
+            },
+          },
+        },
       },
       required: ["type", "data", "title"],
     },

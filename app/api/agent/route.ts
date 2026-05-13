@@ -39,9 +39,23 @@ Vždy zavolej create_chart když chceš zobrazit data vizuálně.
 
 **Příprava dat před grafem:**
 - Data VŽDY seřaď sestupně podle hodnoty — nejvyšší nahoře/vlevo, nejnižší dole/vpravo
-- Omez na max 10 položek — pokud je dat víc, vezmi TOP 10 a uveď to v textu
-- Outliers (extrémní hodnoty které deformují osu) vyčleni jako poznámku v textu, ne v grafu
+- Omez na max 15 položek — pokud je dat víc, vezmi TOP 15 a uveď to v textu
 - Labely zkracej — "Praha Holešovice 3+kk 75m²" → "Holešovice 3+kk 75m²"
+
+**Barevné zóny (pole "color" v každém datovém bodě):**
+Pokud data mají přirozené kategorie kvality nebo výkonnosti, přidej do každého bodu pole "color":
+- "green" — výborné/pod průměrem/doporučeno
+- "yellow" — průměrné/v normě
+- "red" — drahé/nad průměrem/problematické
+- "gray" — outlier, rekreační, nelze srovnávat
+
+Příklad pro ceny m²: green ≤ 25k, yellow 25–60k, red 60k+
+Příklad pro makléře podle výkonu: green = top, yellow = průměr, red = pod průměrem
+
+Pokud použiješ color zóny, přidej i "color_legend" aby uživatel věděl co barvy znamenají.
+Pokud má smysl průměrová čára (průměr okresu, průměr firmy), přidej "reference_line".
+
+Pro pie chart a line chart color zóny nepoužívej — tam barvy nemají stejný sémantický smysl.
 
 Pokud generuješ report, zavolej generate_report a vrátí ti strukturu pro 3 slidy.`;
 
@@ -207,13 +221,15 @@ async function executeTool(
       }
 
       case "create_chart": {
-        const { type, data, title, x_key, y_key, horizontal } = input as {
+        const { type, data, title, x_key, y_key, horizontal, reference_line, color_legend } = input as {
           type: "bar" | "line" | "pie";
           data: { items: Record<string, unknown>[] };
           title: string;
           x_key?: string;
           y_key?: string;
           horizontal?: boolean;
+          reference_line?: { value: number; label: string };
+          color_legend?: { color: string; label: string }[];
         };
 
         return JSON.stringify({
@@ -225,6 +241,8 @@ async function executeTool(
             x_key: x_key || "name",
             y_key: y_key || "value",
             horizontal: horizontal ?? false,
+            ...(reference_line ? { reference_line } : {}),
+            ...(color_legend ? { color_legend } : {}),
           },
         });
       }
