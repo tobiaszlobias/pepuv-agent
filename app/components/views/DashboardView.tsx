@@ -76,6 +76,31 @@ function saveMonitoringConfig(cfg: MonitoringConfig) {
 const YELLOW = "#FFD600";
 const COLORS = ["#FFD600", "#888880", "#F0EDE8", "#444440", "#BBBAB6"];
 
+// Sémantické barvy pro statusy leadů
+const STATUS_COLORS: Record<string, string> = {
+  prohlídka:   "#FFD600", // žlutá — akce
+  nabídka:     "#60a5fa", // modrá — v jednání
+  nový:        "#a78bfa", // fialová — vstup
+  kontaktován: "#34d399", // zelená — progress
+  uzavřen:     "#4ade80", // světle zelená — win
+  ztracen:     "#f87171", // červená — lost
+};
+
+// Barvy pro zdroje klientů
+const SOURCE_COLORS: Record<string, string> = {
+  inzerce:     "#FFD600",
+  doporučení:  "#60a5fa",
+  sreality:    "#a78bfa",
+  web:         "#34d399",
+};
+
+function getStatusColor(name: string): string {
+  return STATUS_COLORS[name.toLowerCase()] ?? "#888880";
+}
+function getSourceColor(name: string, index: number): string {
+  return SOURCE_COLORS[name.toLowerCase()] ?? COLORS[index % COLORS.length];
+}
+
 type TimeSlot = "3m" | "6m" | "12m" | "all";
 
 const TIME_SLOTS: { label: string; value: TimeSlot }[] = [
@@ -338,20 +363,21 @@ export function DashboardView() {
           <ResponsiveContainer width="100%" height={200}>
             <PieChart>
               <Pie data={sourceData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3} dataKey="value">
-                {sourceData.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                {sourceData.map((s, i) => (
+                  <Cell key={i} fill={getSourceColor(s.name, i)} />
                 ))}
               </Pie>
               <Tooltip
-                contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
-                itemStyle={{ color: "var(--text)" }}
+                contentStyle={{ background: "var(--surface-elevated)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
+                labelStyle={{ color: "var(--text)" }}
+                itemStyle={{ color: "var(--muted)" }}
               />
             </PieChart>
           </ResponsiveContainer>
           <div className="flex flex-col gap-1 mt-2">
-            {sourceData.slice(0, 4).map((s, i) => (
+            {sourceData.map((s, i) => (
               <div key={s.name} className="flex items-center gap-2 text-xs">
-                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
+                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: getSourceColor(s.name, i) }} />
                 <span style={{ color: "var(--muted)" }}>{s.name}</span>
                 <span className="ml-auto font-bold" style={{ color: "var(--text)" }}>{s.value}</span>
               </div>
@@ -384,9 +410,9 @@ export function DashboardView() {
         {/* Status leadů */}
         <Section title="Leady podle statusu">
           <div className="flex flex-col gap-2">
-            {statusData.map((s, i) => (
+            {statusData.map((s) => (
               <div key={s.name} className="flex items-center gap-2 text-sm">
-                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
+                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: getStatusColor(s.name) }} />
                 <span className="flex-1 truncate" style={{ color: "var(--muted)" }}>{s.name}</span>
                 <span className="font-bold" style={{ color: "var(--text)" }}>{s.value}</span>
               </div>
