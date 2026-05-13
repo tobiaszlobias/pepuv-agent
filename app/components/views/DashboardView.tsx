@@ -134,7 +134,7 @@ function KpiCard({ label, value, sub, highlight }: {
 
 function Section({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
   return (
-    <div className="rounded-2xl p-5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+    <div className="rounded-2xl p-5 h-full" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
       <div className="flex items-center justify-between mb-4">
         <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>{title}</p>
         {action}
@@ -228,10 +228,18 @@ export function DashboardView() {
   const totalInSlot = chartData.reduce((a, b) => a + b.count, 0);
 
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-6 py-5" style={{ background: "var(--bg)", scrollbarWidth: "none" }}>
+    <div
+      className="flex-1 min-h-0 grid gap-4 px-6 py-5"
+      style={{
+        background: "var(--bg)",
+        userSelect: "none",
+        WebkitUserSelect: "none",
+        gridTemplateRows: "auto 1fr 1fr",
+      }}
+    >
 
       {/* KPI row */}
-      <div className="grid grid-cols-4 gap-4 mb-5">
+      <div className="grid grid-cols-4 gap-4">
         <KpiCard
           label="Klienti celkem"
           value={data.clients.total}
@@ -256,10 +264,10 @@ export function DashboardView() {
       </div>
 
       {/* Charts row */}
-      <div className="grid grid-cols-3 gap-4 mb-5">
+      <div className="grid grid-cols-3 gap-4 min-h-0">
 
         {/* Area chart leadů */}
-        <div className="col-span-2">
+        <div className="col-span-2 min-h-0">
           <Section
             title={`Leady — ${totalInSlot} celkem`}
             action={
@@ -354,7 +362,7 @@ export function DashboardView() {
       </div>
 
       {/* Bottom row */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-4 min-h-0">
 
         {/* Top makléři */}
         <Section title="Top makléři — leady">
