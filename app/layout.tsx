@@ -14,7 +14,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Pepa Agent — Back Office Assistant",
+  title: "Pepův Agent — Back Office Assistant",
   description: "AI back office agent pro realitní firmu",
 };
 

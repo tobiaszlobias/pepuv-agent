@@ -94,7 +94,7 @@ export function MessageList({ messages, dark, onSend }: { messages: Message[]; d
           </div>
           <div>
             <h2 className="font-display font-bold text-2xl" style={{ color: "var(--text)" }}>
-              Pepa Agent
+              Pepův Agent
             </h2>
             <p className="text-sm mt-1 max-w-xs" style={{ color: "var(--muted)" }}>
               Back office asistent pro realitní firmu — data, reporty, emaily, monitoring trhu.

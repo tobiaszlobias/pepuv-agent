@@ -47,7 +47,7 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
             <span className="font-display text-black font-extrabold text-2xl">P</span>
           </div>
           <h1 className="font-display font-extrabold text-2xl" style={{ color: "var(--text)" }}>
-            Pepa Agent
+            Pepův Agent
           </h1>
           <p className="text-sm mt-1" style={{ color: "var(--muted)" }}>
             Back Office Assistant
@@ -288,7 +288,7 @@ export default function Home() {
             </div>
             <div>
               <h1 className="font-display font-bold text-sm leading-tight" style={{ color: "var(--text)" }}>
-                Pepa Agent
+                Pepův Agent
               </h1>
               <p className="text-xs" style={{ color: "var(--muted)" }}>Back Office Assistant</p>
             </div>
