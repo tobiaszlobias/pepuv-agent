@@ -49,7 +49,14 @@ Pokud data mají přirozené kategorie kvality nebo výkonnosti, přidej do kaž
 - "red" — drahé/nad průměrem/problematické
 - "gray" — outlier, rekreační, nelze srovnávat
 
-Příklad pro ceny m²: green ≤ 25k, yellow 25–60k, red 60k+
+Příklad pro ceny m² (nemovitosti):
+  1. Nejdřív identifikuj rekreační lokality (Malá Morávka, chaty, chalupy u ski středisek) → color: "gray"
+  2. Spočítej průměr pouze z NEREKREAČNÍCH položek
+  3. green  = hodnota < průměr * 0.6   (výrazně pod průměrem — výhodná koupě)
+  4. yellow = hodnota < průměr * 1.35  (kolem průměru)
+  5. red    = hodnota >= průměr * 1.35 (předražené)
+  Přidej reference_line s hodnotou průměru nerekreačních.
+
 Příklad pro makléře podle výkonu: green = top, yellow = průměr, red = pod průměrem
 
 Pokud použiješ color zóny, přidej i "color_legend" aby uživatel věděl co barvy znamenají.
