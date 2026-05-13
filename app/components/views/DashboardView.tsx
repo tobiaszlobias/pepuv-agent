@@ -88,19 +88,8 @@ const STATUS_COLORS: Record<string, string> = {
   ztracen:     "#f87171", // červená — lost
 };
 
-// Barvy pro zdroje klientů
-const SOURCE_COLORS: Record<string, string> = {
-  inzerce:     "#FFD600",
-  doporučení:  "#60a5fa",
-  sreality:    "#a78bfa",
-  web:         "#34d399",
-};
-
 function getStatusColor(name: string): string {
   return STATUS_COLORS[name.toLowerCase()] ?? "#888880";
-}
-function getSourceColor(name: string, index: number): string {
-  return SOURCE_COLORS[name.toLowerCase()] ?? COLORS[index % COLORS.length];
 }
 
 type TimeSlot = "3m" | "6m" | "12m" | "all";
@@ -327,7 +316,6 @@ export function DashboardView() {
   if (!data) return null;
 
   const sourceData = Object.entries(data.clients.bySource).map(([name, value]) => ({ name, value }));
-  const statusData = Object.entries(data.leads.byStatus).map(([name, value]) => ({ name, value }));
   const totalInSlot = chartData.reduce((a, b) => a + b.count, 0);
   const isEmpty = chartData.length === 0 || chartData.every((d) => d.count === 0);
 
@@ -491,7 +479,7 @@ export function DashboardView() {
       </div>
 
       {/* Bottom row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 pb-4 md:pb-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 pb-4 md:pb-2">
 
         {/* Top makléři */}
         <Section title="Top makléři — leady">
@@ -526,33 +514,6 @@ export function DashboardView() {
                   <span>Uzavřeno celkem</span>
                   <span className="font-bold" style={{ color: YELLOW }}>{closedCount} obchodů</span>
                 </div>
-              </div>
-            );
-          })()}
-        </Section>
-
-        {/* Status leadů */}
-        <Section title="Leady podle statusu">
-          {(() => {
-            const total = statusData.reduce((a, b) => a + b.value, 0) || 1;
-            return (
-              <div className="flex flex-col gap-2.5">
-                {statusData.map((s) => {
-                  const pct = Math.round((s.value / total) * 100);
-                  return (
-                    <div key={s.name} className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: getStatusColor(s.name) }} />
-                        <span className="flex-1 truncate" style={{ color: "var(--muted)" }}>{s.name}</span>
-                        <span className="text-xs tabular-nums" style={{ color: "var(--muted)" }}>{pct}%</span>
-                        <span className="font-bold w-5 text-right" style={{ color: "var(--text)" }}>{s.value}</span>
-                      </div>
-                      <div className="ml-4 h-1 rounded-full overflow-hidden" style={{ background: "var(--surface-elevated)" }}>
-                        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: getStatusColor(s.name), opacity: 0.7 }} />
-                      </div>
-                    </div>
-                  );
-                })}
               </div>
             );
           })()}
@@ -667,24 +628,26 @@ export function DashboardView() {
                       {loadingSreality ? "..." : "Obnovit"}
                     </button>
                   </div>
-                  {sreality.slice(0, 3).map((l, i) => (
-                    <a
-                      key={i}
-                      href={l.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block rounded-lg px-3 py-2 text-xs transition-colors"
-                      style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)" }}
-                      onMouseEnter={(e) => (e.currentTarget.style.borderColor = YELLOW)}
-                      onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
-                    >
-                      <div className="font-medium truncate" style={{ color: "var(--text)" }}>{l.description || l.address}</div>
-                      <div className="flex justify-between mt-0.5">
-                        <span style={{ color: "var(--muted)" }} className="truncate max-w-[60%]">{l.address}</span>
-                        <span style={{ color: YELLOW }}>{l.price > 0 ? formatPrice(l.price) : "—"}</span>
-                      </div>
-                    </a>
-                  ))}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {sreality.slice(0, 6).map((l, i) => (
+                      <a
+                        key={i}
+                        href={l.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block rounded-lg px-3 py-2 text-xs transition-colors"
+                        style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.borderColor = YELLOW)}
+                        onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+                      >
+                        <div className="font-medium truncate" style={{ color: "var(--text)" }}>{l.description || l.address}</div>
+                        <div className="flex justify-between mt-0.5">
+                          <span style={{ color: "var(--muted)" }} className="truncate max-w-[60%]">{l.address}</span>
+                          <span style={{ color: YELLOW }}>{l.price > 0 ? formatPrice(l.price) : "—"}</span>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">
