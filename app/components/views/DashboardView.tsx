@@ -145,16 +145,69 @@ function buildChartData(dates: string[], slot: TimeSlot) {
   return result;
 }
 
+function useCountUp(target: number, duration = 900) {
+  const [current, setCurrent] = useState(0);
+  useEffect(() => {
+    if (target === 0) { setCurrent(0); return; }
+    const start = performance.now();
+    let raf: number;
+    function tick(now: number) {
+      const t = Math.min((now - start) / duration, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - t, 3);
+      setCurrent(Math.round(eased * target));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    }
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return current;
+}
+
 function KpiCard({ label, value, sub, highlight }: {
   label: string; value: string | number; sub?: string; highlight?: boolean;
 }) {
+  const isNumeric = typeof value === "number";
+  const animated = useCountUp(isNumeric ? (value as number) : 0);
+
+  // For price strings like "9.7 M Kč" — animate the numeric prefix
+  let display: React.ReactNode = value;
+  if (isNumeric) {
+    display = animated;
+  } else if (typeof value === "string") {
+    const match = value.match(/^([\d.]+)(.*)$/);
+    if (match) {
+      const numTarget = parseFloat(match[1]);
+      display = <AnimatedFloat target={numTarget} suffix={match[2]} />;
+    }
+  }
+
   return (
     <div className="rounded-xl md:rounded-2xl p-4 md:p-5 flex flex-col gap-1" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
       <p className="text-[10px] md:text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>{label}</p>
-      <p className="text-2xl md:text-3xl font-bold leading-none" style={{ color: highlight ? YELLOW : "var(--text)" }}>{value}</p>
+      <p className="text-2xl md:text-3xl font-bold leading-none" style={{ color: highlight ? YELLOW : "var(--text)" }}>{display}</p>
       {sub && <p className="text-[10px] md:text-xs mt-1" style={{ color: "var(--muted)" }}>{sub}</p>}
     </div>
   );
+}
+
+function AnimatedFloat({ target, suffix }: { target: number; suffix: string }) {
+  const [current, setCurrent] = useState(0);
+  useEffect(() => {
+    if (target === 0) { setCurrent(0); return; }
+    const start = performance.now();
+    const duration = 900;
+    let raf: number;
+    function tick(now: number) {
+      const t = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setCurrent(parseFloat((eased * target).toFixed(1)));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    }
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target]);
+  return <>{current}{suffix}</>;
 }
 
 function Section({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
