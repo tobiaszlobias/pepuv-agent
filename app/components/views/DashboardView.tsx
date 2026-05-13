@@ -134,7 +134,7 @@ function KpiCard({ label, value, sub, highlight }: {
 
 function Section({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
   return (
-    <div className="rounded-2xl p-5 h-full" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+    <div className="rounded-2xl p-5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
       <div className="flex items-center justify-between mb-4">
         <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>{title}</p>
         {action}
@@ -229,7 +229,7 @@ export function DashboardView() {
 
   return (
     <div
-      className="flex-1 min-h-0 overflow-y-auto px-4 md:px-6 py-4 md:py-5 flex flex-col gap-3 md:gap-4 md:overflow-hidden"
+      className="flex-1 min-h-0 overflow-y-auto px-4 md:px-6 py-4 md:py-5 flex flex-col gap-3 md:gap-4"
       style={{
         background: "var(--bg)",
         userSelect: "none",
@@ -238,7 +238,7 @@ export function DashboardView() {
     >
 
       {/* KPI row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 flex-shrink-0">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         <KpiCard
           label="Klienti celkem"
           value={data.clients.total}
@@ -263,10 +263,10 @@ export function DashboardView() {
       </div>
 
       {/* Charts row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 md:flex-1 md:min-h-0">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
 
         {/* Area chart leadů */}
-        <div className="md:col-span-2 min-h-0">
+        <div className="md:col-span-2">
           <Section
             title={`Leady — ${totalInSlot} celkem`}
             action={
@@ -361,7 +361,7 @@ export function DashboardView() {
       </div>
 
       {/* Bottom row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 md:flex-1 md:min-h-0 pb-2 md:pb-0">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 pb-4 md:pb-2">
 
         {/* Top makléři */}
         <Section title="Top makléři — leady">
