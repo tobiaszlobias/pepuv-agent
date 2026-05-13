@@ -80,7 +80,7 @@ function buildChartData(dates: string[], slot: TimeSlot) {
   const cur = new Date(start);
   while (cur <= end) {
     const key = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}`;
-    const label = cur.toLocaleString("cs-CZ", { month: "short", year: cur.getFullYear() !== now.getFullYear() ? "2-digit" : undefined });
+    const label = cur.toLocaleString("cs-CZ", { month: "short", year: "2-digit" });
     result.push({ month: label, count: map[key] || 0 });
     cur.setMonth(cur.getMonth() + 1);
   }
