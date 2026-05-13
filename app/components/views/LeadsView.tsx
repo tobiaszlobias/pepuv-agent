@@ -51,13 +51,20 @@ function StatusBadge({ status }: { status: string | undefined }) {
   );
 }
 
-const COLUMNS = [
+const COLUMNS_DESKTOP = [
   { key: "datum",            label: "Datum",    render: (v: string | undefined) => <span style={{ color: "var(--muted)" }}>{formatDate(v)}</span> },
   { key: "zdroj",            label: "Zdroj" },
   { key: "typ_nemovitosti",  label: "Typ" },
   { key: "budget",           label: "Budget",   render: (v: string | undefined) => <span style={{ fontVariantNumeric: "tabular-nums" }}>{formatPrice(v)}</span> },
   { key: "status",           label: "Status",   render: (v: string | undefined) => <StatusBadge status={v} /> },
   { key: "makler",           label: "Makléř" },
+];
+
+const COLUMNS_MOBILE = [
+  { key: "datum",           label: "Datum",   render: (v: string | undefined) => <span style={{ color: "var(--muted)" }}>{formatDate(v)}</span> },
+  { key: "typ_nemovitosti", label: "Typ" },
+  { key: "budget",          label: "Budget",  render: (v: string | undefined) => <span style={{ fontVariantNumeric: "tabular-nums" }}>{formatPrice(v)}</span> },
+  { key: "status",          label: "Status",  render: (v: string | undefined) => <StatusBadge status={v} /> },
 ];
 
 function StatCard({ label, value }: { label: string; value: string | number }) {
@@ -74,6 +81,13 @@ export function LeadsView() {
   const [leads, setLeads] = useState<Lead[]>(cached ?? []);
   const [loading, setLoading] = useState(cached === null);
   const [search, setSearch] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => {
     if (cached !== null) return;
@@ -105,8 +119,8 @@ export function LeadsView() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      <div className="px-6 pt-5 pb-4 flex-shrink-0">
-        <div className="grid grid-cols-4 gap-3">
+      <div className="px-4 md:px-6 pt-4 md:pt-5 pb-3 md:pb-4 flex-shrink-0">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
           <StatCard label="Celkem leadů" value={loading ? "…" : leads.length} />
           <StatCard label="Tento měsíc" value={loading ? "…" : thisMonth} />
           <StatCard label="Aktivních" value={loading ? "…" : aktivni} />
@@ -114,12 +128,12 @@ export function LeadsView() {
         </div>
       </div>
 
-      <div className="px-6 pb-3 flex items-center gap-3 flex-shrink-0">
+      <div className="px-4 md:px-6 pb-3 flex items-center gap-2 flex-shrink-0">
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Hledat podle zdroje, statusu, makléře..."
+          placeholder="Hledat..."
           className="flex-1 text-sm px-3 py-2 rounded-lg focus:outline-none transition-all"
           style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)", color: "var(--text)" }}
           onFocus={(e) => (e.currentTarget.style.borderColor = "var(--yellow)")}
@@ -128,7 +142,7 @@ export function LeadsView() {
         {search && (
           <button
             onClick={() => setSearch("")}
-            className="text-xs px-3 py-2 rounded-lg"
+            className="text-xs px-3 py-2 rounded-lg flex-shrink-0"
             style={{ color: "var(--muted)", background: "var(--surface-elevated)", border: "1px solid var(--border)" }}
           >
             Zrušit
@@ -138,7 +152,7 @@ export function LeadsView() {
 
       <div className="flex-1 overflow-y-auto" style={{ borderTop: "1px solid var(--border)" }}>
         <DataTable
-          columns={COLUMNS}
+          columns={isMobile ? COLUMNS_MOBILE : COLUMNS_DESKTOP}
           rows={leads as unknown as Record<string, string | undefined>[]}
           loading={loading}
           searchQuery={search}

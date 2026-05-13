@@ -438,15 +438,17 @@ export default function Home() {
         <div className="flex-1 flex flex-col overflow-hidden" style={{ background: "var(--bg)" }}>
           {activePage === "dashboard" && <DashboardView />}
           {activePage === "chat" && (
-            <>
-              <MessageList messages={messages} dark={dark} onSend={sendMessage} />
-              <ChatInput onSend={sendMessage} disabled={loading} dark={dark} hasMessages={messages.length > 0} />
-            </>
+            <MessageList messages={messages} dark={dark} onSend={sendMessage} />
           )}
           {activePage === "klienti" && <ClientsView />}
           {activePage === "nemovitosti" && <PropertiesView />}
           {activePage === "leady" && <LeadsView />}
         </div>
+
+        {/* Chat input — above bottom nav */}
+        {activePage === "chat" && (
+          <ChatInput onSend={sendMessage} disabled={loading} dark={dark} hasMessages={messages.length > 0} />
+        )}
 
         {/* Bottom nav — mobile only */}
         <nav

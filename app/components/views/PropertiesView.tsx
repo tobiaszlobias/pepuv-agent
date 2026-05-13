@@ -56,7 +56,7 @@ function StavBadge({ stav }: { stav: string | undefined }) {
   );
 }
 
-const COLUMNS = [
+const COLUMNS_DESKTOP = [
   { key: "adresa",           label: "Adresa" },
   { key: "ctvrt",            label: "Čtvrť" },
   { key: "typ",              label: "Typ",    render: (v: string | undefined) => capitalize(v) },
@@ -65,6 +65,13 @@ const COLUMNS = [
   { key: "rok_rekonstrukce", label: "Rekonstr." },
   { key: "makler",           label: "Makléř" },
   { key: "datum_pridani",    label: "Přidáno", render: (v: string | undefined) => <span style={{ color: "var(--muted)" }}>{formatDate(v)}</span> },
+];
+
+const COLUMNS_MOBILE = [
+  { key: "adresa", label: "Adresa" },
+  { key: "cena",   label: "Cena", render: (v: string | undefined) => <span style={{ fontVariantNumeric: "tabular-nums" }}>{formatPrice(v)}</span> },
+  { key: "stav",   label: "Stav", render: (v: string | undefined) => <StavBadge stav={v} /> },
+  { key: "typ",    label: "Typ",  render: (v: string | undefined) => capitalize(v) },
 ];
 
 function StatCard({ label, value, warn }: { label: string; value: string | number; warn?: boolean }) {
@@ -81,6 +88,13 @@ export function PropertiesView() {
   const [properties, setProperties] = useState<Property[]>(cached ?? []);
   const [loading, setLoading] = useState(cached === null);
   const [search, setSearch] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => {
     if (cached !== null) return;
@@ -106,8 +120,8 @@ export function PropertiesView() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      <div className="px-6 pt-5 pb-4 flex-shrink-0">
-        <div className="grid grid-cols-4 gap-3">
+      <div className="px-4 md:px-6 pt-4 md:pt-5 pb-3 md:pb-4 flex-shrink-0">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
           <StatCard label="Celkem nemovitostí" value={loading ? "…" : properties.length} />
           <StatCard label="Průměrná cena" value={loading ? "…" : avgPriceStr} />
           <StatCard label="Chybí rok rekonstrukce" value={loading ? "…" : missingRek} warn={missingRek > 0} />
@@ -115,12 +129,12 @@ export function PropertiesView() {
         </div>
       </div>
 
-      <div className="px-6 pb-3 flex items-center gap-3 flex-shrink-0">
+      <div className="px-4 md:px-6 pb-3 flex items-center gap-2 flex-shrink-0">
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Hledat podle adresy, čtvrti, makléře..."
+          placeholder="Hledat..."
           className="flex-1 text-sm px-3 py-2 rounded-lg focus:outline-none transition-all"
           style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)", color: "var(--text)" }}
           onFocus={(e) => (e.currentTarget.style.borderColor = "var(--yellow)")}
@@ -129,7 +143,7 @@ export function PropertiesView() {
         {search && (
           <button
             onClick={() => setSearch("")}
-            className="text-xs px-3 py-2 rounded-lg"
+            className="text-xs px-3 py-2 rounded-lg flex-shrink-0"
             style={{ color: "var(--muted)", background: "var(--surface-elevated)", border: "1px solid var(--border)" }}
           >
             Zrušit
@@ -139,7 +153,7 @@ export function PropertiesView() {
 
       <div className="flex-1 overflow-y-auto" style={{ borderTop: "1px solid var(--border)" }}>
         <DataTable
-          columns={COLUMNS}
+          columns={isMobile ? COLUMNS_MOBILE : COLUMNS_DESKTOP}
           rows={properties as unknown as Record<string, string | undefined>[]}
           loading={loading}
           searchQuery={search}

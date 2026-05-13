@@ -44,7 +44,7 @@ function StatusBadge({ status }: { status: string | undefined }) {
   );
 }
 
-const COLUMNS = [
+const COLUMNS_DESKTOP = [
   { key: "jmeno",        label: "Jméno" },
   { key: "email",        label: "Email",   render: (v: string | undefined) => <span style={{ color: "var(--muted)" }}>{v || "—"}</span> },
   { key: "telefon",      label: "Telefon", render: (v: string | undefined) => <span style={{ color: "var(--muted)", fontVariantNumeric: "tabular-nums" }}>{v || "—"}</span> },
@@ -52,6 +52,13 @@ const COLUMNS = [
   { key: "status",       label: "Status",  render: (v: string | undefined) => <StatusBadge status={v} /> },
   { key: "makler",       label: "Makléř" },
   { key: "datum_pridani", label: "Přidán", render: (v: string | undefined) => <span style={{ color: "var(--muted)" }}>{formatDate(v)}</span> },
+];
+
+const COLUMNS_MOBILE = [
+  { key: "jmeno",  label: "Jméno" },
+  { key: "zdroj",  label: "Zdroj" },
+  { key: "status", label: "Status", render: (v: string | undefined) => <StatusBadge status={v} /> },
+  { key: "makler", label: "Makléř" },
 ];
 
 function StatCard({ label, value }: { label: string; value: string | number }) {
@@ -87,10 +94,18 @@ export function ClientsView() {
   const aktivni = clients.filter((c) => c.status.toLowerCase().includes("aktivní")).length;
   const sources = new Set(clients.map((c) => c.zdroj).filter(Boolean)).size;
 
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      <div className="px-6 pt-5 pb-4 flex-shrink-0">
-        <div className="grid grid-cols-4 gap-3">
+      <div className="px-4 md:px-6 pt-4 md:pt-5 pb-3 md:pb-4 flex-shrink-0">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
           <StatCard label="Celkem klientů" value={loading ? "…" : clients.length} />
           <StatCard label="Nových tento měsíc" value={loading ? "…" : newThisMonth} />
           <StatCard label="Aktivních" value={loading ? "…" : aktivni} />
@@ -98,12 +113,12 @@ export function ClientsView() {
         </div>
       </div>
 
-      <div className="px-6 pb-3 flex items-center gap-3 flex-shrink-0">
+      <div className="px-4 md:px-6 pb-3 flex items-center gap-2 flex-shrink-0">
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Hledat podle jména, emailu, makléře..."
+          placeholder="Hledat..."
           className="flex-1 text-sm px-3 py-2 rounded-lg focus:outline-none transition-all"
           style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)", color: "var(--text)" }}
           onFocus={(e) => (e.currentTarget.style.borderColor = "var(--yellow)")}
@@ -112,7 +127,7 @@ export function ClientsView() {
         {search && (
           <button
             onClick={() => setSearch("")}
-            className="text-xs px-3 py-2 rounded-lg"
+            className="text-xs px-3 py-2 rounded-lg flex-shrink-0"
             style={{ color: "var(--muted)", background: "var(--surface-elevated)", border: "1px solid var(--border)" }}
           >
             Zrušit
@@ -122,7 +137,7 @@ export function ClientsView() {
 
       <div className="flex-1 overflow-y-auto" style={{ borderTop: "1px solid var(--border)" }}>
         <DataTable
-          columns={COLUMNS}
+          columns={isMobile ? COLUMNS_MOBILE : COLUMNS_DESKTOP}
           rows={clients as unknown as Record<string, string | undefined>[]}
           loading={loading}
           searchQuery={search}
