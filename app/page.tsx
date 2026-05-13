@@ -423,6 +423,24 @@ export default function Home() {
               </span>
             </button>
             {activePage === "chat" && (
+              <div className="md:hidden flex gap-0.5 rounded-lg p-0.5" style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)" }}>
+                {MODELS.map((m) => (
+                  <button
+                    key={m.id}
+                    onClick={() => setModel(m.id)}
+                    className="text-xs px-2 py-1 rounded-md transition-colors"
+                    style={
+                      model === m.id
+                        ? { background: "var(--yellow)", color: "#000", fontWeight: 600 }
+                        : { color: "var(--muted)" }
+                    }
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+            )}
+            {activePage === "chat" && (
               <button
                 onClick={() => { setMessages([]); sessionStorage.removeItem("cache:messages"); }}
                 className="text-xs transition-colors hover:opacity-100 opacity-60"
