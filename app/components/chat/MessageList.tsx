@@ -215,7 +215,7 @@ export function MessageList({ messages, dark, onSend }: { messages: Message[]; d
           {msg.role === "user" && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src="/Gemini_Generated_Image_p5o2v7p5o2v7p5o2.png"
+              src="/prasepepa.png"
               alt="Ty"
               className="flex-shrink-0 w-8 h-8 rounded-xl object-cover ml-2 mt-1"
             />
