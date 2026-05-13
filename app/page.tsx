@@ -98,12 +98,58 @@ const LOADING_TEXTS = [
 
 type Page = "dashboard" | "chat" | "klienti" | "nemovitosti" | "leady";
 
-const NAV_ITEMS: { icon: string; label: string; page: Page }[] = [
-  { icon: "💬", label: "Chat", page: "chat" },
-  { icon: "🏠", label: "Dashboard", page: "dashboard" },
-  { icon: "👥", label: "Klienti", page: "klienti" },
-  { icon: "🏢", label: "Nemovitosti", page: "nemovitosti" },
-  { icon: "📊", label: "Leady", page: "leady" },
+function IconChat({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M14 1H2C1.45 1 1 1.45 1 2v9c0 .55.45 1 1 1h2v3l3-3h7c.55 0 1-.45 1-1V2c0-.55-.45-1-1-1z"
+        stroke={active ? "#000" : "currentColor"} strokeWidth="1.25" strokeLinejoin="round" fill="none"/>
+    </svg>
+  );
+}
+function IconDashboard({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <rect x="1" y="1" width="6" height="6" rx="1.5" stroke={active ? "#000" : "currentColor"} strokeWidth="1.25" fill="none"/>
+      <rect x="9" y="1" width="6" height="6" rx="1.5" stroke={active ? "#000" : "currentColor"} strokeWidth="1.25" fill="none"/>
+      <rect x="1" y="9" width="6" height="6" rx="1.5" stroke={active ? "#000" : "currentColor"} strokeWidth="1.25" fill="none"/>
+      <rect x="9" y="9" width="6" height="6" rx="1.5" stroke={active ? "#000" : "currentColor"} strokeWidth="1.25" fill="none"/>
+    </svg>
+  );
+}
+function IconPeople({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <circle cx="6" cy="5" r="2.5" stroke={active ? "#000" : "currentColor"} strokeWidth="1.25" fill="none"/>
+      <path d="M1 13.5c0-2.76 2.24-5 5-5s5 2.24 5 5" stroke={active ? "#000" : "currentColor"} strokeWidth="1.25" strokeLinecap="round" fill="none"/>
+      <path d="M11 7.5c1.38 0 2.5 1.12 2.5 2.5v2.5" stroke={active ? "#000" : "currentColor"} strokeWidth="1.25" strokeLinecap="round" fill="none"/>
+      <path d="M10.5 4a2 2 0 0 1 0 3" stroke={active ? "#000" : "currentColor"} strokeWidth="1.25" strokeLinecap="round" fill="none"/>
+    </svg>
+  );
+}
+function IconBuilding({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <rect x="2" y="3" width="12" height="11" rx="1.5" stroke={active ? "#000" : "currentColor"} strokeWidth="1.25" fill="none"/>
+      <path d="M5 14V10h6v4" stroke={active ? "#000" : "currentColor"} strokeWidth="1.25" strokeLinejoin="round" fill="none"/>
+      <path d="M5 7h1.5M9.5 7H11M5 3V1.5h6V3" stroke={active ? "#000" : "currentColor"} strokeWidth="1.25" strokeLinecap="round" fill="none"/>
+    </svg>
+  );
+}
+function IconChart({ active }: { active: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M1 12l4-4 3 3 4-5 3 2" stroke={active ? "#000" : "currentColor"} strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      <path d="M1 14.5h14" stroke={active ? "#000" : "currentColor"} strokeWidth="1.25" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+const NAV_ITEMS: { icon: (active: boolean) => React.ReactNode; label: string; page: Page }[] = [
+  { icon: (a) => <IconChat active={a} />, label: "Chat", page: "chat" },
+  { icon: (a) => <IconDashboard active={a} />, label: "Dashboard", page: "dashboard" },
+  { icon: (a) => <IconPeople active={a} />, label: "Klienti", page: "klienti" },
+  { icon: (a) => <IconBuilding active={a} />, label: "Nemovitosti", page: "nemovitosti" },
+  { icon: (a) => <IconChart active={a} />, label: "Leady", page: "leady" },
 ];
 
 export default function Home() {
@@ -270,7 +316,7 @@ export default function Home() {
                   if (!isActive) e.currentTarget.style.background = "transparent";
                 }}
               >
-                <span>{item.icon}</span>
+                <span className="flex-shrink-0">{item.icon(isActive)}</span>
                 <span>{item.label}</span>
               </button>
             );
