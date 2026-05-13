@@ -157,7 +157,7 @@ export function MessageList({ messages, dark }: { messages: Message[]; dark: boo
                           </div>
                         }
                       >
-                        <AgentChart chart={chart} dark={dark} />
+                        <AgentChart chart={chart} />
                       </ErrorBoundary>
                     ))}
                   </div>

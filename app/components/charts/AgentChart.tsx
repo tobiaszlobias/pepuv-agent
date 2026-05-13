@@ -1,18 +1,11 @@
 "use client";
 
 import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
+  BarChart, Bar,
+  LineChart, Line,
+  PieChart, Pie, Cell,
+  XAxis, YAxis,
+  CartesianGrid, Tooltip, Legend,
   ResponsiveContainer,
 } from "recharts";
 
@@ -24,52 +17,51 @@ interface ChartData {
   y_key?: string;
 }
 
-const COLORS = [
-  "#6366f1",
-  "#8b5cf6",
-  "#a78bfa",
-  "#c4b5fd",
-  "#ddd6fe",
-  "#818cf8",
-  "#4f46e5",
-];
+const YELLOW = "#FFD600";
+const COLORS = ["#FFD600", "#888880", "#F0EDE8", "#444440", "#BBBAB6", "#555550", "#CCCC00"];
 
-export function AgentChart({ chart, dark }: { chart: ChartData; dark: boolean }) {
+export function AgentChart({ chart }: { chart: ChartData }) {
   const xKey = chart.x_key || "name";
   const yKey = chart.y_key || "value";
 
-  const gridColor = dark ? "#374151" : "#f0f0f0";
-  const axisColor = dark ? "#6b7280" : "#9ca3af";
-  const tooltipStyle = dark
-    ? { borderRadius: "8px", border: "1px solid #374151", fontSize: "12px", backgroundColor: "#1f2937", color: "#f9fafb" }
-    : { borderRadius: "8px", border: "1px solid #e5e7eb", fontSize: "12px" };
+  const tooltipStyle = {
+    borderRadius: "8px",
+    border: "1px solid var(--border)",
+    fontSize: "12px",
+    backgroundColor: "var(--surface)",
+    color: "var(--text)",
+  };
 
   return (
-    <div className={`rounded-xl border p-4 my-2 ${dark ? "bg-gray-900 border-gray-700" : "bg-white border-gray-200"}`}>
-      <h3 className={`text-sm font-semibold mb-3 ${dark ? "text-gray-100" : "text-gray-800"}`}>{chart.title}</h3>
-      <ResponsiveContainer width="100%" height={240}>
+    <div
+      className="rounded-xl p-4 my-2"
+      style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)" }}
+    >
+      <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: "var(--muted)" }}>
+        {chart.title}
+      </p>
+      <ResponsiveContainer width="100%" height={220}>
         {chart.type === "bar" ? (
-          <BarChart data={chart.data}>
-            <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-            <XAxis dataKey={xKey} tick={{ fontSize: 12, fill: axisColor }} stroke={axisColor} />
-            <YAxis tick={{ fontSize: 12, fill: axisColor }} stroke={axisColor} />
-            <Tooltip contentStyle={tooltipStyle} />
-            <Legend wrapperStyle={{ fontSize: "12px" }} />
-            <Bar dataKey={yKey} fill="#6366f1" radius={[4, 4, 0, 0]} />
+          <BarChart data={chart.data} margin={{ top: 4, right: 4, left: -8, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+            <XAxis dataKey={xKey} tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} width={32} allowDecimals={false} />
+            <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "var(--border)", opacity: 0.4 }} />
+            <Bar dataKey={yKey} fill={YELLOW} radius={[4, 4, 0, 0]} />
           </BarChart>
         ) : chart.type === "line" ? (
-          <LineChart data={chart.data}>
-            <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-            <XAxis dataKey={xKey} tick={{ fontSize: 12, fill: axisColor }} stroke={axisColor} />
-            <YAxis tick={{ fontSize: 12, fill: axisColor }} stroke={axisColor} />
-            <Tooltip contentStyle={tooltipStyle} />
-            <Legend wrapperStyle={{ fontSize: "12px" }} />
+          <LineChart data={chart.data} margin={{ top: 4, right: 4, left: -8, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+            <XAxis dataKey={xKey} tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} width={32} allowDecimals={false} />
+            <Tooltip contentStyle={tooltipStyle} cursor={{ stroke: "var(--border)", strokeWidth: 1 }} />
             <Line
-              type="monotone"
+              type="linear"
               dataKey={yKey}
-              stroke="#6366f1"
+              stroke={YELLOW}
               strokeWidth={2}
-              dot={{ fill: "#6366f1", r: 4 }}
+              dot={{ fill: YELLOW, r: 3, strokeWidth: 0 }}
+              activeDot={{ r: 5, fill: YELLOW, strokeWidth: 0 }}
             />
           </LineChart>
         ) : (
@@ -78,8 +70,8 @@ export function AgentChart({ chart, dark }: { chart: ChartData; dark: boolean })
               data={chart.data}
               cx="50%"
               cy="50%"
-              innerRadius={60}
-              outerRadius={90}
+              innerRadius={55}
+              outerRadius={85}
               paddingAngle={3}
               dataKey={yKey}
               nameKey={xKey}
@@ -89,7 +81,10 @@ export function AgentChart({ chart, dark }: { chart: ChartData; dark: boolean })
               ))}
             </Pie>
             <Tooltip contentStyle={tooltipStyle} />
-            <Legend wrapperStyle={{ fontSize: "12px" }} />
+            <Legend
+              wrapperStyle={{ fontSize: "12px", color: "var(--muted)" }}
+              formatter={(value) => <span style={{ color: "var(--text)" }}>{value}</span>}
+            />
           </PieChart>
         )}
       </ResponsiveContainer>
