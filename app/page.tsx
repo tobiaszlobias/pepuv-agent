@@ -368,14 +368,32 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setDark((d) => { const next = !d; sessionStorage.setItem("dark", next ? "1" : "0"); return next; })}
-              className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0"
-              style={{ background: dark ? "var(--yellow)" : "var(--surface-elevated)", border: "1px solid var(--border)" }}
+              className="relative inline-flex h-7 w-14 items-center rounded-full transition-colors flex-shrink-0"
+              style={{ background: dark ? "#2a2a2a" : "var(--yellow)", border: "1px solid var(--border)" }}
               title={dark ? "Přepnout na světlý režim" : "Přepnout na tmavý režim"}
             >
+              {/* Sun icon — visible in light mode (left side) */}
+              <svg className="absolute left-1.5 w-3.5 h-3.5 transition-opacity" style={{ opacity: dark ? 0.25 : 0 }} viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="8" r="3" fill="#000"/>
+                <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.22 3.22l1.42 1.42M11.36 11.36l1.42 1.42M3.22 12.78l1.42-1.42M11.36 4.64l1.42-1.42" stroke="#000" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+              {/* Moon icon — visible in dark mode (right side) */}
+              <svg className="absolute right-1.5 w-3.5 h-3.5 transition-opacity" style={{ opacity: dark ? 0.5 : 0 }} viewBox="0 0 16 16" fill="none">
+                <path d="M13.5 10A6 6 0 0 1 6 2.5a6 6 0 1 0 7.5 7.5z" fill="var(--muted)"/>
+              </svg>
               <span
-                className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-                style={{ transform: dark ? "translateX(1.375rem)" : "translateX(0.25rem)" }}
-              />
+                className="inline-flex items-center justify-center h-5 w-5 transform rounded-full transition-transform shadow-sm"
+                style={{
+                  background: dark ? "var(--surface-elevated)" : "white",
+                  transform: dark ? "translateX(1.75rem)" : "translateX(0.2rem)",
+                }}
+              >
+                {/* Knob icon */}
+                {dark
+                  ? <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M13.5 10A6 6 0 0 1 6 2.5a6 6 0 1 0 7.5 7.5z" fill="#FFD600"/></svg>
+                  : <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="3" fill="#000"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.22 3.22l1.42 1.42M11.36 11.36l1.42 1.42M3.22 12.78l1.42-1.42M11.36 4.64l1.42-1.42" stroke="#000" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                }
+              </span>
             </button>
             {activePage === "chat" && (
               <button
