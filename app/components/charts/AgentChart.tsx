@@ -2,7 +2,7 @@
 
 import {
   BarChart, Bar,
-  LineChart, Line,
+  AreaChart, Area,
   PieChart, Pie, Cell,
   XAxis, YAxis,
   CartesianGrid, Tooltip, Legend,
@@ -156,7 +156,13 @@ export function AgentChart({ chart }: { chart: ChartData }) {
             </BarChart>
           )
         ) : chart.type === "line" ? (
-          <LineChart data={chart.data} margin={{ top: 4, right: 8, left: 4, bottom: longLabels ? 8 : 0 }}>
+          <AreaChart data={chart.data} margin={{ top: 4, right: 8, left: 4, bottom: longLabels ? 8 : 0 }}>
+            <defs>
+              <linearGradient id={`areaGrad-${chart.title}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={YELLOW} stopOpacity={0.18} />
+                <stop offset="95%" stopColor={YELLOW} stopOpacity={0} />
+              </linearGradient>
+            </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
             <XAxis dataKey={xKey} {...xAxisProps} />
             <YAxis tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} width={yWidth} allowDecimals={false} tickFormatter={formatYTick} />
@@ -164,8 +170,8 @@ export function AgentChart({ chart }: { chart: ChartData }) {
               <ReferenceLine y={chart.reference_line.value} stroke="var(--muted)" strokeDasharray="4 4" strokeWidth={1.5} label={{ value: chart.reference_line.label, position: "insideTopRight", fontSize: 10, fill: "var(--muted)" }} />
             )}
             <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={{ stroke: "var(--border)", strokeWidth: 1 }} formatter={(value: unknown) => [formatTooltipValue(Number(value)), null]} />
-            <Line type="linear" dataKey={yKey} stroke={YELLOW} strokeWidth={2} dot={{ fill: YELLOW, r: 3, strokeWidth: 0 }} activeDot={{ r: 5, fill: YELLOW, strokeWidth: 0 }} />
-          </LineChart>
+            <Area type="linear" dataKey={yKey} stroke={YELLOW} strokeWidth={2} fill={`url(#areaGrad-${chart.title})`} dot={false} activeDot={{ r: 4, fill: YELLOW, strokeWidth: 0 }} animationDuration={500} animationEasing="ease-out" />
+          </AreaChart>
         ) : (
           <PieChart>
             <Pie data={chart.data} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey={yKey} nameKey={xKey}>

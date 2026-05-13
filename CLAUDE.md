@@ -22,7 +22,7 @@ Pepa je fiktivní postava ze zadání — reprezentuje back office managera real
 
 ---
 
-## Aktuální stav (14. 5. 2026)
+## Aktuální stav (14. 5. 2026 — večer)
 
 ✅ Všech 6 use cases ze zadání funguje na live deploymentu  
 ✅ Google Sheets data naseedována (50 klientů, 50 nemovitostí, 50 leadů)  
@@ -40,6 +40,14 @@ Pepa je fiktivní postava ze zadání — reprezentuje back office managera real
 ✅ AgentChart — bar/line/pie, horizontal layout, color zones (green/yellow/red/gray), reference line, color legend  
 ✅ SVG nav ikony (bez emoji), tooltip bez dvojtečky, user-select: none na dashboardu  
 ✅ Mobilní layout — bottom nav, responzivní dashboard grid (2 cols KPI, stacking sekcí), h-[100dvh]  
+✅ KPI cards count-up animace (ease-out cubic, 900ms) při prvním loadu  
+✅ Area chart animace při změně timeslotu (key={timeSlot}, 500ms ease-out)  
+✅ Dashboard — metric switcher (Leady/Nemovitosti/Klienti) vlevo jako title, prázdný stav grafu  
+✅ Makléři progress bary + podíl %, statusy progress bary + uzavřeno celkem  
+✅ AgentChart line → AreaChart s gradientem (konzistentní s dashboardem)  
+✅ Chat empty state — hero + 2×3 quick prompt grid, prompts kompaktní scrollable řada po prvním chatu  
+✅ Theme toggle se slunce/měsíc ikonami  
+✅ Sidebar/header výška srovnána (65px)  
 
 **Zbývá:** Natočit demo video
 
