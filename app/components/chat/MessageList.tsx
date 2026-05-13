@@ -65,7 +65,16 @@ function TypingIndicator({ text }: { text?: string }) {
   );
 }
 
-export function MessageList({ messages, dark }: { messages: Message[]; dark: boolean }) {
+const QUICK_PROMPTS = [
+  { label: "Noví klienti Q1", prompt: "Jací noví klienti za Q1 2025?" },
+  { label: "Vývoj leadů", prompt: "Ukáž vývoj leadů za posledních 6 měsíců" },
+  { label: "Email zájemci", prompt: "Napiš email zájemci o prohlídku" },
+  { label: "Chybějící data", prompt: "Nemovitosti bez dat o rekonstrukci" },
+  { label: "Týdenní report", prompt: "Shrň výsledky minulého týdne" },
+  { label: "Sreality monitoring", prompt: "Nové nabídky Praha Holešovice" },
+];
+
+export function MessageList({ messages, dark, onSend }: { messages: Message[]; dark: boolean; onSend?: (text: string) => void }) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -74,20 +83,45 @@ export function MessageList({ messages, dark }: { messages: Message[]; dark: boo
 
   if (messages.length === 0) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-        <div
-          className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
-          style={{ background: "var(--yellow)" }}
-        >
-          <span className="text-3xl">🏢</span>
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-10 gap-8">
+        {/* Hero */}
+        <div className="flex flex-col items-center text-center gap-3">
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center"
+            style={{ background: "var(--yellow)" }}
+          >
+            <span className="font-display font-extrabold text-2xl text-black">P</span>
+          </div>
+          <div>
+            <h2 className="font-display font-bold text-2xl" style={{ color: "var(--text)" }}>
+              Pepa Agent
+            </h2>
+            <p className="text-sm mt-1 max-w-xs" style={{ color: "var(--muted)" }}>
+              Back office asistent pro realitní firmu — data, reporty, emaily, monitoring trhu.
+            </p>
+          </div>
         </div>
-        <h2 className="font-semibold text-xl mb-2" style={{ color: "var(--text)" }}>
-          Pepa Agent
-        </h2>
-        <p className="text-sm max-w-sm" style={{ color: "var(--muted)" }}>
-          Tvůj back office asistent pro realitní firmu. Zeptej se na data klientů,
-          nemovitostí, leadů nebo požádej o report.
-        </p>
+
+        {/* Quick prompt grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 w-full max-w-xl">
+          {QUICK_PROMPTS.map((item) => (
+            <button
+              key={item.prompt}
+              onClick={() => onSend?.(item.prompt)}
+              className="text-left px-4 py-3 rounded-xl text-sm transition-all"
+              style={{
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+                color: "var(--text)",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--yellow)")}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+            >
+              <span className="font-medium block text-xs mb-0.5" style={{ color: "var(--yellow)" }}>{item.label}</span>
+              <span className="text-xs leading-snug" style={{ color: "var(--muted)" }}>{item.prompt}</span>
+            </button>
+          ))}
+        </div>
       </div>
     );
   }
@@ -101,10 +135,10 @@ export function MessageList({ messages, dark }: { messages: Message[]; dark: boo
         >
           {msg.role === "assistant" && (
             <div
-              className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center mr-2 mt-1"
+              className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center mr-2 mt-1 font-display font-extrabold text-sm text-black"
               style={{ background: "var(--yellow)" }}
             >
-              <span className="text-sm">🤖</span>
+              P
             </div>
           )}
 

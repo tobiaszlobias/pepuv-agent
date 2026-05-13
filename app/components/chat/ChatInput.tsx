@@ -6,6 +6,7 @@ interface ChatInputProps {
   onSend: (message: string) => void;
   disabled: boolean;
   dark: boolean;
+  hasMessages?: boolean;
 }
 
 const QUICK_PROMPTS = [
@@ -17,7 +18,7 @@ const QUICK_PROMPTS = [
   "Nové nabídky Praha Holešovice",
 ];
 
-export function ChatInput({ onSend, disabled, dark }: ChatInputProps) {
+export function ChatInput({ onSend, disabled, dark, hasMessages }: ChatInputProps) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -53,30 +54,32 @@ export function ChatInput({ onSend, disabled, dark }: ChatInputProps) {
       className="px-4 py-3 flex-shrink-0"
       style={{ background: "var(--surface)", borderTop: "1px solid var(--border)" }}
     >
-      {/* Quick prompts */}
-      <div className="flex flex-wrap gap-2 mb-3">
-        {QUICK_PROMPTS.map((prompt) => (
-          <button
-            key={prompt}
-            onClick={() => onSend(prompt)}
-            disabled={disabled}
-            className="text-xs px-3 py-1.5 rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{
-              background: "var(--surface-elevated)",
-              color: "var(--yellow)",
-              border: "1px solid var(--border)",
-            }}
-            onMouseEnter={(e) => {
-              if (!disabled) e.currentTarget.style.borderColor = "var(--yellow)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "var(--border)";
-            }}
-          >
-            {prompt}
-          </button>
-        ))}
-      </div>
+      {/* Quick prompts — only shown after first message */}
+      {hasMessages && (
+        <div className="flex flex-wrap gap-2 mb-3">
+          {QUICK_PROMPTS.map((prompt) => (
+            <button
+              key={prompt}
+              onClick={() => onSend(prompt)}
+              disabled={disabled}
+              className="text-xs px-3 py-1.5 rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{
+                background: "var(--surface-elevated)",
+                color: "var(--yellow)",
+                border: "1px solid var(--border)",
+              }}
+              onMouseEnter={(e) => {
+                if (!disabled) e.currentTarget.style.borderColor = "var(--yellow)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "var(--border)";
+              }}
+            >
+              {prompt}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Input area */}
       <div className="flex gap-2 items-end">

@@ -394,8 +394,8 @@ export default function Home() {
           {activePage === "dashboard" && <DashboardView />}
           {activePage === "chat" && (
             <>
-              <MessageList messages={messages} dark={dark} />
-              <ChatInput onSend={sendMessage} disabled={loading} dark={dark} />
+              <MessageList messages={messages} dark={dark} onSend={sendMessage} />
+              <ChatInput onSend={sendMessage} disabled={loading} dark={dark} hasMessages={messages.length > 0} />
             </>
           )}
           {activePage === "klienti" && <ClientsView />}
