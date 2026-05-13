@@ -124,10 +124,10 @@ function KpiCard({ label, value, sub, highlight }: {
   label: string; value: string | number; sub?: string; highlight?: boolean;
 }) {
   return (
-    <div className="rounded-2xl p-5 flex flex-col gap-1" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-      <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>{label}</p>
-      <p className="text-3xl font-bold leading-none" style={{ color: highlight ? YELLOW : "var(--text)" }}>{value}</p>
-      {sub && <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>{sub}</p>}
+    <div className="rounded-xl md:rounded-2xl p-4 md:p-5 flex flex-col gap-1" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+      <p className="text-[10px] md:text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>{label}</p>
+      <p className="text-2xl md:text-3xl font-bold leading-none" style={{ color: highlight ? YELLOW : "var(--text)" }}>{value}</p>
+      {sub && <p className="text-[10px] md:text-xs mt-1" style={{ color: "var(--muted)" }}>{sub}</p>}
     </div>
   );
 }
@@ -229,17 +229,16 @@ export function DashboardView() {
 
   return (
     <div
-      className="flex-1 min-h-0 grid gap-4 px-6 py-5"
+      className="flex-1 min-h-0 overflow-y-auto px-4 md:px-6 py-4 md:py-5 flex flex-col gap-3 md:gap-4 md:overflow-hidden"
       style={{
         background: "var(--bg)",
         userSelect: "none",
         WebkitUserSelect: "none",
-        gridTemplateRows: "auto 1fr 1fr",
       }}
     >
 
       {/* KPI row */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 flex-shrink-0">
         <KpiCard
           label="Klienti celkem"
           value={data.clients.total}
@@ -264,10 +263,10 @@ export function DashboardView() {
       </div>
 
       {/* Charts row */}
-      <div className="grid grid-cols-3 gap-4 min-h-0">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 md:flex-1 md:min-h-0">
 
         {/* Area chart leadů */}
-        <div className="col-span-2 min-h-0">
+        <div className="md:col-span-2 min-h-0">
           <Section
             title={`Leady — ${totalInSlot} celkem`}
             action={
@@ -362,7 +361,7 @@ export function DashboardView() {
       </div>
 
       {/* Bottom row */}
-      <div className="grid grid-cols-3 gap-4 min-h-0">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 md:flex-1 md:min-h-0 pb-2 md:pb-0">
 
         {/* Top makléři */}
         <Section title="Top makléři — leady">

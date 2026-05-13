@@ -271,10 +271,10 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-screen" style={{ background: "var(--bg)" }}>
-      {/* Sidebar */}
+    <div className="flex h-[100dvh]" style={{ background: "var(--bg)" }}>
+      {/* Sidebar — desktop only */}
       <aside
-        className="w-60 flex flex-col flex-shrink-0"
+        className="hidden md:flex w-60 flex-col flex-shrink-0"
         style={{ background: "var(--surface)", borderRight: "1px solid var(--border)" }}
       >
         {/* Logo */}
@@ -337,26 +337,35 @@ export default function Home() {
       <main className="flex-1 flex flex-col min-w-0">
         {/* Header */}
         <header
-          className="px-6 py-4 flex items-center justify-between flex-shrink-0"
+          className="px-4 md:px-6 py-3 md:py-4 flex items-center justify-between flex-shrink-0"
           style={{ background: "var(--surface)", borderBottom: "1px solid var(--border)" }}
         >
-          <div>
-            <h2 className="font-semibold text-base" style={{ color: "var(--text)" }}>
-              {activePage === "dashboard" && "Dashboard"}
-              {activePage === "chat" && "Chat s agentem"}
-              {activePage === "klienti" && "Klienti"}
-              {activePage === "nemovitosti" && "Nemovitosti"}
-              {activePage === "leady" && "Leady"}
-            </h2>
-            <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>
-              {activePage === "dashboard" && "Přehled klíčových čísel a aktivit"}
-              {activePage === "chat" && "Ptej se na klienty, nemovitosti, leady nebo požádej o report"}
-              {activePage === "klienti" && "Přehled všech klientů z Google Sheets"}
-              {activePage === "nemovitosti" && "Přehled všech nemovitostí z Google Sheets"}
-              {activePage === "leady" && "Přehled všech leadů z Google Sheets"}
-            </p>
+          <div className="flex items-center gap-3">
+            {/* Logo — mobile only */}
+            <div
+              className="md:hidden w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ background: "var(--yellow)" }}
+            >
+              <span className="font-display font-extrabold text-sm text-black">P</span>
+            </div>
+            <div>
+              <h2 className="font-semibold text-sm md:text-base" style={{ color: "var(--text)" }}>
+                {activePage === "dashboard" && "Dashboard"}
+                {activePage === "chat" && "Chat s agentem"}
+                {activePage === "klienti" && "Klienti"}
+                {activePage === "nemovitosti" && "Nemovitosti"}
+                {activePage === "leady" && "Leady"}
+              </h2>
+              <p className="hidden md:block text-xs mt-0.5" style={{ color: "var(--muted)" }}>
+                {activePage === "dashboard" && "Přehled klíčových čísel a aktivit"}
+                {activePage === "chat" && "Ptej se na klienty, nemovitosti, leady nebo požádej o report"}
+                {activePage === "klienti" && "Přehled všech klientů z Google Sheets"}
+                {activePage === "nemovitosti" && "Přehled všech nemovitostí z Google Sheets"}
+                {activePage === "leady" && "Přehled všech leadů z Google Sheets"}
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setDark((d) => { const next = !d; sessionStorage.setItem("dark", next ? "1" : "0"); return next; })}
               className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0"
@@ -374,7 +383,7 @@ export default function Home() {
                 className="text-xs transition-colors hover:opacity-100 opacity-60"
                 style={{ color: "var(--muted)" }}
               >
-                Vyčistit chat
+                Vyčistit
               </button>
             )}
           </div>
@@ -393,6 +402,29 @@ export default function Home() {
           {activePage === "nemovitosti" && <PropertiesView />}
           {activePage === "leady" && <LeadsView />}
         </div>
+
+        {/* Bottom nav — mobile only */}
+        <nav
+          className="md:hidden flex flex-shrink-0"
+          style={{ background: "var(--surface)", borderTop: "1px solid var(--border)" }}
+        >
+          {NAV_ITEMS.map((item) => {
+            const isActive = activePage === item.page;
+            return (
+              <button
+                key={item.label}
+                onClick={() => { setActivePage(item.page); sessionStorage.setItem("activePage", item.page); }}
+                className="flex-1 flex flex-col items-center justify-center gap-1 py-3 text-[10px] font-medium transition-colors"
+                style={{ color: isActive ? "var(--yellow)" : "var(--muted)" }}
+              >
+                <span>
+                  {item.icon(false)}
+                </span>
+                {item.label}
+              </button>
+            );
+          })}
+        </nav>
       </main>
     </div>
   );
