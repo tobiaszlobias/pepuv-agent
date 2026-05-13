@@ -314,7 +314,7 @@ export function DashboardView() {
             }
           >
             <ResponsiveContainer width="100%" height={240}>
-              <AreaChart data={chartData.length > 0 ? chartData : [{ month: "", count: 0 }]} margin={{ top: 8, right: 8, left: 4, bottom: 0 }}>
+              <AreaChart key={timeSlot} data={chartData.length > 0 ? chartData : [{ month: "", count: 0 }]} margin={{ top: 8, right: 8, left: 4, bottom: 0 }}>
                 <defs>
                   <linearGradient id="leadGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor={YELLOW} stopOpacity={0.2} />
@@ -351,7 +351,8 @@ export function DashboardView() {
                   name="Leady"
                   dot={false}
                   activeDot={{ r: 4, fill: YELLOW, strokeWidth: 0 }}
-                  isAnimationActive={false}
+                  animationDuration={500}
+                  animationEasing="ease-out"
                 />
               </AreaChart>
             </ResponsiveContainer>
