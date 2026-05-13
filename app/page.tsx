@@ -278,7 +278,7 @@ export default function Home() {
         style={{ background: "var(--surface)", borderRight: "1px solid var(--border)" }}
       >
         {/* Logo */}
-        <div className="px-5 py-5" style={{ borderBottom: "1px solid var(--border)" }}>
+        <div className="px-5 flex items-center flex-shrink-0" style={{ borderBottom: "1px solid var(--border)", height: "65px" }}>
           <div className="flex items-center gap-3">
             <div
               className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -337,8 +337,8 @@ export default function Home() {
       <main className="flex-1 flex flex-col min-w-0">
         {/* Header */}
         <header
-          className="px-4 md:px-6 py-3 md:py-4 flex items-center justify-between flex-shrink-0"
-          style={{ background: "var(--surface)", borderBottom: "1px solid var(--border)" }}
+          className="px-4 md:px-6 flex items-center justify-between flex-shrink-0"
+          style={{ background: "var(--surface)", borderBottom: "1px solid var(--border)", height: "65px" }}
         >
           <div className="flex items-center gap-3">
             {/* Logo — mobile only */}
