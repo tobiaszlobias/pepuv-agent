@@ -210,8 +210,8 @@ function AnimatedFloat({ target, suffix }: { target: number; suffix: string }) {
 
 function Section({ title, children, action, titleNode }: { title: string; children: React.ReactNode; action?: React.ReactNode; titleNode?: React.ReactNode }) {
   return (
-    <div className="rounded-2xl p-5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-      <div className="flex items-center justify-between mb-4">
+    <div className="rounded-2xl p-4 md:p-5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
         {titleNode
           ? titleNode
           : <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>{title}</p>

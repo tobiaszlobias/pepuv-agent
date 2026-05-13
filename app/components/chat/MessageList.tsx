@@ -83,23 +83,18 @@ export function MessageList({ messages, dark, onSend }: { messages: Message[]; d
 
   if (messages.length === 0) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-10 gap-8">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 md:px-6 py-8 gap-6">
         {/* Hero */}
-        <div className="flex flex-col items-center text-center gap-3">
+        <div className="flex flex-col items-center text-center gap-2">
           <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center"
+            className="w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center"
             style={{ background: "var(--yellow)" }}
           >
-            <span className="font-display font-extrabold text-2xl text-black">P</span>
+            <span className="font-display font-extrabold text-xl md:text-2xl text-black">P</span>
           </div>
-          <div>
-            <h2 className="font-display font-bold text-2xl" style={{ color: "var(--text)" }}>
-              Pepův Agent
-            </h2>
-            <p className="text-sm mt-1 max-w-xs" style={{ color: "var(--muted)" }}>
-              Back office asistent pro realitní firmu — data, reporty, emaily, monitoring trhu.
-            </p>
-          </div>
+          <h2 className="font-display font-bold text-xl md:text-2xl" style={{ color: "var(--text)" }}>
+            Pepův Agent
+          </h2>
         </div>
 
         {/* Quick prompt grid */}
@@ -108,7 +103,7 @@ export function MessageList({ messages, dark, onSend }: { messages: Message[]; d
             <button
               key={item.prompt}
               onClick={() => onSend?.(item.prompt)}
-              className="text-left px-4 py-3 rounded-xl text-sm transition-all"
+              className="text-left px-3 md:px-4 py-3 rounded-xl text-sm transition-all"
               style={{
                 background: "var(--surface)",
                 border: "1px solid var(--border)",
