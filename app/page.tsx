@@ -152,12 +152,21 @@ const NAV_ITEMS: { icon: (active: boolean) => React.ReactNode; label: string; pa
   { icon: (a) => <IconChart active={a} />, label: "Leady", page: "leady" },
 ];
 
+type ModelId = "claude-haiku-4-5-20251001" | "claude-sonnet-4-6" | "claude-opus-4-7";
+
+const MODELS: { id: ModelId; label: string; sub: string }[] = [
+  { id: "claude-haiku-4-5-20251001", label: "Haiku", sub: "Rychlý" },
+  { id: "claude-sonnet-4-6",        label: "Sonnet", sub: "Vyvážený" },
+  { id: "claude-opus-4-7",          label: "Opus",   sub: "Nejlepší" },
+];
+
 export default function Home() {
   const [authenticated, setAuthenticated] = useState(false);
   const [activePage, setActivePage] = useState<Page>("chat");
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [dark, setDark] = useState(true);
+  const [model, setModel] = useState<ModelId>("claude-sonnet-4-6");
   const loadingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -232,7 +241,7 @@ export default function Home() {
         const res = await fetch("/api/agent", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: history }),
+          body: JSON.stringify({ messages: history, model }),
         });
 
         if (!res.ok) throw new Error("API error");
@@ -323,13 +332,31 @@ export default function Home() {
           })}
         </nav>
 
-        {/* Status */}
-        <div className="px-4 py-4" style={{ borderTop: "1px solid var(--border)" }}>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0" />
-            <span className="text-xs" style={{ color: "var(--muted)" }}>Agent aktivní</span>
+        {/* Model picker */}
+        <div className="px-3 py-3" style={{ borderTop: "1px solid var(--border)" }}>
+          <div className="flex items-center gap-2 mb-2 px-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0" />
+            <span className="text-xs font-medium" style={{ color: "var(--muted)" }}>Model</span>
           </div>
-          <p className="text-xs mt-0.5" style={{ color: "var(--border)" }}>claude-sonnet-4-6</p>
+          <div className="flex flex-col gap-1">
+            {MODELS.map((m) => (
+              <button
+                key={m.id}
+                onClick={() => setModel(m.id)}
+                className="flex items-center justify-between px-3 py-2 rounded-xl text-left transition-all"
+                style={
+                  model === m.id
+                    ? { background: "var(--yellow)", color: "#000" }
+                    : { background: "transparent", color: "var(--muted)" }
+                }
+                onMouseEnter={(e) => { if (model !== m.id) e.currentTarget.style.background = "var(--surface-elevated)"; }}
+                onMouseLeave={(e) => { if (model !== m.id) e.currentTarget.style.background = "transparent"; }}
+              >
+                <span className="text-xs font-semibold">{m.label}</span>
+                <span className="text-xs opacity-70">{m.sub}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </aside>
 

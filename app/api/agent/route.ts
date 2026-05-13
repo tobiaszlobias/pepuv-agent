@@ -308,7 +308,8 @@ async function executeTool(
 }
 
 export async function POST(req: NextRequest) {
-  const { messages }: { messages: ChatMessage[] } = await req.json();
+  const { messages, model }: { messages: ChatMessage[]; model?: string } = await req.json();
+  const selectedModel = model || "claude-sonnet-4-6";
 
   const apiMessages: MessageParam[] = messages.map((m) => ({
     role: m.role,
@@ -319,7 +320,7 @@ export async function POST(req: NextRequest) {
   const allMessages: MessageParam[] = [...apiMessages];
 
   let response = await client.messages.create({
-    model: "claude-sonnet-4-6",
+    model: selectedModel,
     max_tokens: 4096,
     system: SYSTEM_PROMPT,
     tools: agentTools,
@@ -348,7 +349,7 @@ export async function POST(req: NextRequest) {
     allMessages.push({ role: "user", content: toolResults });
 
     response = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: selectedModel,
       max_tokens: 4096,
       system: SYSTEM_PROMPT,
       tools: agentTools,
