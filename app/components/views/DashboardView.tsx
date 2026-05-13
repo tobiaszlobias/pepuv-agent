@@ -240,10 +240,18 @@ function formatPrice(n: number) {
   return `${n} Kč`;
 }
 
+function isValidDashboardData(d: DashboardData | null): d is DashboardData {
+  if (!d) return false;
+  // Invalidate old cache that lacked dates arrays for clients/properties
+  return Array.isArray(d.clients.dates) && Array.isArray(d.properties.dates);
+}
+
 export function DashboardView() {
-  const [data, setData] = useState<DashboardData | null>(getCached<DashboardData>("dashboard"));
+  const cached = getCached<DashboardData>("dashboard");
+  const validCached = isValidDashboardData(cached) ? cached : null;
+  const [data, setData] = useState<DashboardData | null>(validCached);
   const [sreality, setSreality] = useState<SrealityListing[]>(getCached<SrealityListing[]>("sreality_latest") ?? []);
-  const [loadingData, setLoadingData] = useState(data === null);
+  const [loadingData, setLoadingData] = useState(validCached === null);
   const [loadingSreality, setLoadingSreality] = useState(false);
   const [srealityError, setSrealityError] = useState("");
   const [srealityScanned, setSrealityScanned] = useState(false);
