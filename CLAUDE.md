@@ -22,7 +22,7 @@ Pepa je fiktivní postava ze zadání — reprezentuje back office managera real
 
 ---
 
-## Aktuální stav (12. 5. 2026)
+## Aktuální stav (13. 5. 2026)
 
 ✅ Všech 6 use cases ze zadání funguje na live deploymentu  
 ✅ Google Sheets data naseedována (50 klientů, 50 nemovitostí, 50 leadů)  
@@ -35,6 +35,8 @@ Pepa je fiktivní postava ze zadání — reprezentuje back office managera real
 ✅ Ochrana heslem (LoginScreen + /api/auth, heslo v env PASSWORD)  
 ✅ Sidebar stránky: Klienti, Nemovitosti, Leady (tabulky z Sheets, search, cache)  
 ✅ SessionStorage persistence — aktivní stránka, dark mode, chat history, data tabulek  
+✅ Dashboard — KPI cards, area chart + timeslot picker (3m/6m/12m/Vše), pie chart, Sreality panel  
+✅ Tabulky — formátované ceny (8 M Kč), datum (cs-CZ), status/stav color badges  
 
 **Zbývá:** Natočit demo video
 
@@ -161,5 +163,5 @@ create_chart(type: 'bar'|'line'|'pie', data, title, x_key?, y_key?)
 
 - Sheets: jen čtení (bez zápisu)
 - Sreality: ~20 náhodných výsledků, filtr server-side — ne cílené vyhledávání
-- Tabulky: jen search, bez row click / detail modalu, bez exportu CSV
+- Tabulky: jen search + formátování, bez row click / detail modalu, bez exportu CSV
 - Cache: sessionStorage — session-scoped, nesdílí se mezi taby

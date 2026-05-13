@@ -1,8 +1,11 @@
 "use client";
 
+import React from "react";
+
 interface Column {
   key: string;
   label: string;
+  render?: (value: string | undefined, row: Record<string, string | undefined>) => React.ReactNode;
 }
 
 interface DataTableProps {
@@ -49,7 +52,7 @@ export function DataTable({ columns, rows, loading, searchQuery }: DataTableProp
             {columns.map((col) => (
               <th
                 key={col.key}
-                className="text-left px-4 py-3 font-semibold text-xs uppercase tracking-wide"
+                className="text-left px-4 py-3 font-medium text-xs uppercase tracking-wide"
                 style={{ color: "var(--muted)" }}
               >
                 {col.label}
@@ -68,7 +71,9 @@ export function DataTable({ columns, rows, loading, searchQuery }: DataTableProp
             >
               {columns.map((col) => (
                 <td key={col.key} className="px-4 py-3" style={{ color: "var(--text)" }}>
-                  {row[col.key] || <span style={{ color: "var(--muted)" }}>—</span>}
+                  {col.render
+                    ? col.render(row[col.key], row)
+                    : row[col.key] || <span style={{ color: "var(--muted)" }}>—</span>}
                 </td>
               ))}
             </tr>

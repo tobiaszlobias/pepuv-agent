@@ -15,14 +15,43 @@ interface Client {
   makler: string;
 }
 
+function formatDate(raw: string | undefined): string {
+  if (!raw) return "—";
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return raw;
+  return d.toLocaleDateString("cs-CZ", { day: "numeric", month: "numeric", year: "numeric" });
+}
+
+const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
+  aktivní:  { bg: "rgba(255,214,0,0.15)",  color: "#FFD600" },
+  nový:     { bg: "rgba(96,165,250,0.12)", color: "#60a5fa" },
+  neaktivní:{ bg: "rgba(136,136,128,0.15)", color: "#888880" },
+  uzavřen:  { bg: "rgba(74,222,128,0.12)", color: "#4ade80" },
+};
+
+function StatusBadge({ status }: { status: string | undefined }) {
+  if (!status) return <span style={{ color: "var(--muted)" }}>—</span>;
+  const key = status.toLowerCase();
+  const found = Object.keys(STATUS_COLORS).find((k) => key.includes(k));
+  const style = found ? STATUS_COLORS[found] : { bg: "var(--surface-elevated)", color: "var(--muted)" };
+  return (
+    <span
+      className="inline-block px-2 py-0.5 rounded-md text-xs font-medium"
+      style={{ background: style.bg, color: style.color }}
+    >
+      {status}
+    </span>
+  );
+}
+
 const COLUMNS = [
-  { key: "jmeno", label: "Jméno" },
-  { key: "email", label: "Email" },
-  { key: "telefon", label: "Telefon" },
-  { key: "zdroj", label: "Zdroj" },
-  { key: "status", label: "Status" },
-  { key: "makler", label: "Makléř" },
-  { key: "datum_pridani", label: "Přidán" },
+  { key: "jmeno",        label: "Jméno" },
+  { key: "email",        label: "Email",   render: (v: string | undefined) => <span style={{ color: "var(--muted)" }}>{v || "—"}</span> },
+  { key: "telefon",      label: "Telefon", render: (v: string | undefined) => <span style={{ color: "var(--muted)", fontVariantNumeric: "tabular-nums" }}>{v || "—"}</span> },
+  { key: "zdroj",        label: "Zdroj" },
+  { key: "status",       label: "Status",  render: (v: string | undefined) => <StatusBadge status={v} /> },
+  { key: "makler",       label: "Makléř" },
+  { key: "datum_pridani", label: "Přidán", render: (v: string | undefined) => <span style={{ color: "var(--muted)" }}>{formatDate(v)}</span> },
 ];
 
 function StatCard({ label, value }: { label: string; value: string | number }) {
@@ -56,12 +85,10 @@ export function ClientsView() {
   }).length;
 
   const aktivni = clients.filter((c) => c.status.toLowerCase().includes("aktivní")).length;
-
   const sources = new Set(clients.map((c) => c.zdroj).filter(Boolean)).size;
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Stats */}
       <div className="px-6 pt-5 pb-4 flex-shrink-0">
         <div className="grid grid-cols-4 gap-3">
           <StatCard label="Celkem klientů" value={loading ? "…" : clients.length} />
@@ -71,7 +98,6 @@ export function ClientsView() {
         </div>
       </div>
 
-      {/* Search bar */}
       <div className="px-6 pb-3 flex items-center gap-3 flex-shrink-0">
         <input
           type="text"
@@ -79,11 +105,7 @@ export function ClientsView() {
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Hledat podle jména, emailu, makléře..."
           className="flex-1 text-sm px-3 py-2 rounded-lg focus:outline-none transition-all"
-          style={{
-            background: "var(--surface-elevated)",
-            border: "1px solid var(--border)",
-            color: "var(--text)",
-          }}
+          style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)", color: "var(--text)" }}
           onFocus={(e) => (e.currentTarget.style.borderColor = "var(--yellow)")}
           onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
         />
@@ -98,7 +120,6 @@ export function ClientsView() {
         )}
       </div>
 
-      {/* Table */}
       <div className="flex-1 overflow-y-auto" style={{ borderTop: "1px solid var(--border)" }}>
         <DataTable
           columns={COLUMNS}
