@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   AreaChart, Area,
   PieChart, Pie, Cell,
-  XAxis, YAxis, Tooltip, ResponsiveContainer,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 import { getCached, setCached } from "@/lib/cache";
 
@@ -208,10 +208,10 @@ function AnimatedFloat({ target, suffix }: { target: number; suffix: string }) {
   return <>{current}{suffix}</>;
 }
 
-function Section({ title, children, action, titleNode }: { title: string; children: React.ReactNode; action?: React.ReactNode; titleNode?: React.ReactNode }) {
+function Section({ title, children, action, titleNode, stackOnMobile }: { title: string; children: React.ReactNode; action?: React.ReactNode; titleNode?: React.ReactNode; stackOnMobile?: boolean }) {
   return (
     <div className="rounded-2xl p-4 md:p-5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+      <div className={`flex ${stackOnMobile ? "flex-col gap-2" : "flex-wrap items-center justify-between gap-2"} mb-4 md:flex-row md:items-center md:justify-between`}>
         {titleNode
           ? titleNode
           : <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>{title}</p>
@@ -227,6 +227,82 @@ function formatPrice(n: number) {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)} M Kč`;
   if (n >= 1_000) return `${Math.round(n / 1_000)} tis. Kč`;
   return `${n} Kč`;
+}
+
+function ChartWithAdaptiveLabels({ chartData, chartMetric, timeSlot }: {
+  chartData: { month: string; count: number }[];
+  chartMetric: string;
+  timeSlot: string;
+}) {
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = React.useState(600);
+
+  React.useEffect(() => {
+    if (!containerRef.current) return;
+    const ro = new ResizeObserver((entries) => {
+      setContainerWidth(entries[0].contentRect.width);
+    });
+    ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  const shortLabels = containerWidth < 400;
+  const formatMonth = (val: string) => {
+    if (!shortLabels) return val;
+    const parts = val.split(" ");
+    if (parts.length === 2) return parts[0].slice(0, 2) + parts[1];
+    return val.slice(0, 4);
+  };
+
+  return (
+    <div ref={containerRef} style={{ width: "100%", height: 240 }}>
+      <ResponsiveContainer width="100%" height={240}>
+        <AreaChart key={`${chartMetric}-${timeSlot}`} data={chartData} margin={{ top: 8, right: 8, left: 4, bottom: 0 }}>
+          <defs>
+            <linearGradient id="leadGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor={YELLOW} stopOpacity={0.2} />
+              <stop offset="95%" stopColor={YELLOW} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 3" strokeOpacity={0.5} />
+          <XAxis
+            dataKey="month"
+            tick={{ fontSize: shortLabels ? 10 : 11, fill: "var(--muted)" }}
+            axisLine={false}
+            tickLine={false}
+            interval="preserveStartEnd"
+            tickFormatter={formatMonth}
+          />
+          <YAxis
+            tick={{ fontSize: 11, fill: "var(--muted)" }}
+            axisLine={false}
+            tickLine={false}
+            width={28}
+            allowDecimals={false}
+            tickCount={5}
+          />
+          <Tooltip
+            contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
+            labelStyle={{ color: "var(--text)" }}
+            itemStyle={{ color: YELLOW }}
+            cursor={{ stroke: "var(--border)", strokeWidth: 1 }}
+          />
+          <Area
+            type="linear"
+            dataKey="count"
+            stroke={YELLOW}
+            strokeWidth={2}
+            fill="url(#leadGradient)"
+            name="Leady"
+            dot={false}
+            activeDot={{ r: 4, fill: YELLOW, strokeWidth: 0 }}
+            animationDuration={500}
+            animationEasing="ease-out"
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
 }
 
 function isValidDashboardData(d: DashboardData | null): d is DashboardData {
@@ -361,6 +437,7 @@ export function DashboardView() {
         <div className="md:col-span-2">
           <Section
             title=""
+            stackOnMobile
             action={
               <div className="flex gap-0.5 rounded-lg p-0.5" style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)" }}>
                 {TIME_SLOTS.map((s) => (
@@ -403,49 +480,7 @@ export function DashboardView() {
                 <p className="text-sm" style={{ color: "var(--muted)" }}>Žádné záznamy v tomto období</p>
               </div>
             ) : (
-            <ResponsiveContainer width="100%" height={240}>
-              <AreaChart key={`${chartMetric}-${timeSlot}`} data={chartData} margin={{ top: 8, right: 8, left: 4, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="leadGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={YELLOW} stopOpacity={0.2} />
-                    <stop offset="95%" stopColor={YELLOW} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis
-                  dataKey="month"
-                  tick={{ fontSize: 11, fill: "var(--muted)" }}
-                  axisLine={false}
-                  tickLine={false}
-                  interval="preserveStartEnd"
-                />
-                <YAxis
-                  tick={{ fontSize: 11, fill: "var(--muted)" }}
-                  axisLine={false}
-                  tickLine={false}
-                  width={32}
-                  allowDecimals={false}
-                  tickCount={5}
-                />
-                <Tooltip
-                  contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
-                  labelStyle={{ color: "var(--text)" }}
-                  itemStyle={{ color: YELLOW }}
-                  cursor={{ stroke: "var(--border)", strokeWidth: 1 }}
-                />
-                <Area
-                  type="linear"
-                  dataKey="count"
-                  stroke={YELLOW}
-                  strokeWidth={2}
-                  fill="url(#leadGradient)"
-                  name="Leady"
-                  dot={false}
-                  activeDot={{ r: 4, fill: YELLOW, strokeWidth: 0 }}
-                  animationDuration={500}
-                  animationEasing="ease-out"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            <ChartWithAdaptiveLabels chartData={chartData} chartMetric={chartMetric} timeSlot={timeSlot} />
             )}
           </Section>
         </div>
