@@ -1,26 +1,28 @@
-// Apify Sreality scraper helper
-// Token je server-side only — nikdy neposílat klientovi
+// Sreality API helper — přímé volání bez Apify
+// Nahrazuje původní Apify scraper který vracel náhodné výsledky bez možnosti filtrace
 
-const APIFY_BASE = "https://api.apify.com/v2";
-const SREALITY_ACTOR = "shahidirfan~sreality-cz-scraper";
+const SREALITY_API = "https://www.sreality.cz/api/cs/v2/estates";
+const SREALITY_BASE = "https://www.sreality.cz/detail";
+
+// category_main_cb: 1=byt, 2=dům, 3=pozemek, 4=kancelář, 5=ostatní
+const PROPERTY_TYPE_MAP: Record<string, number> = {
+  byt: 1,
+  dům: 2,
+  dum: 2,
+  pozemek: 3,
+  kancelář: 4,
+  kancelar: 4,
+  ostatní: 5,
+  ostatni: 5,
+};
 
 interface SrealityListing {
   address: string;
   price: number;
-  price_czk?: number;
   type: string;
   url: string;
-  description?: string;
-  images?: string[];
+  description: string;
   scraped_at: string;
-}
-
-// Normalize Czech strings for fuzzy matching (remove diacritics, lowercase)
-function normalize(s: string): string {
-  return s
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "");
 }
 
 export async function scrapeSreality(params: {
@@ -29,70 +31,66 @@ export async function scrapeSreality(params: {
   max_price?: number;
   transaction_type?: string;
 }): Promise<SrealityListing[]> {
-  const token = process.env.APIFY_API_TOKEN;
-  if (!token) throw new Error("APIFY_API_TOKEN not set");
+  const query = new URLSearchParams();
 
-  // Actor nepodporuje filtrování v inputu — stáhneme výsledky a filtrujeme server-side
-  const runRes = await fetch(
-    `${APIFY_BASE}/acts/${SREALITY_ACTOR}/run-sync-get-dataset-items?token=${token}&timeout=60&memory=256`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-    }
-  );
+  // Typ transakce: 1=prodej (default), 2=pronájem
+  query.set("category_type_cb", "1");
 
-  if (!runRes.ok) {
-    const text = await runRes.text();
-    throw new Error(`Apify error ${runRes.status}: ${text}`);
+  // Typ nemovitosti
+  const typRaw = (params.property_type || "").toLowerCase().trim();
+  const categoryMain = PROPERTY_TYPE_MAP[typRaw];
+  if (categoryMain) {
+    query.set("category_main_cb", String(categoryMain));
   }
 
-  const items: Record<string, unknown>[] = await runRes.json();
+  // Lokalita
+  query.set("region", params.locality);
 
-  // --- Lokalita ---
-  // Rozbij na slova, matchuj každé slovo zvlášť (bez diakritiky)
-  const localityWords = normalize(params.locality)
-    .split(/[\s,]+/)
-    .filter((w) => w.length > 2); // ignoruj "v", "na" apod.
+  // Max cena
+  if (params.max_price) {
+    query.set("price_max", String(params.max_price));
+  }
 
-  let filtered = items.filter((item) => {
-    const fields = [
-      (item.locality_text as string) || "",
-      (item.location_city as string) || "",
-      (item.location_district as string) || "",
-      (item.location_region as string) || "",
-      (item.title as string) || "",
-    ].map(normalize).join(" ");
+  query.set("per_page", "20");
+  query.set("sort", "0"); // nejnovější
 
-    return localityWords.every((w) => fields.includes(w));
+  const url = `${SREALITY_API}?${query}`;
+
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+      "Accept": "application/json",
+    },
   });
 
-  // --- Typ nemovitosti ---
-  if (params.property_type) {
-    const typNorm = normalize(params.property_type);
-    filtered = filtered.filter((item) => {
-      const mainCat = normalize((item.category_main as string) || "");
-      const subCat = normalize((item.category_sub as string) || "");
-      const title = normalize((item.title as string) || "");
-      return mainCat.includes(typNorm) || subCat.includes(typNorm) || title.includes(typNorm);
-    });
+  if (!res.ok) {
+    throw new Error(`Sreality API error ${res.status}`);
   }
 
-  // --- Max cena ---
-  if (params.max_price) {
-    filtered = filtered.filter((item) => {
-      const p = (item.price_czk as number) || (item.price as number) || 0;
-      return p === 0 || p <= params.max_price!;
-    });
-  }
+  const data = await res.json();
+  const items: Record<string, unknown>[] = data?._embedded?.estates ?? [];
 
-  return filtered.slice(0, 20).map((item) => ({
-    address: (item.locality_text as string) || "",
-    price: (item.price_czk as number) || (item.price as number) || 0,
-    price_czk: item.price_czk as number,
-    type: `${item.category_main || ""} ${item.category_sub || ""}`.trim(),
-    url: (item.source_url as string) || "",
-    description: (item.title as string) || "",
-    scraped_at: new Date().toISOString(),
-  }));
+  return items.map((item) => {
+    const hashId = item.hash_id as number;
+    const seo = item.seo as Record<string, unknown> | undefined;
+    const localitySeo = (seo?.locality as string) || "";
+    const catMain = seo?.category_main_cb as number;
+    const catSub = seo?.category_sub_cb as number;
+    const catType = seo?.category_type_cb as number;
+
+    const detailUrl = hashId && localitySeo
+      ? `${SREALITY_BASE}/${catType === 2 ? "pronajem" : "prodej"}/${catMain === 1 ? "byt" : catMain === 2 ? "dum" : "nemovitost"}/${localitySeo}/${hashId}`
+      : "";
+
+    const priceRaw = (item.price_czk as { value_raw?: number })?.value_raw ?? 0;
+
+    return {
+      address: (item.locality as string) || "",
+      price: priceRaw,
+      type: (item.name as string) || "",
+      url: detailUrl || `https://www.sreality.cz`,
+      description: (item.name as string) || "",
+      scraped_at: new Date().toISOString(),
+    };
+  });
 }
