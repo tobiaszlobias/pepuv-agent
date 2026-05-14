@@ -4,6 +4,22 @@
 const SREALITY_API = "https://www.sreality.cz/api/cs/v2/estates";
 const SREALITY_BASE = "https://www.sreality.cz/detail";
 
+// category_sub_cb → dispozice slug pro URL
+const DISPOSITION_SLUG: Record<number, string> = {
+  2:  "1+1",
+  3:  "1+kk",
+  4:  "2+kk",
+  5:  "2+1",
+  6:  "3+kk",
+  7:  "3+1",
+  8:  "4+kk",
+  9:  "4+1",
+  10: "5+kk",
+  11: "5+1",
+  12: "6+",
+  16: "atypický",
+};
+
 // category_main_cb: 1=byt, 2=dům, 3=pozemek, 4=kancelář, 5=ostatní
 const PROPERTY_TYPE_MAP: Record<string, number> = {
   byt: 1,
@@ -128,14 +144,16 @@ export async function scrapeSreality(params: {
     const hashId = item.hash_id as number;
     const seo = item.seo as Record<string, unknown> | undefined;
     const catMain = seo?.category_main_cb as number;
+    const catSub = seo?.category_sub_cb as number;
     const catType = seo?.category_type_cb as number;
     const localitySeo = (seo?.locality as string) || "";
 
     const transType = catType === 2 ? "pronajem" : "prodej";
     const propType = catMain === 1 ? "byt" : catMain === 2 ? "dum" : "nemovitost";
-    // Správný formát: /detail/prodej/byt/praha-holešovice-nadrazni/1234567890
+    const disposition = DISPOSITION_SLUG[catSub] || "";
+    // Správný formát: /detail/prodej/byt/3+kk/jindrichov-jindrichov-/632767308
     const detailUrl = hashId && localitySeo
-      ? `${SREALITY_BASE}/${transType}/${propType}/${localitySeo}/${hashId}`
+      ? `${SREALITY_BASE}/${transType}/${propType}${disposition ? `/${disposition}` : ""}/${localitySeo}/${hashId}`
       : hashId
       ? `${SREALITY_BASE}/${transType}/${propType}/${hashId}`
       : "";
