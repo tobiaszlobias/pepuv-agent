@@ -4,7 +4,7 @@
 const SREALITY_API = "https://www.sreality.cz/api/cs/v2/estates";
 const SREALITY_BASE = "https://www.sreality.cz/detail";
 
-// category_sub_cb → URL slug (byty = dispozice, domy = typ domu)
+// category_sub_cb → URL slug (verified from Sreality HTML)
 const SUB_SLUG: Record<number, string> = {
   // Byty (category_main_cb=1)
   2:  "1+1",
@@ -19,19 +19,19 @@ const SUB_SLUG: Record<number, string> = {
   11: "5+1",
   12: "6+",
   16: "atypicky",
-  // Domy (category_main_cb=2)
-  37: "rodinny-dum",
+  // Domy (category_main_cb=2) — slugs verified from Sreality search HTML
+  37: "rodinny",
   38: "chata",
   39: "vila",
-  40: "na-klic",
-  41: "mobilheim",
-  43: "zemedelska-usedlost",
-  44: "ostatni",
   46: "chalupa",
-  47: "historicky-objekt",
-  48: "pasivni-dum",
-  49: "trojidum",
-  50: "dvojidum",
+  54: "vicegeneracni-dum",
+  // Pozemky (category_main_cb=3)
+  19: "ostatni-pozemky",
+  20: "pole",
+  21: "les",
+  22: "louka",
+  23: "zahrada",
+  24: "ostatni-pozemky",
 };
 
 // category_main_cb: 1=byt, 2=dům, 3=pozemek, 4=kancelář, 5=ostatní
@@ -159,11 +159,12 @@ export async function scrapeSreality(params: {
     const localitySeo = (seo?.locality as string) || "";
 
     const transType = catType === 2 ? "pronajem" : "prodej";
-    const propType = catMain === 1 ? "byt" : catMain === 2 ? "dum" : "nemovitost";
+    const propType = catMain === 1 ? "byt" : catMain === 2 ? "dum" : catMain === 3 ? "pozemek" : "nemovitost";
     const subSlug = SUB_SLUG[catSub] || "";
-    // Format: /detail/prodej/byt/3+kk/locality/hash  or  /detail/prodej/dum/rodinny-dum/locality/hash
-    const detailUrl = hashId && localitySeo
-      ? `${SREALITY_BASE}/${transType}/${propType}${subSlug ? `/${subSlug}` : ""}/${localitySeo}/${hashId}`
+    // Strip trailing dashes from locality slug (Sreality API returns e.g. "hodslavice-hodslavice-")
+    const localityClean = localitySeo.replace(/-+$/, "");
+    const detailUrl = hashId && localityClean
+      ? `${SREALITY_BASE}/${transType}/${propType}${subSlug ? `/${subSlug}` : ""}/${localityClean}/${hashId}`
       : hashId
       ? `${SREALITY_BASE}/${transType}/${propType}/${hashId}`
       : "";
