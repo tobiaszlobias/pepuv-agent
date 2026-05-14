@@ -127,13 +127,13 @@ export async function scrapeSreality(params: {
   return items.map((item) => {
     const hashId = item.hash_id as number;
     const seo = item.seo as Record<string, unknown> | undefined;
-    const localitySeo = (seo?.locality as string) || "";
     const catMain = seo?.category_main_cb as number;
-    const catSub = seo?.category_sub_cb as number;
     const catType = seo?.category_type_cb as number;
 
-    const detailUrl = hashId && localitySeo
-      ? `${SREALITY_BASE}/${catType === 2 ? "pronajem" : "prodej"}/${catMain === 1 ? "byt" : catMain === 2 ? "dum" : "nemovitost"}/${localitySeo}/${hashId}`
+    const transType = catType === 2 ? "pronajem" : "prodej";
+    const propType = catMain === 1 ? "byt" : catMain === 2 ? "dum" : "nemovitost";
+    const detailUrl = hashId
+      ? `${SREALITY_BASE}/${transType}/${propType}/${hashId}`
       : "";
 
     const priceRaw = (item.price_czk as { value_raw?: number })?.value_raw ?? 0;
