@@ -382,26 +382,57 @@ async function executeTool(
         const isMKc = vals.length > 0 && vals.every((v) => v >= 1_000_000) &&
           cleanedItems.every((d) => Number(d[resolvedYKey] ?? 0) <= 500);
 
-        const itemsWithColor = isHoriz
+        // Detect if Claude passed color zones (any item has color field, or color_legend provided)
+        const hasColorZones = color_legend != null || cleanedItems.some((d) => d.color);
+
+        // Apply color zones for ALL bar charts (horizontal and vertical) when color zones are used
+        const itemsWithColor = (type === "bar" && hasColorZones)
           ? cleanedItems.map((item) => {
+              // If item already has a valid color zone, keep it; otherwise derive from value
+              const existing = item.color as string | undefined;
+              if (existing && ["green", "yellow", "red", "blue", "gray"].includes(existing)) {
+                return item;
+              }
+              // Derive from value — works for both price (Kč/M Kč) and arbitrary scales
+              const val = Number(item[resolvedYKey] ?? 0);
               const valKc = toKc(item[resolvedYKey]);
-              const color = valKc < 6_000_000 ? "green" : valKc < 12_000_000 ? "yellow" : "red";
+              // Use Kč thresholds if values look like prices, otherwise use relative thirds
+              let color: string;
+              if (vals.some((v) => v >= 100_000)) {
+                color = valKc < 6_000_000 ? "green" : valKc < 12_000_000 ? "yellow" : "red";
+              } else {
+                // Generic: sort-based coloring — bottom third green, middle yellow, top red
+                const sorted = [...vals].sort((a, b) => a - b);
+                const lo = sorted[Math.floor(sorted.length / 3)];
+                const hi = sorted[Math.floor((sorted.length * 2) / 3)];
+                color = val <= lo ? "green" : val <= hi ? "yellow" : "red";
+              }
               return { ...item, color };
             })
           : cleanedItems;
 
+        // Auto force horizontal for vertical bars with long labels or many items
+        const xKey = x_key || "name";
+        const hasLongLabels = cleanedItems.some((d) => String(d[xKey] ?? "").length > 10);
+        const autoHoriz = isHoriz || (type === "bar" && !isHoriz && (cleanedItems.length > 6 || hasLongLabels));
+
+        // Re-sort ascending if we switched to horizontal
+        const finalItems = (autoHoriz && !isHoriz)
+          ? [...itemsWithColor].sort((a, b) => Number(a[resolvedYKey] ?? 0) - Number(b[resolvedYKey] ?? 0))
+          : itemsWithColor;
+
         // Auto-detect unit for M Kč axis formatting
-        const autoUnit = unit || (isHoriz && isMKc ? "M Kč" : undefined);
+        const autoUnit = unit || (autoHoriz && isMKc ? "M Kč" : undefined);
 
         return JSON.stringify({
           success: true,
           chart: {
             type,
             title,
-            data: itemsWithColor,
-            x_key: x_key || "name",
+            data: finalItems,
+            x_key: xKey,
             y_key: resolvedYKey,
-            horizontal: isHoriz,
+            horizontal: autoHoriz,
             ...(autoUnit ? { unit: autoUnit } : {}),
             ...(reference_line ? { reference_line } : {}),
             ...(color_legend ? { color_legend } : {}),
