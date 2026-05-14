@@ -125,7 +125,7 @@ export function AgentChart({ chart }: { chart: ChartData }) {
         </div>
       )}
 
-      <ResponsiveContainer width="100%" height={isHorizontal ? horizontalHeight : (longLabels ? 260 : 220)}>
+      <ResponsiveContainer width="100%" height={chart.type === "pie" ? 200 : (isHorizontal ? horizontalHeight : (longLabels ? 260 : 220))}>
         {chart.type === "bar" ? (
           isHorizontal ? (
             <BarChart data={chart.data} layout="vertical" margin={{ top: 4, right: 52, left: 4, bottom: 4 }}>
@@ -174,16 +174,32 @@ export function AgentChart({ chart }: { chart: ChartData }) {
           </AreaChart>
         ) : (
           <PieChart>
-            <Pie data={chart.data} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey={yKey} nameKey={xKey}>
+            <Pie data={chart.data} cx="50%" cy="50%" innerRadius={52} outerRadius={82} paddingAngle={0} dataKey={yKey} nameKey={xKey} strokeWidth={0}>
               {chart.data.map((item, i) => (
                 <Cell key={i} fill={hasZones ? (getCellColor(item, i)) : PIE_COLORS[i % PIE_COLORS.length]} />
               ))}
             </Pie>
             <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} formatter={(value: unknown) => [formatTooltipValue(Number(value)), null]} />
-            <Legend wrapperStyle={{ fontSize: "12px" }} formatter={(value) => <span style={{ color: "var(--text)" }}>{value}</span>} />
           </PieChart>
         )}
       </ResponsiveContainer>
+
+      {chart.type === "pie" && (
+        <div className="flex flex-col gap-1 mt-2">
+          {chart.data.map((item, i) => (
+            <div key={i} className="flex items-center gap-2 text-xs">
+              <span
+                className="w-2 h-2 rounded-full flex-shrink-0"
+                style={{ background: hasZones ? getCellColor(item, i) : PIE_COLORS[i % PIE_COLORS.length] }}
+              />
+              <span style={{ color: "var(--muted)" }}>{String(item[xKey] ?? "")}</span>
+              <span className="ml-auto font-bold" style={{ color: "var(--text)" }}>
+                {formatYTick(Number(item[yKey] ?? 0))}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
