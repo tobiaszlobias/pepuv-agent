@@ -227,7 +227,7 @@ export function MessageList({ messages, dark, onSend }: { messages: Message[]; d
                           </div>
                         }
                       >
-                        <AgentChart chart={chart} />
+                        <AgentChart chart={chart} index={i} />
                       </ErrorBoundary>
                     ))}
                   </div>

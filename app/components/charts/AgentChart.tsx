@@ -68,9 +68,10 @@ function getCellColor(item: Record<string, unknown>, index: number): string {
   return shades[index % shades.length];
 }
 
-export function AgentChart({ chart }: { chart: ChartData }) {
+export function AgentChart({ chart, index = 0 }: { chart: ChartData; index?: number }) {
   const xKey = chart.x_key || "name";
   const yKey = chart.y_key || "value";
+  const gradientId = `areaGrad-${index}`;
   const isHorizontal = chart.horizontal ?? false;
   const yWidth = getYAxisWidth(chart.data, yKey);
   const longLabels = hasLongXLabels(chart.data, xKey);
@@ -158,7 +159,7 @@ export function AgentChart({ chart }: { chart: ChartData }) {
         ) : chart.type === "line" ? (
           <AreaChart data={chart.data} margin={{ top: 4, right: 8, left: 4, bottom: longLabels ? 8 : 0 }}>
             <defs>
-              <linearGradient id={`areaGrad-${chart.title}`} x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor={YELLOW} stopOpacity={0.18} />
                 <stop offset="95%" stopColor={YELLOW} stopOpacity={0} />
               </linearGradient>
@@ -170,7 +171,7 @@ export function AgentChart({ chart }: { chart: ChartData }) {
               <ReferenceLine y={chart.reference_line.value} stroke="var(--muted)" strokeDasharray="4 4" strokeWidth={1.5} label={{ value: chart.reference_line.label, position: "insideTopRight", fontSize: 10, fill: "var(--muted)" }} />
             )}
             <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={{ stroke: "var(--border)", strokeWidth: 1 }} formatter={(value: unknown) => [formatTooltipValue(Number(value)), null]} />
-            <Area type="linear" dataKey={yKey} stroke={YELLOW} strokeWidth={2} fill={`url(#areaGrad-${chart.title})`} dot={false} activeDot={{ r: 4, fill: YELLOW, strokeWidth: 0 }} animationDuration={500} animationEasing="ease-out" />
+            <Area type="linear" dataKey={yKey} stroke={YELLOW} strokeWidth={2} fill={`url(#${gradientId})`} dot={false} activeDot={{ r: 4, fill: YELLOW, strokeWidth: 0 }} animationDuration={500} animationEasing="ease-out" />
           </AreaChart>
         ) : (
           <PieChart>
