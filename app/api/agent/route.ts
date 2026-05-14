@@ -350,20 +350,35 @@ async function executeTool(
         const resolvedYKey = y_key || "value";
         const rawItems: Record<string, unknown>[] = data.items || (data as unknown as Record<string, unknown>[]);
 
-        // Sort descending — highest value first (best makléř on top in horizontal charts)
-        const sortedItems = [...rawItems].sort(
-          (a, b) => Number(b[resolvedYKey] ?? 0) - Number(a[resolvedYKey] ?? 0)
+        // Horizontal bar: sort ascending so cheapest appears at top (Recharts renders first item at top)
+        // Vertical bar / pie / line: sort descending (highest value first)
+        const isHoriz = horizontal ?? false;
+        const sortedItems = [...rawItems].sort((a, b) =>
+          isHoriz
+            ? Number(a[resolvedYKey] ?? 0) - Number(b[resolvedYKey] ?? 0)
+            : Number(b[resolvedYKey] ?? 0) - Number(a[resolvedYKey] ?? 0)
         );
+
+        // Re-apply color zones after sorting, based on value thresholds (for price charts)
+        // Only overrides if the agent passed color zone hints — use value-based coloring
+        const hasColorHints = rawItems.some((d) => d.color);
+        const itemsWithColor = hasColorHints
+          ? sortedItems.map((item) => {
+              const val = Number(item[resolvedYKey] ?? 0);
+              const color = val < 6_000_000 ? "green" : val < 12_000_000 ? "yellow" : "red";
+              return { ...item, color };
+            })
+          : sortedItems;
 
         return JSON.stringify({
           success: true,
           chart: {
             type,
             title,
-            data: sortedItems,
+            data: itemsWithColor,
             x_key: x_key || "name",
             y_key: resolvedYKey,
-            horizontal: horizontal ?? false,
+            horizontal: isHoriz,
             ...(reference_line ? { reference_line } : {}),
             ...(color_legend ? { color_legend } : {}),
           },

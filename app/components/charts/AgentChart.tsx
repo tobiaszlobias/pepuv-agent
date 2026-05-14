@@ -43,6 +43,17 @@ function formatYTick(value: number): string {
   return String(value);
 }
 
+function formatPriceTick(value: number): string {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(0)}M Kč`;
+  if (value >= 1_000) return `${Math.round(value / 1_000)}k Kč`;
+  return String(value);
+}
+
+function isLikelyPrice(data: Record<string, unknown>[], key: string): boolean {
+  const vals = data.map((d) => Number(d[key] ?? 0)).filter((n) => n > 0);
+  return vals.length > 0 && vals.every((v) => v >= 100_000);
+}
+
 function formatTooltipValue(value: number): string {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2)} M Kč`;
   if (value >= 1_000) return `${value.toLocaleString("cs-CZ")} Kč`;
@@ -75,6 +86,8 @@ export function AgentChart({ chart, index = 0 }: { chart: ChartData; index?: num
   const isHorizontal = chart.horizontal ?? false;
   const yWidth = getYAxisWidth(chart.data, yKey);
   const longLabels = hasLongXLabels(chart.data, xKey);
+  const priceChart = isHorizontal && isLikelyPrice(chart.data, yKey);
+  const tickFormatter = priceChart ? formatPriceTick : formatYTick;
 
   const horizontalHeight = Math.max(220, Math.min(600, chart.data.length * 32));
   const hasZones = chart.data.some((d) => d.color);
@@ -129,17 +142,17 @@ export function AgentChart({ chart, index = 0 }: { chart: ChartData; index?: num
       <ResponsiveContainer width="100%" height={chart.type === "pie" ? 200 : (isHorizontal ? horizontalHeight : (longLabels ? 260 : 220))}>
         {chart.type === "bar" ? (
           isHorizontal ? (
-            <BarChart data={chart.data} layout="vertical" margin={{ top: 4, right: 52, left: 4, bottom: 4 }}>
+            <BarChart data={chart.data} layout="vertical" margin={{ top: 4, right: priceChart ? 80 : 52, left: 4, bottom: 4 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
-              <XAxis type="number" tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} tickFormatter={formatYTick} allowDecimals={false} />
+              <XAxis type="number" tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} tickFormatter={tickFormatter} allowDecimals={false} />
               <YAxis type="category" dataKey={xKey} tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} width={150} />
               {chart.reference_line && (
                 <ReferenceLine x={chart.reference_line.value} stroke="var(--muted)" strokeDasharray="4 4" strokeWidth={1.5} />
               )}
-              <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={{ fill: "var(--border)", opacity: 0.25 }} formatter={(value: unknown) => [formatTooltipValue(Number(value)), null]} />
+              <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={{ fill: "var(--border)", opacity: 0.25 }} formatter={(value: unknown) => [priceChart ? formatPriceTick(Number(value)) : formatTooltipValue(Number(value)), null]} />
               <Bar dataKey={yKey} radius={[0, 4, 4, 0]}>
                 {chart.data.map((item, i) => <Cell key={i} fill={getCellColor(item, i)} />)}
-                <LabelList dataKey={yKey} position="right" style={{ fontSize: 10, fill: "var(--muted)" }} formatter={(v: unknown) => formatYTick(Number(v))} />
+                <LabelList dataKey={yKey} position="right" style={{ fontSize: 10, fill: "var(--muted)" }} formatter={(v: unknown) => tickFormatter(Number(v))} />
               </Bar>
             </BarChart>
           ) : (
