@@ -360,16 +360,31 @@ async function executeTool(
             : Number(b[resolvedYKey] ?? 0) - Number(a[resolvedYKey] ?? 0)
         );
 
-        // Strip any "label" field Claude may add — bar labels are rendered by axis/tooltip, not data
+        // Strip any "label" field Claude may add — labels are rendered by axis/tooltip only
         const cleanedItems = sortedItems.map(({ label: _label, ...rest }) => rest as Record<string, unknown>);
 
-        // Always color horizontal bars by price threshold (values may be in Kč or M Kč)
-        const vals = cleanedItems.map((d) => Number(d[resolvedYKey] ?? 0)).filter((n) => n > 0);
-        const isMKc = vals.length > 0 && vals.every((v) => v <= 500);
+        // Debug: log raw price values to Vercel function logs
+        if (isHoriz && cleanedItems.length > 0) {
+          console.log("[create_chart] raw prices sample:", cleanedItems.slice(0, 3).map(d => ({ val: d[resolvedYKey], type: typeof d[resolvedYKey] })));
+        }
+
+        // Normalize price values: parse strings, convert M Kč → Kč, produce canonical Kč numbers
+        function toKc(raw: unknown): number {
+          if (raw === null || raw === undefined) return 0;
+          const s = String(raw).replace(/\s/g, "").replace("Kč", "").replace("MKč", "").trim();
+          const n = parseFloat(s);
+          if (isNaN(n)) return 0;
+          // If value ≤ 500 it's already in millions (e.g. Claude passed 9.5 meaning 9.5M)
+          return n <= 500 ? n * 1_000_000 : n;
+        }
+
+        const vals = cleanedItems.map((d) => toKc(d[resolvedYKey])).filter((n) => n > 0);
+        const isMKc = vals.length > 0 && vals.every((v) => v >= 1_000_000) &&
+          cleanedItems.every((d) => Number(d[resolvedYKey] ?? 0) <= 500);
+
         const itemsWithColor = isHoriz
           ? cleanedItems.map((item) => {
-              const val = Number(item[resolvedYKey] ?? 0);
-              const valKc = isMKc ? val * 1_000_000 : val;
+              const valKc = toKc(item[resolvedYKey]);
               const color = valKc < 6_000_000 ? "green" : valKc < 12_000_000 ? "yellow" : "red";
               return { ...item, color };
             })
