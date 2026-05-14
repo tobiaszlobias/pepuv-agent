@@ -411,28 +411,20 @@ async function executeTool(
             })
           : cleanedItems;
 
-        // Auto force horizontal for vertical bars with long labels or many items
         const xKey = x_key || "name";
-        const hasLongLabels = cleanedItems.some((d) => String(d[xKey] ?? "").length > 10);
-        const autoHoriz = isHoriz || (type === "bar" && !isHoriz && (cleanedItems.length > 6 || hasLongLabels));
-
-        // Re-sort ascending if we switched to horizontal
-        const finalItems = (autoHoriz && !isHoriz)
-          ? [...itemsWithColor].sort((a, b) => Number(a[resolvedYKey] ?? 0) - Number(b[resolvedYKey] ?? 0))
-          : itemsWithColor;
 
         // Auto-detect unit for M Kč axis formatting
-        const autoUnit = unit || (autoHoriz && isMKc ? "M Kč" : undefined);
+        const autoUnit = unit || (isHoriz && isMKc ? "M Kč" : undefined);
 
         return JSON.stringify({
           success: true,
           chart: {
             type,
             title,
-            data: finalItems,
+            data: itemsWithColor,
             x_key: xKey,
             y_key: resolvedYKey,
-            horizontal: autoHoriz,
+            horizontal: isHoriz,
             ...(autoUnit ? { unit: autoUnit } : {}),
             ...(reference_line ? { reference_line } : {}),
             ...(color_legend ? { color_legend } : {}),

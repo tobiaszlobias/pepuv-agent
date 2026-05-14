@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import {
   BarChart, Bar,
   AreaChart, Area,
@@ -89,7 +90,29 @@ export function AgentChart({ chart, index = 0 }: { chart: ChartData; index?: num
   const xKey = chart.x_key || "name";
   const yKey = chart.y_key || "value";
   const gradientId = `areaGrad-${index}`;
-  const isHorizontal = chart.horizontal ?? false;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(600);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      setContainerWidth(entry.contentRect.width);
+    });
+    ro.observe(el);
+    setContainerWidth(el.getBoundingClientRect().width);
+    return () => ro.disconnect();
+  }, []);
+
+  // Decide horizontal dynamically: switch when labels would overlap
+  // Each label needs ~charWidth * labelLength px; if total exceeds container → go horizontal
+  const charWidth = 7; // px per char at font-size 11px
+  const maxLabelLen = Math.max(...chart.data.map((d) => String(d[xKey] ?? "").length));
+  const labelWidthNeeded = maxLabelLen * charWidth;
+  const slotWidth = chart.data.length > 0 ? (containerWidth - 60) / chart.data.length : 999;
+  const labelsWouldOverlap = chart.type === "bar" && !chart.horizontal && slotWidth < labelWidthNeeded;
+
+  const isHorizontal = (chart.horizontal ?? false) || labelsWouldOverlap;
   const yWidth = getYAxisWidth(chart.data, yKey);
   const longLabels = hasLongXLabels(chart.data, xKey);
   const priceChart = isHorizontal && isLikelyPrice(chart.data, yKey, chart.unit);
@@ -120,6 +143,7 @@ export function AgentChart({ chart, index = 0 }: { chart: ChartData; index?: num
 
   return (
     <div
+      ref={containerRef}
       className="rounded-xl p-4 my-2"
       style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)" }}
     >
