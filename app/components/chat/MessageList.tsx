@@ -197,7 +197,16 @@ export function MessageList({ messages, dark, onSend }: { messages: Message[]; d
                   {msg.role === "user" ? (
                     <p>{msg.content}</p>
                   ) : (
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        a: ({ href, children }) => (
+                          <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: "var(--yellow)" }}>
+                            {children}
+                          </a>
+                        ),
+                      }}
+                    >
                       {msg.content}
                     </ReactMarkdown>
                   )}

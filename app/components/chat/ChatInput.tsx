@@ -190,7 +190,7 @@ export function ChatInput({ onSend, disabled, hasMessages, model, setModel }: Ch
 
       {/* Input row */}
       <div
-        className="flex gap-2 items-end rounded-xl px-3 py-2"
+        className="flex gap-2 items-center rounded-xl px-3 py-2"
         style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)" }}
         onFocusCapture={(e) => (e.currentTarget.style.borderColor = "var(--yellow)")}
         onBlurCapture={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
