@@ -18,9 +18,8 @@ interface ChartData {
   x_key?: string;
   y_key?: string;
   horizontal?: boolean;
-  // Agent může přidat referenční čáru (průměr apod.)
+  unit?: string; // "M Kč" → format as millions
   reference_line?: { value: number; label: string };
-  // Agent může přidat legendu pro barevné zóny
   color_legend?: { color: string; label: string }[];
 }
 
@@ -49,9 +48,17 @@ function formatPriceTick(value: number): string {
   return String(value);
 }
 
-function isLikelyPrice(data: Record<string, unknown>[], key: string): boolean {
+function isLikelyPrice(data: Record<string, unknown>[], key: string, unit?: string): boolean {
+  if (unit?.includes("Kč") || unit?.includes("M")) return true;
   const vals = data.map((d) => Number(d[key] ?? 0)).filter((n) => n > 0);
   return vals.length > 0 && vals.every((v) => v >= 100_000);
+}
+
+function isMilions(data: Record<string, unknown>[], key: string, unit?: string): boolean {
+  if (unit?.includes("M")) return true;
+  const vals = data.map((d) => Number(d[key] ?? 0)).filter((n) => n > 0);
+  // Values already in millions (1–100 range, all integers typical of M Kč)
+  return vals.length > 0 && vals.every((v) => v >= 1 && v <= 200) && vals.some((v) => v >= 3);
 }
 
 function formatTooltipValue(value: number): string {
@@ -86,8 +93,13 @@ export function AgentChart({ chart, index = 0 }: { chart: ChartData; index?: num
   const isHorizontal = chart.horizontal ?? false;
   const yWidth = getYAxisWidth(chart.data, yKey);
   const longLabels = hasLongXLabels(chart.data, xKey);
-  const priceChart = isHorizontal && isLikelyPrice(chart.data, yKey);
-  const tickFormatter = priceChart ? formatPriceTick : formatYTick;
+  const priceChart = isHorizontal && isLikelyPrice(chart.data, yKey, chart.unit);
+  const milionChart = priceChart && isMilions(chart.data, yKey, chart.unit);
+  const tickFormatter = priceChart
+    ? milionChart
+      ? (v: number) => `${v}M Kč`
+      : formatPriceTick
+    : formatYTick;
 
   const horizontalHeight = Math.max(220, Math.min(600, chart.data.length * 32));
   const hasZones = chart.data.some((d) => d.color);
@@ -150,7 +162,7 @@ export function AgentChart({ chart, index = 0 }: { chart: ChartData; index?: num
                 <ReferenceLine x={chart.reference_line.value} stroke="var(--muted)" strokeDasharray="4 4" strokeWidth={1.5} />
               )}
               <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={{ fill: "var(--border)", opacity: 0.25 }} formatter={(value: unknown) => [priceChart ? formatPriceTick(Number(value)) : formatTooltipValue(Number(value)), null]} />
-              <Bar dataKey={yKey} radius={[0, 4, 4, 0]}>
+              <Bar dataKey={yKey} radius={[0, 4, 4, 0]} animationDuration={0}>
                 {chart.data.map((item, i) => <Cell key={i} fill={getCellColor(item, i)} />)}
                 <LabelList dataKey={yKey} position="right" style={{ fontSize: 10, fill: "var(--muted)" }} formatter={(v: unknown) => tickFormatter(Number(v))} />
               </Bar>
@@ -164,7 +176,7 @@ export function AgentChart({ chart, index = 0 }: { chart: ChartData; index?: num
                 <ReferenceLine y={chart.reference_line.value} stroke="var(--muted)" strokeDasharray="4 4" strokeWidth={1.5} label={{ value: chart.reference_line.label, position: "insideTopRight", fontSize: 10, fill: "var(--muted)" }} />
               )}
               <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={{ fill: "var(--border)", opacity: 0.4 }} formatter={(value: unknown) => [formatTooltipValue(Number(value)), null]} />
-              <Bar dataKey={yKey} radius={[4, 4, 0, 0]}>
+              <Bar dataKey={yKey} radius={[4, 4, 0, 0]} animationDuration={0}>
                 {chart.data.map((item, i) => <Cell key={i} fill={getCellColor(item, i)} />)}
               </Bar>
             </BarChart>

@@ -336,13 +336,14 @@ async function executeTool(
       }
 
       case "create_chart": {
-        const { type, data, title, x_key, y_key, horizontal, reference_line, color_legend } = input as {
+        const { type, data, title, x_key, y_key, horizontal, reference_line, color_legend, unit } = input as {
           type: "bar" | "line" | "pie";
           data: { items: Record<string, unknown>[] };
           title: string;
           x_key?: string;
           y_key?: string;
           horizontal?: boolean;
+          unit?: string;
           reference_line?: { value: number; label: string };
           color_legend?: { color: string; label: string }[];
         };
@@ -370,6 +371,10 @@ async function executeTool(
             })
           : sortedItems;
 
+        // Auto-detect unit: if agent passed unit, use it; otherwise detect M Kč from value range
+        const vals = itemsWithColor.map((d) => Number((d as Record<string, unknown>)[resolvedYKey] ?? 0)).filter((n) => n > 0);
+        const autoUnit = unit || (vals.length > 0 && vals.every((v) => v >= 1 && v <= 200) && vals.some((v) => v >= 3) && hasColorHints ? "M Kč" : undefined);
+
         return JSON.stringify({
           success: true,
           chart: {
@@ -379,6 +384,7 @@ async function executeTool(
             x_key: x_key || "name",
             y_key: resolvedYKey,
             horizontal: isHoriz,
+            ...(autoUnit ? { unit: autoUnit } : {}),
             ...(reference_line ? { reference_line } : {}),
             ...(color_legend ? { color_legend } : {}),
           },
