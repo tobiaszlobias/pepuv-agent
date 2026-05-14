@@ -212,7 +212,7 @@ export function MessageList({ messages, dark, onSend }: { messages: Message[]; d
                   )}
                 </div>
 
-                {msg.role === "assistant" && msg.content && (
+                {msg.content && (
                   <CopyButton text={msg.content} />
                 )}
 
