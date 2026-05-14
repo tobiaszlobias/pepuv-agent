@@ -70,9 +70,8 @@ function StatCard({ label, value }: { label: string; value: string | number }) {
 }
 
 export function LeadsView() {
-  const cached = getCached<Lead[]>("leads");
-  const [leads, setLeads] = useState<Lead[]>(cached ?? []);
-  const [loading, setLoading] = useState(cached === null);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -83,7 +82,8 @@ export function LeadsView() {
   }, []);
 
   useEffect(() => {
-    if (cached !== null) return;
+    // Vždy načti čerstvá data (cache mohla být ze starého seedu)
+    setLoading(true);
     fetch("/api/sheets/leads")
       .then((r) => r.json())
       .then((data: Lead[]) => { setCached("leads", data); setLeads(data); setLoading(false); })
@@ -97,9 +97,10 @@ export function LeadsView() {
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   }).length;
 
-  const aktivni = leads.filter((l) =>
-    l.status.toLowerCase().includes("aktivní") || l.status.toLowerCase().includes("nový")
-  ).length;
+  const aktivni = leads.filter((l) => {
+    const s = l.status.toLowerCase();
+    return !s.includes("uzavř") && !s.includes("ztrace") && s !== "";
+  }).length;
 
   const budgets = leads.map((l) => parseInt(l.budget.replace(/\D/g, ""), 10)).filter((n) => !isNaN(n) && n > 0);
   const avgBudget = budgets.length > 0
