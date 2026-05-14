@@ -360,22 +360,23 @@ async function executeTool(
             : Number(b[resolvedYKey] ?? 0) - Number(a[resolvedYKey] ?? 0)
         );
 
-        // Re-apply color zones after sorting, based on value thresholds (for price charts)
-        // Only overrides if the agent passed color zone hints — use value-based coloring
-        const hasColorHints = rawItems.some((d) => d.color);
-        const itemsWithColor = hasColorHints
-          ? sortedItems.map((item) => {
+        // Strip any "label" field Claude may add — bar labels are rendered by axis/tooltip, not data
+        const cleanedItems = sortedItems.map(({ label: _label, ...rest }) => rest as Record<string, unknown>);
+
+        // Always color horizontal bars by price threshold (values may be in Kč or M Kč)
+        const vals = cleanedItems.map((d) => Number(d[resolvedYKey] ?? 0)).filter((n) => n > 0);
+        const isMKc = vals.length > 0 && vals.every((v) => v <= 500);
+        const itemsWithColor = isHoriz
+          ? cleanedItems.map((item) => {
               const val = Number(item[resolvedYKey] ?? 0);
-              // Values may be in Kč (5_000_000) or M Kč (5) — detect by magnitude
-              const valKc = val < 1000 ? val * 1_000_000 : val;
+              const valKc = isMKc ? val * 1_000_000 : val;
               const color = valKc < 6_000_000 ? "green" : valKc < 12_000_000 ? "yellow" : "red";
               return { ...item, color };
             })
-          : sortedItems;
+          : cleanedItems;
 
-        // Auto-detect unit: if agent passed unit, use it; otherwise detect M Kč from value range
-        const vals = itemsWithColor.map((d) => Number((d as Record<string, unknown>)[resolvedYKey] ?? 0)).filter((n) => n > 0);
-        const autoUnit = unit || (vals.length > 0 && vals.every((v) => v >= 1 && v <= 200) && vals.some((v) => v >= 3) && hasColorHints ? "M Kč" : undefined);
+        // Auto-detect unit for M Kč axis formatting
+        const autoUnit = unit || (isHoriz && isMKc ? "M Kč" : undefined);
 
         return JSON.stringify({
           success: true,
