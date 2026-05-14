@@ -192,7 +192,7 @@ export function AgentChart({ chart, index = 0 }: { chart: ChartData; index?: num
         {chart.type === "bar" ? (
           isHorizontal ? (
             <BarChart data={chart.data} layout="vertical" margin={{ top: 4, right: priceChart ? 80 : 52, left: 4, bottom: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.6} strokeWidth={1.5} horizontal={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--muted)" strokeOpacity={0.25} strokeWidth={1} horizontal={false} />
               <XAxis type="number" tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} tickFormatter={tickFormatter} allowDecimals={false} />
               <YAxis type="category" dataKey={xKey} tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} width={150} />
               {chart.reference_line && (
@@ -205,7 +205,7 @@ export function AgentChart({ chart, index = 0 }: { chart: ChartData; index?: num
             </BarChart>
           ) : (
             <BarChart data={chart.data} margin={{ top: 4, right: 8, left: 4, bottom: longLabels ? 8 : 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.6} strokeWidth={1.5} vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--muted)" strokeOpacity={0.25} strokeWidth={1} vertical={false} />
               <XAxis dataKey={xKey} {...xAxisProps} />
               <YAxis tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} width={yWidth} allowDecimals={false} tickFormatter={formatYTick} />
               {chart.reference_line && (
@@ -225,7 +225,7 @@ export function AgentChart({ chart, index = 0 }: { chart: ChartData; index?: num
                 <stop offset="95%" stopColor={YELLOW} stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.6} strokeWidth={1.5} vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--muted)" strokeOpacity={0.25} strokeWidth={1} vertical={false} />
             <XAxis dataKey={xKey} {...xAxisProps} />
             <YAxis tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} width={yWidth} allowDecimals={false} tickFormatter={formatYTick} />
             {chart.reference_line && (
