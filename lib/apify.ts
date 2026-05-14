@@ -129,10 +129,14 @@ export async function scrapeSreality(params: {
     const seo = item.seo as Record<string, unknown> | undefined;
     const catMain = seo?.category_main_cb as number;
     const catType = seo?.category_type_cb as number;
+    const localitySeo = (seo?.locality as string) || "";
 
     const transType = catType === 2 ? "pronajem" : "prodej";
     const propType = catMain === 1 ? "byt" : catMain === 2 ? "dum" : "nemovitost";
-    const detailUrl = hashId
+    // Správný formát: /detail/prodej/byt/praha-holešovice-nadrazni/1234567890
+    const detailUrl = hashId && localitySeo
+      ? `${SREALITY_BASE}/${transType}/${propType}/${localitySeo}/${hashId}`
+      : hashId
       ? `${SREALITY_BASE}/${transType}/${propType}/${hashId}`
       : "";
 
