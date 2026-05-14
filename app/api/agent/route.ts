@@ -65,7 +65,9 @@ Dotaz: "Shrň výsledky", "Týdenní report", "Co se dělo minulý týden"
 ### ŠABLONA: Monitoring Sreality
 Dotaz: "Nové nabídky", "Co je na Sreality", "Monitoring Praha"
 1. Zavolej search_sreality(locality, property_type?, max_price?)
-2. Text: tabulka — Adresa | Typ | Cena | Odkaz (pokud dostupný)
+2. Text: tabulka v markdown — sloupce: Adresa | Typ | Cena | Odkaz
+   - Odkaz VŽDY zobraz jako markdown link: [Sreality](url) — každý řádek musí mít odkaz
+   - Pokud url chybí nebo je prázdné, napiš "—"
 3. Závěr: "Nalezeno X nabídek v [lokalitě]."
 
 ### ŠABLONA: Dotaz na makléře / výkon
