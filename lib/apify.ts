@@ -101,21 +101,6 @@ export async function scrapeSreality(params: {
     query.set("category_main_cb", String(categoryMain));
   }
 
-  // Lokalita — použij numerické ID pokud ho známe, jinak raw text
-  const localityKey = params.locality.toLowerCase().trim();
-  const regionId = LOCALITY_ID_MAP[localityKey];
-  if (regionId) {
-    query.set("locality_district_id", regionId);
-  } else {
-    // Fallback: zkus najít partial match
-    const partialMatch = Object.entries(LOCALITY_ID_MAP).find(([key]) => localityKey.includes(key) || key.includes(localityKey));
-    if (partialMatch) {
-      query.set("locality_district_id", partialMatch[1]);
-    } else {
-      query.set("region", params.locality);
-    }
-  }
-
   // Max cena
   if (params.max_price) {
     query.set("price_max", String(params.max_price));
@@ -124,21 +109,32 @@ export async function scrapeSreality(params: {
   query.set("per_page", "20");
   query.set("sort", "0"); // nejnovější
 
-  const url = `${SREALITY_API}?${query}`;
+  const localityKey = params.locality.toLowerCase().trim();
+  const regionId = LOCALITY_ID_MAP[localityKey] ??
+    Object.entries(LOCALITY_ID_MAP).find(([key]) => localityKey.includes(key) || key.includes(localityKey))?.[1];
 
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-      "Accept": "application/json",
-    },
-  });
-
-  if (!res.ok) {
-    throw new Error(`Sreality API error ${res.status}`);
+  async function fetchEstates(extraParams: Record<string, string>): Promise<Record<string, unknown>[]> {
+    const q = new URLSearchParams(query);
+    for (const [k, v] of Object.entries(extraParams)) q.set(k, v);
+    const res = await fetch(`${SREALITY_API}?${q}`, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+        "Accept": "application/json",
+      },
+    });
+    if (!res.ok) throw new Error(`Sreality API error ${res.status}`);
+    const data = await res.json();
+    return data?._embedded?.estates ?? [];
   }
 
-  const data = await res.json();
-  const items: Record<string, unknown>[] = data?._embedded?.estates ?? [];
+  // Try district ID first; if 0 results fall back to text region search
+  let items: Record<string, unknown>[] = [];
+  if (regionId) {
+    items = await fetchEstates({ locality_district_id: regionId });
+  }
+  if (items.length === 0) {
+    items = await fetchEstates({ region: params.locality });
+  }
 
   return items.map((item) => {
     const hashId = item.hash_id as number;
