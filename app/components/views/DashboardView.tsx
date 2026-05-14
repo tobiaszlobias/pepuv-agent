@@ -311,7 +311,7 @@ function isValidDashboardData(d: DashboardData | null): d is DashboardData {
   return Array.isArray(d.clients.dates) && Array.isArray(d.properties.dates);
 }
 
-export function DashboardView() {
+export function DashboardView({ onChatPrompt }: { onChatPrompt?: (prompt: string) => void }) {
   const cached = getCached<DashboardData>("dashboard");
   const validCached = isValidDashboardData(cached) ? cached : null;
   const [data, setData] = useState<DashboardData | null>(validCached);
@@ -429,6 +429,30 @@ export function DashboardView() {
           sub="nemovitosti v portfoliu"
         />
       </div>
+
+      {/* Proaktivní alert — chybějící data */}
+      {data.properties.missingRekonstrukce > 0 && (
+        <button
+          onClick={() => onChatPrompt?.("Najdi nemovitosti, u kterých nám v systému chybí data o rekonstrukci a stavebních úpravách a připrav jejich seznam k doplnění.")}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all"
+          style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.25)" }}
+          onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(248,113,113,0.5)")}
+          onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(248,113,113,0.25)")}
+        >
+          <span className="text-base flex-shrink-0">⚠️</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold" style={{ color: "#f87171" }}>
+              {data.properties.missingRekonstrukce} nemovitostí bez roku rekonstrukce
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>
+              Klikni pro zobrazení v chatu a přípravu seznamu k doplnění
+            </p>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0" style={{ color: "#f87171" }}>
+            <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+      )}
 
       {/* Charts row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">

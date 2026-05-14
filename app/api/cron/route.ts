@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { scrapeSreality } from "@/lib/apify";
+import { appendMonitoringRow } from "@/lib/sheets";
 
 // Vercel Cron: každý den v 7:00 UTC
 // Nastavení v vercel.json
@@ -11,24 +12,26 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const locality = "Praha Holešovice";
+
   try {
-    const listings = await scrapeSreality({
-      locality: "Praha Holešovice",
-      transaction_type: "prodej",
+    const listings = await scrapeSreality({ locality, transaction_type: "prodej" });
+    const timestamp = new Date().toISOString();
+
+    await appendMonitoringRow({
+      timestamp,
+      locality,
+      count: listings.length,
+      listings: listings.map((l) => ({ address: l.address, price: l.price, url: l.url })),
     });
 
-    // TODO: Uložit výsledky do databáze nebo poslat notifikaci
-    // V produkci: uložit do Sheets nebo poslat email Pepovi
-
-    console.log(
-      `[Cron] Sreality monitoring: nalezeno ${listings.length} nabídek v Praha Holešovice`
-    );
+    console.log(`[Cron] Sreality monitoring: nalezeno ${listings.length} nabídek v ${locality}, uloženo do Sheets`);
 
     return NextResponse.json({
       success: true,
-      timestamp: new Date().toISOString(),
+      timestamp,
       listings_found: listings.length,
-      locality: "Praha Holešovice",
+      locality,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

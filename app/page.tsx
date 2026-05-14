@@ -289,6 +289,9 @@ export default function Home() {
       setMessages((prev) => [...prev, userMsg, loadingMsg]);
       setLoading(true);
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 90_000);
+
       try {
         const history = [
           ...messages,
@@ -299,8 +302,10 @@ export default function Home() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ messages: history, model }),
+          signal: controller.signal,
         });
 
+        clearTimeout(timeoutId);
         if (!res.ok) throw new Error("API error");
 
         const data = await res.json();
@@ -316,11 +321,15 @@ export default function Home() {
         setMessages((prev) =>
           prev.filter((m) => m.id !== "loading").concat(assistantMsg)
         );
-      } catch {
+      } catch (err) {
+        clearTimeout(timeoutId);
+        const isTimeout = err instanceof Error && err.name === "AbortError";
         const errMsg: Message = {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          content: "Omlouvám se, nastala chyba při zpracování dotazu. Zkus to prosím znovu.",
+          content: isTimeout
+            ? "Dotaz trval příliš dlouho (90 s). Zkus jednodušší dotaz nebo přepni na rychlejší model (Haiku)."
+            : "Omlouvám se, nastala chyba při zpracování dotazu. Zkus to prosím znovu.",
         };
         setMessages((prev) =>
           prev.filter((m) => m.id !== "loading").concat(errMsg)
@@ -478,7 +487,15 @@ export default function Home() {
 
         {/* Content */}
         <div className="flex-1 flex flex-col overflow-hidden" style={{ background: "var(--bg)" }}>
-          {activePage === "dashboard" && <DashboardView />}
+          {activePage === "dashboard" && (
+            <DashboardView
+              onChatPrompt={(prompt) => {
+                setActivePage("chat");
+                sessionStorage.setItem("activePage", "chat");
+                sendMessage(prompt);
+              }}
+            />
+          )}
           {activePage === "chat" && (
             <MessageList messages={messages} dark={dark} onSend={sendMessage} />
           )}

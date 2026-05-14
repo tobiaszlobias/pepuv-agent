@@ -218,44 +218,114 @@ async function executeTool(
       case "generate_report": {
         const { week } = input as { week: string; include_charts?: boolean };
 
-        // Mock report data — v produkci by se tahalo ze Sheets
+        const [allLeads, allProperties, allClients] = await Promise.all([
+          getLeads(),
+          getProperties(),
+          getClients(),
+        ]);
+
+        const now = new Date();
+        const isLastWeek = week.toLowerCase().includes("minul");
+        const weekOffset = isLastWeek ? 1 : 0;
+
+        // Určí začátek a konec cílového týdne
+        const weekStart = new Date(now);
+        const day = weekStart.getDay() || 7;
+        weekStart.setDate(weekStart.getDate() - day + 1 - weekOffset * 7);
+        weekStart.setHours(0, 0, 0, 0);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        weekEnd.setHours(23, 59, 59, 999);
+
+        // Předchozí týden pro výpočet change
+        const prevStart = new Date(weekStart);
+        prevStart.setDate(prevStart.getDate() - 7);
+        const prevEnd = new Date(weekEnd);
+        prevEnd.setDate(prevEnd.getDate() - 7);
+
+        function inRange(dateStr: string, from: Date, to: Date) {
+          if (!dateStr) return false;
+          const d = new Date(dateStr);
+          return d >= from && d <= to;
+        }
+
+        function sign(n: number) {
+          if (n > 0) return `+${n}`;
+          if (n < 0) return String(n);
+          return "0";
+        }
+
+        // Leady
+        const leadsThisWeek = allLeads.filter((l) => inRange(l.datum, weekStart, weekEnd));
+        const leadsPrevWeek = allLeads.filter((l) => inRange(l.datum, prevStart, prevEnd));
+        const leadsNew = leadsThisWeek.length;
+        const leadsNewPrev = leadsPrevWeek.length;
+        const leadsKontaktovan = allLeads.filter((l) => l.status.toLowerCase().includes("kontaktov")).length;
+        const leadsProhlidka = allLeads.filter((l) => l.status.toLowerCase().includes("prohl")).length;
+        const leadsUzavren = allLeads.filter((l) => inRange(l.datum, weekStart, weekEnd) && l.status.toLowerCase().includes("uzavř")).length;
+        const leadsUzavrenPrev = allLeads.filter((l) => inRange(l.datum, prevStart, prevEnd) && l.status.toLowerCase().includes("uzavř")).length;
+
+        // Nemovitosti
+        const propForSale = allProperties.filter((p) => p.stav.toLowerCase().includes("prodej") || p.stav.toLowerCase().includes("nabídka")).length;
+        const propReserved = allProperties.filter((p) => p.stav.toLowerCase().includes("rezerv")).length;
+        const propSoldThisWeek = allProperties.filter((p) => inRange(p.datum_pridani, weekStart, weekEnd) && p.stav.toLowerCase().includes("prodáno")).length;
+        const propSoldPrev = allProperties.filter((p) => inRange(p.datum_pridani, prevStart, prevEnd) && p.stav.toLowerCase().includes("prodáno")).length;
+        const propMissingRek = allProperties.filter((p) => !p.rok_rekonstrukce || p.rok_rekonstrukce === "").length;
+        const prices = allProperties.map((p) => parseInt(p.cena.replace(/\D/g, ""), 10)).filter((n) => !isNaN(n) && n > 0);
+        const avgPrice = prices.length > 0 ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length) : 0;
+        const avgPriceM = avgPrice > 0 ? `${(avgPrice / 1_000_000).toFixed(1)} M Kč` : "—";
+
+        // Klienti
+        const clientsNew = allClients.filter((c) => inRange(c.datum_pridani, weekStart, weekEnd)).length;
+        const clientsNewPrev = allClients.filter((c) => inRange(c.datum_pridani, prevStart, prevEnd)).length;
+
+        // Top makléř
+        const maklerCounts: Record<string, number> = {};
+        allLeads.forEach((l) => { if (l.makler) maklerCounts[l.makler] = (maklerCounts[l.makler] || 0) + 1; });
+        const topMakler = Object.entries(maklerCounts).sort((a, b) => b[1] - a[1])[0];
+
+        // Next steps dynamicky
+        const nextSteps: string[] = [];
+        const leadsNabidka = allLeads.filter((l) => l.status.toLowerCase().includes("nabídka")).length;
+        if (leadsNabidka > 0) nextSteps.push(`Follow-up s ${leadsNabidka} klienty ve fázi nabídky`);
+        if (propMissingRek > 0) nextSteps.push(`Doplnit data o rekonstrukci u ${propMissingRek} nemovitostí`);
+        nextSteps.push("Ranní monitoring Sreality — Praha Holešovice");
+
+        const weekLabel = `${weekStart.toLocaleDateString("cs-CZ", { day: "numeric", month: "numeric" })} – ${weekEnd.toLocaleDateString("cs-CZ", { day: "numeric", month: "numeric", year: "numeric" })}`;
+
         const reportData = {
           success: true,
           week,
           slides: [
             {
               title: "Přehled leadů",
-              subtitle: `Týden ${week}`,
+              subtitle: weekLabel,
               metrics: [
-                { label: "Nové leady", value: 12, change: "+3" },
-                { label: "Kontaktováno", value: 8, change: "+1" },
-                { label: "Prohlídky", value: 4, change: "0" },
-                { label: "Uzavřeno", value: 2, change: "+1" },
+                { label: "Nové leady tento týden", value: leadsNew, change: sign(leadsNew - leadsNewPrev) },
+                { label: "Kontaktováno (celkem)", value: leadsKontaktovan, change: "" },
+                { label: "Prohlídky (celkem)", value: leadsProhlidka, change: "" },
+                { label: "Uzavřeno tento týden", value: leadsUzavren, change: sign(leadsUzavren - leadsUzavrenPrev) },
               ],
             },
             {
               title: "Nemovitosti",
               subtitle: "Aktuální portfolio",
               metrics: [
-                { label: "K prodeji", value: 23, change: "-2" },
-                { label: "Rezervováno", value: 5, change: "+2" },
-                { label: "Prodáno tento týden", value: 2, change: "+2" },
-                { label: "Průměrná cena", value: "8,5M Kč", change: "" },
+                { label: "K prodeji", value: propForSale, change: "" },
+                { label: "Rezervováno", value: propReserved, change: "" },
+                { label: "Prodáno tento týden", value: propSoldThisWeek, change: sign(propSoldThisWeek - propSoldPrev) },
+                { label: "Průměrná cena", value: avgPriceM, change: "" },
               ],
             },
             {
               title: "Výsledky týdne",
               subtitle: "Shrnutí a next steps",
               highlights: [
-                "Uzavřeny 2 obchody: Holešovická 15, Mánesova 8",
-                "Nový lead z Sreality — zájemce o 3+kk Praha 7",
-                "3 nemovitosti přidány do portfolia",
+                `${leadsNew} nových leadů tento týden (${sign(leadsNew - leadsNewPrev)} vs. předchozí)`,
+                `${clientsNew} nových klientů (${sign(clientsNew - clientsNewPrev)} vs. předchozí týden)`,
+                topMakler ? `Top makléř: ${topMakler[0]} — ${topMakler[1]} leadů celkem` : "Data o makléřích nejsou k dispozici",
               ],
-              next_steps: [
-                "Follow-up s 5 klienty ve fázi nabídky",
-                "Doplnit data o rekonstrukci u 7 nemovitostí",
-                "Ranní monitoring Sreality — Praha Holešovice",
-              ],
+              next_steps: nextSteps,
             },
           ],
         };
@@ -278,9 +348,9 @@ async function executeTool(
         const resolvedYKey = y_key || "value";
         const rawItems: Record<string, unknown>[] = data.items || (data as unknown as Record<string, unknown>[]);
 
-        // Sort ascending by value so lowest (best value) appears first / at top in horizontal charts
+        // Sort descending — highest value first (best makléř on top in horizontal charts)
         const sortedItems = [...rawItems].sort(
-          (a, b) => Number(a[resolvedYKey] ?? 0) - Number(b[resolvedYKey] ?? 0)
+          (a, b) => Number(b[resolvedYKey] ?? 0) - Number(a[resolvedYKey] ?? 0)
         );
 
         return JSON.stringify({
@@ -318,6 +388,8 @@ export async function POST(req: NextRequest) {
 
   // Tool use loop
   const allMessages: MessageParam[] = [...apiMessages];
+  const MAX_ITERATIONS = 8;
+  let iterations = 0;
 
   let response = await client.messages.create({
     model: selectedModel,
@@ -328,7 +400,8 @@ export async function POST(req: NextRequest) {
   });
 
   // Loop dokud Claude vrací tool_use bloky
-  while (response.stop_reason === "tool_use") {
+  while (response.stop_reason === "tool_use" && iterations < MAX_ITERATIONS) {
+    iterations++;
     const toolUseBlocks = response.content.filter(
       (b): b is Anthropic.ToolUseBlock => b.type === "tool_use"
     );

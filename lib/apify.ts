@@ -16,6 +16,48 @@ const PROPERTY_TYPE_MAP: Record<string, number> = {
   ostatni: 5,
 };
 
+// Sreality locality ID mapping — textový název → numerické region ID
+// Bez správného ID vrátí API prázdný výsledek nebo celou ČR
+const LOCALITY_ID_MAP: Record<string, string> = {
+  // Praha čtvrti
+  "praha holešovice": "3538",
+  "holešovice": "3538",
+  "praha vinohrady": "3536",
+  "vinohrady": "3536",
+  "praha žižkov": "3537",
+  "žižkov": "3537",
+  "praha smíchov": "3527",
+  "smíchov": "3527",
+  "praha dejvice": "3521",
+  "dejvice": "3521",
+  "praha karlín": "3528",
+  "karlín": "3528",
+  "praha nusle": "3531",
+  "nusle": "3531",
+  "praha vršovice": "3540",
+  "vršovice": "3540",
+  // Praha jako celek
+  "praha 1": "10001",
+  "praha 2": "10002",
+  "praha 3": "10003",
+  "praha 4": "10004",
+  "praha 5": "10005",
+  "praha 6": "10006",
+  "praha 7": "10007",
+  "praha 8": "10008",
+  "praha 9": "10009",
+  "praha 10": "10010",
+  "praha": "10001",
+  // Další města
+  "brno": "5546",
+  "ostrava": "8076",
+  "plzeň": "8658",
+  "olomouc": "8077",
+  "liberec": "5543",
+  "hradec králové": "5539",
+  "české budějovice": "5540",
+};
+
 interface SrealityListing {
   address: string;
   price: number;
@@ -43,8 +85,20 @@ export async function scrapeSreality(params: {
     query.set("category_main_cb", String(categoryMain));
   }
 
-  // Lokalita
-  query.set("region", params.locality);
+  // Lokalita — použij numerické ID pokud ho známe, jinak raw text
+  const localityKey = params.locality.toLowerCase().trim();
+  const regionId = LOCALITY_ID_MAP[localityKey];
+  if (regionId) {
+    query.set("locality_district_id", regionId);
+  } else {
+    // Fallback: zkus najít partial match
+    const partialMatch = Object.entries(LOCALITY_ID_MAP).find(([key]) => localityKey.includes(key) || key.includes(localityKey));
+    if (partialMatch) {
+      query.set("locality_district_id", partialMatch[1]);
+    } else {
+      query.set("region", params.locality);
+    }
+  }
 
   // Max cena
   if (params.max_price) {

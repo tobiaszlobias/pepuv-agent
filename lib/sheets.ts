@@ -10,7 +10,7 @@ function getAuth() {
 
   return new google.auth.GoogleAuth({
     credentials,
-    scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
   });
 }
 
@@ -203,4 +203,31 @@ export async function getLeads(filters?: {
   }
 
   return leads;
+}
+
+export async function appendMonitoringRow(row: {
+  timestamp: string;
+  locality: string;
+  count: number;
+  listings: { address: string; price: number; url: string }[];
+}) {
+  const sheetId = process.env.GOOGLE_SHEETS_ID;
+  if (!sheetId) throw new Error("GOOGLE_SHEETS_ID not set");
+
+  const auth = getAuth();
+  const sheets = google.sheets({ version: "v4", auth });
+
+  const topListings = row.listings
+    .slice(0, 3)
+    .map((l) => `${l.address} (${l.price > 0 ? (l.price / 1_000_000).toFixed(1) + "M" : "—"})`)
+    .join(" | ");
+
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: sheetId,
+    range: "Monitoring!A:E",
+    valueInputOption: "RAW",
+    requestBody: {
+      values: [[row.timestamp, row.locality, row.count, topListings, new Date().toLocaleDateString("cs-CZ")]],
+    },
+  });
 }

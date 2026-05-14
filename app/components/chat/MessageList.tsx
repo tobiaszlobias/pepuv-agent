@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { AgentChart } from "@/app/components/charts/AgentChart";
@@ -37,6 +37,34 @@ export interface Message {
   slides?: Slide[];
   loading?: boolean;
   loadingText?: string;
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  if (!text.trim()) return null;
+  return (
+    <button
+      onClick={async () => {
+        await navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }}
+      className="mt-2 flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg transition-all opacity-60 hover:opacity-100"
+      style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)", color: "var(--muted)" }}
+    >
+      {copied ? (
+        <>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#4ade80" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          Zkopírováno
+        </>
+      ) : (
+        <>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="4" y="1" width="7" height="8" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="1" y="4" width="7" height="8" rx="1" stroke="currentColor" strokeWidth="1.2" fill="var(--surface-elevated)"/></svg>
+          Kopírovat
+        </>
+      )}
+    </button>
+  );
 }
 
 function TypingIndicator({ text }: { text?: string }) {
@@ -174,6 +202,10 @@ export function MessageList({ messages, dark, onSend }: { messages: Message[]; d
                     </ReactMarkdown>
                   )}
                 </div>
+
+                {msg.role === "assistant" && msg.content && (
+                  <CopyButton text={msg.content} />
+                )}
 
                 {msg.charts && msg.charts.length > 0 && (
                   <div className="mt-3 space-y-3">

@@ -47,9 +47,10 @@ export async function GET() {
     .map((l) => l.datum)
     .sort();
 
-  const activeLeads = leads.filter((l) =>
-    l.status.toLowerCase().includes("aktivní") || l.status.toLowerCase().includes("nový")
-  ).length;
+  const activeLeads = leads.filter((l) => {
+    const s = l.status.toLowerCase();
+    return !s.includes("uzavř") && !s.includes("ztrace") && s !== "";
+  }).length;
 
   const leadsByStatus = leads.reduce<Record<string, number>>((acc, l) => {
     const s = l.status || "Neznámý";
