@@ -4,8 +4,9 @@
 const SREALITY_API = "https://www.sreality.cz/api/cs/v2/estates";
 const SREALITY_BASE = "https://www.sreality.cz/detail";
 
-// category_sub_cb → dispozice slug pro URL
-const DISPOSITION_SLUG: Record<number, string> = {
+// category_sub_cb → URL slug (byty = dispozice, domy = typ domu)
+const SUB_SLUG: Record<number, string> = {
+  // Byty (category_main_cb=1)
   2:  "1+1",
   3:  "1+kk",
   4:  "2+kk",
@@ -17,7 +18,20 @@ const DISPOSITION_SLUG: Record<number, string> = {
   10: "5+kk",
   11: "5+1",
   12: "6+",
-  16: "atypický",
+  16: "atypicky",
+  // Domy (category_main_cb=2)
+  37: "rodinny-dum",
+  38: "chata",
+  39: "vila",
+  40: "na-klic",
+  41: "mobilheim",
+  43: "zemedelska-usedlost",
+  44: "ostatni",
+  46: "chalupa",
+  47: "historicky-objekt",
+  48: "pasivni-dum",
+  49: "trojidum",
+  50: "dvojidum",
 };
 
 // category_main_cb: 1=byt, 2=dům, 3=pozemek, 4=kancelář, 5=ostatní
@@ -146,10 +160,10 @@ export async function scrapeSreality(params: {
 
     const transType = catType === 2 ? "pronajem" : "prodej";
     const propType = catMain === 1 ? "byt" : catMain === 2 ? "dum" : "nemovitost";
-    const disposition = DISPOSITION_SLUG[catSub] || "";
-    // Správný formát: /detail/prodej/byt/3+kk/jindrichov-jindrichov-/632767308
+    const subSlug = SUB_SLUG[catSub] || "";
+    // Format: /detail/prodej/byt/3+kk/locality/hash  or  /detail/prodej/dum/rodinny-dum/locality/hash
     const detailUrl = hashId && localitySeo
-      ? `${SREALITY_BASE}/${transType}/${propType}${disposition ? `/${disposition}` : ""}/${localitySeo}/${hashId}`
+      ? `${SREALITY_BASE}/${transType}/${propType}${subSlug ? `/${subSlug}` : ""}/${localitySeo}/${hashId}`
       : hashId
       ? `${SREALITY_BASE}/${transType}/${propType}/${hashId}`
       : "";
