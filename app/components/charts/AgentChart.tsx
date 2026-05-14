@@ -5,10 +5,9 @@ import {
   AreaChart, Area,
   PieChart, Pie, Cell,
   XAxis, YAxis,
-  CartesianGrid, Tooltip, Legend,
+  CartesianGrid, Tooltip,
   ReferenceLine,
   ResponsiveContainer,
-  LabelList,
 } from "recharts";
 
 interface ChartData {
@@ -101,7 +100,7 @@ export function AgentChart({ chart, index = 0 }: { chart: ChartData; index?: num
       : formatPriceTick
     : formatYTick;
 
-  const horizontalHeight = Math.max(220, Math.min(600, chart.data.length * 32));
+  const horizontalHeight = chart.data.length * 28 + 100;
   const hasZones = chart.data.some((d) => d.color);
 
   const tooltipStyle = {
@@ -161,10 +160,9 @@ export function AgentChart({ chart, index = 0 }: { chart: ChartData; index?: num
               {chart.reference_line && (
                 <ReferenceLine x={chart.reference_line.value} stroke="var(--muted)" strokeDasharray="4 4" strokeWidth={1.5} />
               )}
-              <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={{ fill: "var(--border)", opacity: 0.25 }} formatter={(value: unknown) => [priceChart ? formatPriceTick(Number(value)) : formatTooltipValue(Number(value)), null]} />
+              <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={{ fill: "var(--border)", opacity: 0.25 }} formatter={(value: unknown) => [milionChart ? `${Number(value)}M Kč` : priceChart ? formatPriceTick(Number(value)) : formatTooltipValue(Number(value)), null]} />
               <Bar dataKey={yKey} radius={[0, 4, 4, 0]} animationDuration={0}>
                 {chart.data.map((item, i) => <Cell key={i} fill={getCellColor(item, i)} />)}
-                <LabelList dataKey={yKey} position="right" style={{ fontSize: 10, fill: "var(--muted)" }} formatter={(v: unknown) => tickFormatter(Number(v))} />
               </Bar>
             </BarChart>
           ) : (

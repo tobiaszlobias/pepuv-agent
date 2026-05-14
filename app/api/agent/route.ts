@@ -366,7 +366,9 @@ async function executeTool(
         const itemsWithColor = hasColorHints
           ? sortedItems.map((item) => {
               const val = Number(item[resolvedYKey] ?? 0);
-              const color = val < 6_000_000 ? "green" : val < 12_000_000 ? "yellow" : "red";
+              // Values may be in Kč (5_000_000) or M Kč (5) — detect by magnitude
+              const valKc = val < 1000 ? val * 1_000_000 : val;
+              const color = valKc < 6_000_000 ? "green" : valKc < 12_000_000 ? "yellow" : "red";
               return { ...item, color };
             })
           : sortedItems;
