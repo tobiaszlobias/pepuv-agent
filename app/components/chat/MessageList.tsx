@@ -152,109 +152,112 @@ export function MessageList({ messages, dark, onSend }: { messages: Message[]; d
   return (
     <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
       {messages.map((msg) => (
-        <div
-          key={msg.id}
-          className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-        >
-          {msg.role === "assistant" && (
+        <div key={msg.id} className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}>
+          {/* Bubble row */}
+          <div className={`flex w-full ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+            {msg.role === "assistant" && (
+              <div
+                className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center mr-2 mt-1 font-display font-extrabold text-sm text-black"
+                style={{ background: "var(--yellow)" }}
+              >
+                P
+              </div>
+            )}
+
             <div
-              className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center mr-2 mt-1 font-display font-extrabold text-sm text-black"
-              style={{ background: "var(--yellow)" }}
+              className={`max-w-[85%] px-4 py-3 text-sm ${
+                msg.role === "user"
+                  ? "rounded-2xl rounded-tr-sm"
+                  : "rounded-2xl rounded-tl-sm"
+              }`}
+              style={
+                msg.role === "user"
+                  ? { background: "var(--yellow)", color: "#000" }
+                  : {
+                      background: "var(--surface)",
+                      border: "1px solid var(--border)",
+                      color: "var(--text)",
+                    }
+              }
             >
-              P
-            </div>
-          )}
-
-          <div
-            className={`max-w-[85%] px-4 py-3 text-sm ${
-              msg.role === "user"
-                ? "rounded-2xl rounded-tr-sm"
-                : "rounded-2xl rounded-tl-sm"
-            }`}
-            style={
-              msg.role === "user"
-                ? { background: "var(--yellow)", color: "#000" }
-                : {
-                    background: "var(--surface)",
-                    border: "1px solid var(--border)",
-                    color: "var(--text)",
-                  }
-            }
-          >
-            {msg.loading ? (
-              <TypingIndicator text={msg.loadingText} />
-            ) : (
-              <>
-                <div
-                  className={
-                    msg.role === "user"
-                      ? "text-sm font-medium"
-                      : dark
-                      ? "prose prose-sm prose-invert max-w-none prose-p:my-0.5 prose-headings:my-1 prose-li:my-0 prose-table:text-xs"
-                      : "prose prose-sm max-w-none prose-p:my-0.5 prose-headings:my-1 prose-li:my-0 prose-table:text-xs"
-                  }
-                >
-                  {msg.role === "user" ? (
-                    <p>{msg.content}</p>
-                  ) : (
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={{
-                        a: ({ href, children }) => (
-                          <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: "var(--yellow)" }}>
-                            {children}
-                          </a>
-                        ),
-                      }}
-                    >
-                      {msg.content}
-                    </ReactMarkdown>
-                  )}
-                </div>
-
-                {msg.content && (
-                  <CopyButton text={msg.content} />
-                )}
-
-                {msg.charts && msg.charts.length > 0 && (
-                  <div className="mt-3 space-y-3">
-                    {msg.charts.map((chart, i) => (
-                      <ErrorBoundary
-                        key={i}
-                        fallback={
-                          <div className="text-xs py-2" style={{ color: "var(--error)" }}>
-                            Graf se nepodařilo zobrazit.
-                          </div>
-                        }
-                      >
-                        <AgentChart chart={chart} index={i} />
-                      </ErrorBoundary>
-                    ))}
-                  </div>
-                )}
-
-                {msg.slides && msg.slides.length > 0 && (
-                  <ErrorBoundary
-                    fallback={
-                      <div className="text-xs py-2" style={{ color: "var(--error)" }}>
-                        Report se nepodařilo zobrazit.
-                      </div>
+              {msg.loading ? (
+                <TypingIndicator text={msg.loadingText} />
+              ) : (
+                <>
+                  <div
+                    className={
+                      msg.role === "user"
+                        ? "text-sm font-medium"
+                        : dark
+                        ? "prose prose-sm prose-invert max-w-none prose-p:my-0.5 prose-headings:my-1 prose-li:my-0 prose-table:text-xs"
+                        : "prose prose-sm max-w-none prose-p:my-0.5 prose-headings:my-1 prose-li:my-0 prose-table:text-xs"
                     }
                   >
-                    <ReportSlides slides={msg.slides} />
-                  </ErrorBoundary>
-                )}
-              </>
+                    {msg.role === "user" ? (
+                      <p>{msg.content}</p>
+                    ) : (
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          a: ({ href, children }) => (
+                            <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: "var(--yellow)" }}>
+                              {children}
+                            </a>
+                          ),
+                        }}
+                      >
+                        {msg.content}
+                      </ReactMarkdown>
+                    )}
+                  </div>
+
+                  {msg.charts && msg.charts.length > 0 && (
+                    <div className="mt-3 space-y-3">
+                      {msg.charts.map((chart, i) => (
+                        <ErrorBoundary
+                          key={i}
+                          fallback={
+                            <div className="text-xs py-2" style={{ color: "var(--error)" }}>
+                              Graf se nepodařilo zobrazit.
+                            </div>
+                          }
+                        >
+                          <AgentChart chart={chart} index={i} />
+                        </ErrorBoundary>
+                      ))}
+                    </div>
+                  )}
+
+                  {msg.slides && msg.slides.length > 0 && (
+                    <ErrorBoundary
+                      fallback={
+                        <div className="text-xs py-2" style={{ color: "var(--error)" }}>
+                          Report se nepodařilo zobrazit.
+                        </div>
+                      }
+                    >
+                      <ReportSlides slides={msg.slides} />
+                    </ErrorBoundary>
+                  )}
+                </>
+              )}
+            </div>
+
+            {msg.role === "user" && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src="/prasepepa.png"
+                alt="Ty"
+                className="flex-shrink-0 w-8 h-8 rounded-xl object-cover ml-2 mt-1"
+              />
             )}
           </div>
 
-          {msg.role === "user" && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src="/prasepepa.png"
-              alt="Ty"
-              className="flex-shrink-0 w-8 h-8 rounded-xl object-cover ml-2 mt-1"
-            />
+          {/* Copy button — always below the full message, aligned to bubble edge */}
+          {!msg.loading && msg.content && (
+            <div className={msg.role === "user" ? "mr-10" : "ml-10"}>
+              <CopyButton text={msg.content} />
+            </div>
           )}
         </div>
       ))}
