@@ -34,11 +34,24 @@ body {
   font-family: var(--font-display), system-ui, sans-serif;
 }
 
-/* Disable text/element selection on chart SVGs */
-.recharts-wrapper,
-.recharts-wrapper * {
+/* Disable text selection and blue outline everywhere except actual inputs */
+body, body * {
   user-select: none;
   -webkit-user-select: none;
+}
+
+input, textarea, [contenteditable] {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* Remove browser focus outline on non-input elements */
+*:focus {
+  outline: none;
+}
+
+input:focus, textarea:focus, [contenteditable]:focus {
+  outline: none; /* handled per-element with custom border */
 }
 
 /* Hide scrollbars everywhere — layout uses overflow for clipping, not navigation */
