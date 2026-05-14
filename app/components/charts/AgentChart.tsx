@@ -204,10 +204,10 @@ export function AgentChart({ chart, index = 0 }: { chart: ChartData; index?: num
               </Bar>
             </BarChart>
           ) : (
-            <BarChart data={chart.data} margin={{ top: 4, right: 8, left: 4, bottom: longLabels ? 8 : 0 }}>
+            <BarChart data={chart.data} margin={{ top: 16, right: 8, left: 4, bottom: longLabels ? 8 : 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--muted)" strokeOpacity={0.25} strokeWidth={1} vertical={false} />
-              <XAxis dataKey={xKey} {...xAxisProps} />
-              <YAxis tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} width={yWidth} allowDecimals={false} tickFormatter={formatYTick} />
+              <XAxis dataKey={xKey} {...xAxisProps} padding={{ left: 20, right: 20 }} />
+              <YAxis tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} width={yWidth} allowDecimals={false} tickFormatter={formatYTick} domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.15)]} />
               {chart.reference_line && (
                 <ReferenceLine y={chart.reference_line.value} stroke="var(--muted)" strokeDasharray="4 4" strokeWidth={1.5} label={{ value: chart.reference_line.label, position: "insideTopRight", fontSize: 10, fill: "var(--muted)" }} />
               )}
@@ -218,7 +218,7 @@ export function AgentChart({ chart, index = 0 }: { chart: ChartData; index?: num
             </BarChart>
           )
         ) : chart.type === "line" ? (
-          <AreaChart data={chart.data} margin={{ top: 4, right: 8, left: 4, bottom: longLabels ? 8 : 0 }}>
+          <AreaChart data={chart.data} margin={{ top: 16, right: 8, left: 4, bottom: longLabels ? 8 : 0 }}>
             <defs>
               <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor={YELLOW} stopOpacity={0.18} />
@@ -226,8 +226,8 @@ export function AgentChart({ chart, index = 0 }: { chart: ChartData; index?: num
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--muted)" strokeOpacity={0.25} strokeWidth={1} vertical={false} />
-            <XAxis dataKey={xKey} {...xAxisProps} />
-            <YAxis tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} width={yWidth} allowDecimals={false} tickFormatter={formatYTick} />
+            <XAxis dataKey={xKey} {...xAxisProps} padding={{ left: 20, right: 20 }} />
+            <YAxis tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} width={yWidth} allowDecimals={false} tickFormatter={formatYTick} domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.15)]} />
             {chart.reference_line && (
               <ReferenceLine y={chart.reference_line.value} stroke="var(--muted)" strokeDasharray="4 4" strokeWidth={1.5} label={{ value: chart.reference_line.label, position: "insideTopRight", fontSize: 10, fill: "var(--muted)" }} />
             )}
