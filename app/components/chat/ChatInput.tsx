@@ -26,6 +26,7 @@ const QUICK_PROMPTS = [
   { label: "Chybějící rekonstrukce", prompt: "Najdi nemovitosti, u kterých nám v systému chybí data o rekonstrukci a stavebních úpravách a připrav jejich seznam k doplnění." },
   { label: "Týdenní report", prompt: "Shrň výsledky minulého týdne do krátkého reportu pro vedení a připrav k tomu prezentaci se třemi slidy." },
   { label: "Sreality Holešovice", prompt: "Sleduj všechny hlavní realitní servery a každé ráno mě informuj o nových nabídkách v lokalitě Praha Holešovice." },
+  { label: "Kdy mám volno?", prompt: "Kdy mám volno tento týden? Ukaž mi volné termíny z mého kalendáře." },
 ];
 
 function ChevronDown() {

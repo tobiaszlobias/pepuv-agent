@@ -4,6 +4,7 @@ import { agentTools } from "@/lib/tools/definitions";
 import { getClients, getProperties, getLeads } from "@/lib/sheets";
 import { searchByAddress, searchByParcel } from "@/lib/cuzk";
 import { scrapeSreality } from "@/lib/apify";
+import { getUpcomingEvents, getFreeSlotsForNextDays, createCalendarEvent } from "@/lib/calendar";
 
 const client = new Anthropic();
 
@@ -11,10 +12,7 @@ const SYSTEM_PROMPT = `Jsi Back Office Operations Agent pro realitní firmu. Pom
 
 Mluvíš česky. Jsi profesionální, stručný a konkrétní.
 
-Dostupné termíny prohlídek (kalendář Pepa):
-- Pondělí: 10:00, 14:00
-- Středa: 9:00, 14:00, 16:00
-- Pátek: 10:00, 13:00
+Máš přístup k Pepovu Google Kalendáři přes nástroje get_calendar_events a find_free_slots. Vždy je používej pro dotazy na dostupnost a termíny — nepoužívej pevně zadané časy.
 
 ---
 
@@ -38,16 +36,17 @@ Dotaz: "Noví klienti Q1", "Jaké nemovitosti máme", "Leady tento měsíc"
 
 ### ŠABLONA: Email klientovi
 Dotaz: "Napiš email", "Email zájemci", "Navrhni termín"
-1. Zavolej draft_email(client_name, property_address, available_slots)
-2. Text: hotový email v bloku — formát:
+1. NEJDŘÍV zavolej find_free_slots() — získej reálné volné termíny z Pepova kalendáře
+2. Zavolej draft_email(client_name, property_address, available_slots: [první 3 volné sloty z kalendáře])
+3. Text: hotový email v bloku — formát:
    **Předmět:** ...
 
    Dobrý den [jméno],
    [tělo emailu — 3-4 věty, profesionální tón]
-   Nabízím tyto termíny prohlídky:
-   - [termín 1]
-   - [termín 2]
-   - [termín 3]
+   Nabízím tyto termíny prohlídky (dle mého kalendáře):
+   - [termín 1 z kalendáře]
+   - [termín 2 z kalendáře]
+   - [termín 3 z kalendáře]
    S pozdravem, Pepa
 
 ### ŠABLONA: Nemovitosti s chybějícími daty
@@ -190,6 +189,51 @@ async function executeTool(
           count: data.length,
           listings: data,
         });
+      }
+
+      case "get_calendar_events": {
+        const { days: calDays } = input as { days?: number };
+        try {
+          const events = await getUpcomingEvents(calDays ?? 7);
+          return JSON.stringify({ success: true, count: events.length, events });
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          return JSON.stringify({ success: false, error: `Kalendář nedostupný: ${msg}`, events: [] });
+        }
+      }
+
+      case "find_free_slots": {
+        const { days: slotDays } = input as { days?: number };
+        try {
+          const available = await getFreeSlotsForNextDays(slotDays ?? 5);
+          const allSlots = available.flatMap((d) => d.slots.map((s) => s.label));
+          return JSON.stringify({ success: true, available, all_slot_labels: allSlots });
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          // Fallback to static slots if calendar unavailable
+          return JSON.stringify({
+            success: false,
+            error: `Kalendář nedostupný: ${msg}`,
+            all_slot_labels: ["pondělí 10:00–11:00", "středa 14:00–15:00", "pátek 10:00–11:00"],
+          });
+        }
+      }
+
+      case "create_calendar_event": {
+        const { title: evTitle, date: evDate, start: evStart, end: evEnd, description: evDesc } = input as {
+          title: string;
+          date: string;
+          start: string;
+          end: string;
+          description?: string;
+        };
+        try {
+          const result = await createCalendarEvent(evTitle, evDate, evStart, evEnd, evDesc);
+          return JSON.stringify({ success: true, ...result, message: `Událost "${evTitle}" byla přidána do kalendáře.` });
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          return JSON.stringify({ success: false, error: `Nepodařilo se vytvořit událost: ${msg}` });
+        }
       }
 
       case "draft_email": {

@@ -178,6 +178,67 @@ export const agentTools: Anthropic.Tool[] = [
     },
   },
   {
+    name: "get_calendar_events",
+    description:
+      "Načte nadcházející události z Pepova kalendáře. Použij pro dotazy jako 'kdy mám volno', 'co mám tento týden', 'jaké prohlídky mám naplánované'. Vrátí seznam událostí s daty a časy.",
+    input_schema: {
+      type: "object",
+      properties: {
+        days: {
+          type: "number",
+          description: "Počet dní dopředu, výchozí 7. Pro 'tento týden' použij 7, pro 'tento měsíc' 30.",
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "find_free_slots",
+    description:
+      "Najde volné termíny v Pepově kalendáři pro plánování prohlídek. Vrátí seznam hodinových bloků kdy Pepa nemá jiné schůzky (pracovní doba 8–18, 30min buffer kolem eventů). Použij VŽDY před draft_email pokud uživatel chce navrhnout termín prohlídky.",
+    input_schema: {
+      type: "object",
+      properties: {
+        days: {
+          type: "number",
+          description: "Počet pracovních dní dopředu pro hledání (výchozí 5). Vynechá víkendy automaticky.",
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "create_calendar_event",
+    description:
+      "Vytvoří novou událost v Pepově kalendáři. Použij po potvrzení termínu uživatelem.",
+    input_schema: {
+      type: "object",
+      properties: {
+        title: {
+          type: "string",
+          description: "Název události, např. 'Prohlídka Holešovice — Novák'",
+        },
+        date: {
+          type: "string",
+          description: "Datum ve formátu YYYY-MM-DD",
+        },
+        start: {
+          type: "string",
+          description: "Čas začátku HH:MM, např. '10:00'",
+        },
+        end: {
+          type: "string",
+          description: "Čas konce HH:MM, např. '11:00'",
+        },
+        description: {
+          type: "string",
+          description: "Volitelný popis nebo poznámky k události",
+        },
+      },
+      required: ["title", "date", "start", "end"],
+    },
+  },
+  {
     name: "create_chart",
     description: `Vytvoří graf z dat. Vyber typ grafu podle obsahu:
 

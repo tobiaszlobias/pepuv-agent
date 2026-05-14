@@ -22,7 +22,7 @@ Pepa je fiktivní postava ze zadání — reprezentuje back office managera real
 
 ---
 
-## Aktuální stav (14. 5. 2026 — noc)
+## Aktuální stav (14. 5. 2026)
 
 ✅ Všech 6 use cases ze zadání funguje na live deploymentu  
 ✅ Google Sheets data naseedována (50 klientů, 50 nemovitostí, 50 leadů)  
@@ -58,6 +58,12 @@ Pepa je fiktivní postava ze zadání — reprezentuje back office managera real
 ✅ Theme toggle se slunce/měsíc ikonami  
 ✅ Sidebar/header výška srovnána (65px)  
 
+✅ Google Calendar integrace — get_calendar_events, find_free_slots, create_calendar_event nástroje  
+✅ /api/calendar route (GET upcoming/free_slots/free_slots_week, POST create event)  
+✅ Email šablona používá reálné sloty z kalendáře (ne hardcoded časy)  
+✅ Quick prompt "Kdy mám volno?" přidán do ChatInput  
+✅ Seed skripty: create-calendar.ts, share-calendar.ts, seed-calendar.ts  
+
 **Zbývá:** Natočit demo video
 
 ---
@@ -84,6 +90,7 @@ GOOGLE_SHEETS_ID=         ← ID Google Sheetu
 GOOGLE_SERVICE_ACCOUNT=   ← Google service account JSON (base64)
 APIFY_API_TOKEN=          ← Apify token
 PASSWORD=                 ← Heslo pro přihlašovací obrazovku
+GOOGLE_CALENDAR_ID=       ← ID Google Kalendáře (Pepa - Pracovní kalendář)
 ```
 
 ---
@@ -107,6 +114,7 @@ PASSWORD=                 ← Heslo pro přihlašovací obrazovku
     /agent/route.ts            ← hlavní API route, Claude tool use loop
     /auth/route.ts             ← POST ověření hesla (env PASSWORD)
     /cron/route.ts             ← Vercel Cron — ranní monitoring Sreality
+    /calendar/route.ts         ← GET upcoming/free_slots/free_slots_week, POST create event
     /sheets/
       clients/route.ts         ← GET všichni klienti
       properties/route.ts      ← GET všechny nemovitosti
@@ -129,10 +137,14 @@ PASSWORD=                 ← Heslo pro přihlašovací obrazovku
     /tools/definitions.ts      ← JSON schema pro 8 nástrojů Claudea
     sheets.ts                  ← Google Sheets helper (getClients/Properties/Leads)
     cache.ts                   ← in-memory + sessionStorage cache (getCached/setCached)
+    calendar.ts                ← Google Calendar (getUpcomingEvents, findFreeSlots, createCalendarEvent, getFreeSlotsForNextDays)
     cuzk.ts                    ← ČÚZK API (searchByAddress, searchByParcel)
     apify.ts                   ← Apify scraper, server-side filtrování locality
   /scripts
     seed-sheets.ts             ← seed skript, valueInputOption: "RAW"
+    create-calendar.ts         ← vytvoří Google Kalendář, vypíše ID
+    share-calendar.ts          ← sdílí kalendář s emailem (pro Google Calendar UI)
+    seed-calendar.ts           ← naplní kalendář ~30 realistickými událostmi
 ```
 
 ### Tool use loop
@@ -157,6 +169,9 @@ search_sreality(locality, property_type?, max_price?)
 draft_email(client_name, property_address, available_slots?)
 generate_report(week)
 create_chart(type: 'bar'|'line'|'pie', data, title, x_key?, y_key?)
+get_calendar_events(days?)           ← Google Calendar, nadcházející události
+find_free_slots(days?)               ← volné hodinové bloky v pracovní době 8-18
+create_calendar_event(title, date, start, end, description?)
 ```
 
 ---
