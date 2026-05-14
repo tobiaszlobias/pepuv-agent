@@ -137,8 +137,22 @@ export function AgentChart({ chart, index = 0 }: { chart: ChartData; index?: num
   const tooltipLabelStyle = { color: "var(--text)", fontWeight: 500 };
   const tooltipItemStyle = { color: "var(--muted)" };
 
-  const xAxisProps = longLabels && !isHorizontal
-    ? { tick: { fontSize: 10, fill: "var(--muted)" }, axisLine: false, tickLine: false, angle: -35, textAnchor: "end" as const, height: 60, interval: 0 }
+  // For line charts and bar charts with long labels: shorten tick text instead of rotating
+  const needsShortLabels = longLabels && !isHorizontal;
+  const shortTickFormatter = needsShortLabels
+    ? (val: unknown) => {
+        const s = String(val ?? "");
+        // "Prosinec 2026" → "Pro 26", "Leden 2026" → "Led 26"
+        const parts = s.split(" ");
+        if (parts.length === 2 && parts[1].length === 4) {
+          return `${parts[0].slice(0, 3)} ${parts[1].slice(2)}`;
+        }
+        return s.slice(0, 6);
+      }
+    : undefined;
+
+  const xAxisProps = needsShortLabels
+    ? { tick: { fontSize: 10, fill: "var(--muted)" }, axisLine: false, tickLine: false, tickFormatter: shortTickFormatter }
     : { tick: { fontSize: 11, fill: "var(--muted)" }, axisLine: false, tickLine: false };
 
   return (
