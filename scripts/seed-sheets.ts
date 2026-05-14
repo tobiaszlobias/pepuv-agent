@@ -188,15 +188,17 @@ function sleep(ms: number): Promise<void> {
 function generateKlienti(): (string | number)[][] {
   const headers = ["id", "jméno", "email", "telefon", "zdroj", "datum_přidání", "status", "makléř"];
   const zdroje = ["web", "doporučení", "inzerce", "sreality"];
-  const statusy = ["aktivní", "uzavřený", "lead"];
+  const today = new Date();
   const from = new Date("2024-01-01");
-  const to = new Date("2025-12-31");
 
   const rows: (string | number)[][] = [headers];
 
-  for (let i = 1; i <= 50; i++) {
+  for (let i = 1; i <= 60; i++) {
     const jmeno = rand(VSECHNA_JMENA);
     const zdroj = rand(zdroje);
+    // Poslední 3 měsíce — více nových klientů pro realismus
+    const isRecent = i > 45;
+    const dateFrom = isRecent ? new Date(today.getFullYear(), today.getMonth() - 3, 1) : from;
     const status = Math.random() < 0.5 ? "aktivní" : Math.random() < 0.5 ? "lead" : "uzavřený";
 
     rows.push([
@@ -205,7 +207,7 @@ function generateKlienti(): (string | number)[][] {
       randEmail(jmeno),
       randPhone(),
       zdroj,
-      randDate(from, to),
+      randDate(dateFrom, today),
       status,
       rand(MAKLERS),
     ]);
@@ -221,29 +223,43 @@ function generateLeady(): (string | number)[][] {
   const zdroje = ["web", "doporučení", "inzerce", "sreality"];
   const typy = ["byt", "dům", "pozemek"];
   const statusy = ["nový", "kontaktován", "prohlídka", "nabídka", "uzavřen", "ztracen"];
+  const today = new Date();
   const from = new Date("2024-07-01");
-  const to = new Date("2025-12-31");
 
   const rows: (string | number)[][] = [headers];
 
-  for (let i = 1; i <= 50; i++) {
+  for (let i = 1; i <= 70; i++) {
     const typ = rand(typy);
-    let budget: string;
+    // Budget jako číslo v Kč (ne string) — agent s tím může počítat
+    let budget: number;
     if (typ === "byt") {
-      budget = `${randInt(3, 12)}M Kč`;
+      budget = randInt(3, 12) * 1_000_000;
     } else if (typ === "dům") {
-      budget = `${randInt(8, 25)}M Kč`;
+      budget = randInt(8, 25) * 1_000_000;
     } else {
-      budget = `${randInt(1, 8)}M Kč`;
+      budget = randInt(1, 8) * 1_000_000;
+    }
+
+    // Poslední 3 měsíce — čerstvá data
+    const isRecent = i > 50;
+    const dateFrom = isRecent ? new Date(today.getFullYear(), today.getMonth() - 3, 1) : from;
+
+    // Realistické rozložení statusů — více aktivních než uzavřených
+    let status: string;
+    const r = Math.random();
+    if (isRecent) {
+      status = r < 0.3 ? "nový" : r < 0.55 ? "kontaktován" : r < 0.75 ? "prohlídka" : r < 0.85 ? "nabídka" : r < 0.92 ? "uzavřen" : "ztracen";
+    } else {
+      status = rand(statusy);
     }
 
     rows.push([
       i,
-      randDate(from, to),
+      randDate(dateFrom, today),
       rand(zdroje),
       typ,
       budget,
-      rand(statusy),
+      status,
       rand(MAKLERS),
     ]);
   }
@@ -297,7 +313,7 @@ function stavbaToRow(
     poznamkyRek,
     katCislo,
     rand(MAKLERS),
-    randDate(new Date("2024-01-01"), new Date("2025-12-31")),
+    randDate(new Date("2024-01-01"), new Date()),
   ];
 }
 
@@ -329,7 +345,7 @@ function generateMockNemovitost(id: number): (string | number)[] {
     poznamky,
     katCislo,
     rand(MAKLERS),
-    randDate(new Date("2024-01-01"), new Date("2025-12-31")),
+    randDate(new Date("2024-01-01"), new Date()),
   ];
 }
 
@@ -390,6 +406,11 @@ async function main() {
   // 3. Zapiš do Google Sheets
   console.log("\n📝 Zapisuji do Google Sheets...");
   const sheets = getSheets();
+
+  // Vymaž starý obsah před zápisem (clear + write)
+  for (const range of ["Klienti!A1:Z1000", "Nemovitosti!A1:Z1000", "Leady!A1:Z1000"]) {
+    await sheets.spreadsheets.values.clear({ spreadsheetId: SHEET_ID, range });
+  }
 
   await writeSheet(sheets, "Klienti!A1", klientiData);
   await writeSheet(sheets, "Nemovitosti!A1", nemovitostiData);
