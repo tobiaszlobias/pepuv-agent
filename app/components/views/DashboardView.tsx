@@ -259,7 +259,7 @@ function ChartWithAdaptiveLabels({ chartData, chartMetric, timeSlot }: {
   return (
     <div ref={containerRef} style={{ width: "100%", height: 240 }}>
       <ResponsiveContainer width="100%" height={240}>
-        <AreaChart key={`${chartMetric}-${timeSlot}`} data={chartData} margin={{ top: 8, right: 8, left: 4, bottom: 8 }}>
+        <AreaChart key={`${chartMetric}-${timeSlot}`} data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
           <defs>
             <linearGradient id="leadGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor={YELLOW} stopOpacity={0.2} />
@@ -274,12 +274,13 @@ function ChartWithAdaptiveLabels({ chartData, chartMetric, timeSlot }: {
             tickLine={false}
             interval="preserveStartEnd"
             tickFormatter={formatMonth}
+            padding={{ left: 40, right: 20 }}
           />
           <YAxis
             tick={{ fontSize: 11, fill: "var(--muted)" }}
             axisLine={false}
             tickLine={false}
-            width={28}
+            width={32}
             allowDecimals={false}
             tickCount={5}
           />
@@ -473,7 +474,7 @@ export function DashboardView({ onChatPrompt }: { onChatPrompt?: (prompt: string
           <Section
             title=""
             stackOnMobile
-            className="pb-2 md:pb-3"
+            className="pb-1"
             action={
               <div className="flex gap-0.5 rounded-lg p-0.5" style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)" }}>
                 {TIME_SLOTS.map((s) => (
