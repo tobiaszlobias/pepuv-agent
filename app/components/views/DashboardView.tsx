@@ -210,9 +210,9 @@ function AnimatedFloat({ target, suffix }: { target: number; suffix: string }) {
   return <>{current}{suffix}</>;
 }
 
-function Section({ title, children, action, titleNode, stackOnMobile }: { title: string; children: React.ReactNode; action?: React.ReactNode; titleNode?: React.ReactNode; stackOnMobile?: boolean }) {
+function Section({ title, children, action, titleNode, stackOnMobile, className }: { title: string; children: React.ReactNode; action?: React.ReactNode; titleNode?: React.ReactNode; stackOnMobile?: boolean; className?: string }) {
   return (
-    <div className="rounded-2xl p-4 md:p-5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+    <div className={`rounded-2xl p-4 md:p-5 ${className ?? ""}`} style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
       <div className={`flex ${stackOnMobile ? "flex-col gap-2" : "flex-wrap items-center justify-between gap-2"} mb-4 md:flex-row md:items-center md:justify-between`}>
         {titleNode
           ? titleNode
@@ -259,7 +259,7 @@ function ChartWithAdaptiveLabels({ chartData, chartMetric, timeSlot }: {
   return (
     <div ref={containerRef} style={{ width: "100%", height: 240 }}>
       <ResponsiveContainer width="100%" height={240}>
-        <AreaChart key={`${chartMetric}-${timeSlot}`} data={chartData} margin={{ top: 8, right: 8, left: 4, bottom: 0 }}>
+        <AreaChart key={`${chartMetric}-${timeSlot}`} data={chartData} margin={{ top: 8, right: 8, left: 4, bottom: 8 }}>
           <defs>
             <linearGradient id="leadGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor={YELLOW} stopOpacity={0.2} />
@@ -473,6 +473,7 @@ export function DashboardView({ onChatPrompt }: { onChatPrompt?: (prompt: string
           <Section
             title=""
             stackOnMobile
+            className="pb-2 md:pb-3"
             action={
               <div className="flex gap-0.5 rounded-lg p-0.5" style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)" }}>
                 {TIME_SLOTS.map((s) => (
