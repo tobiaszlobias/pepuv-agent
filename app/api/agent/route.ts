@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { agentTools } from "@/lib/tools/definitions";
 import { getClients, getProperties, getLeads } from "@/lib/sheets";
-import { searchByAddress, searchByParcel } from "@/lib/cuzk";
+import { searchByAddress, searchByParcel, searchBuilding } from "@/lib/cuzk";
 import { scrapeSreality } from "@/lib/apify";
 import { getUpcomingEvents, getFreeSlotsForNextDays, createCalendarEvent } from "@/lib/calendar";
 
@@ -68,6 +68,27 @@ Dotaz: "Nové nabídky", "Co je na Sreality", "Monitoring Praha"
    - Odkaz VŽDY zobraz jako markdown link: [Sreality](url) — každý řádek musí mít odkaz
    - Pokud url chybí nebo je prázdné, napiš "—"
 3. Závěr: "Nalezeno X nabídek v [lokalitě]."
+
+### ŠABLONA: Nabídky Sreality + ověření v ČÚZK
+Dotaz: "Ukáž nabídky v X a ověř v katastru", "Zkontroluj katastr pro nabídky", "Co je na Sreality a jak to stojí v katastru"
+1. Zavolej search_sreality(locality, property_type?)
+2. Z vrácených nabídek vyber max 2 kde adresa obsahuje číslo (např. "Komunardů 32" → č.p. 32)
+   - Pokud žádná adresa číslo neobsahuje, uveď "číslo popisné neznámé — ČÚZK nelze ověřit" a přeskoč krok 3-4
+3. Pro každou vybranou: zavolej search_cuzk(cislo_domovni: X, kod_casti_obce: Y)
+   - Kódy: Holešovice=490067, Vinohrady=490229, Žižkov=490261, Smíchov=400301, Dejvice=400459, Karlín=400637
+   - NIKDY více než 2 volání ČÚZK na jeden dotaz (API limit)
+4. Výstup:
+   ## Nabídky — [lokalita]
+   | Adresa | Typ | Cena | Odkaz |
+   (všechny Sreality nabídky)
+
+   ## Katastrální ověření
+   ### [adresa]
+   - **Typ stavby:** [zpusobVyuziti]
+   - **Památková ochrana:** [zpusobyOchrany nebo "bez ochrany"]
+   - **Počet jednotek v domě:** [pocetJednotek]
+   - **Právní řízení:** [pokud maRizeni: "⚠️ POZOR — aktivní řízení!" jinak "čisté, bez plomb"]
+   - **List vlastnictví:** LV [lv.cislo], k.ú. [lv.katastralniUzemi]
 
 ### ŠABLONA: Dotaz na makléře / výkon
 Dotaz: "Kdo má nejvíc leadů", "Výkon makléřů", "Srovnání makléřů"
@@ -147,10 +168,12 @@ async function executeTool(
       }
 
       case "search_cuzk": {
-        const { address, parcel_number, cadastral_area } = input as {
+        const { address, parcel_number, cadastral_area, cislo_domovni, kod_casti_obce } = input as {
           address?: string;
           parcel_number?: string;
           cadastral_area?: string;
+          cislo_domovni?: number;
+          kod_casti_obce?: number;
         };
 
         if (!process.env.CUZK_API_KEY) {
@@ -160,6 +183,16 @@ async function executeTool(
           });
         }
 
+        if (cislo_domovni && kod_casti_obce) {
+          const data = await searchBuilding(cislo_domovni, kod_casti_obce);
+          if (!data) {
+            return JSON.stringify({
+              success: false,
+              error: `Budova č.p. ${cislo_domovni} v části obce ${kod_casti_obce} nebyla v ČÚZK nalezena.`,
+            });
+          }
+          return JSON.stringify({ success: true, source: "ČÚZK", data });
+        }
         if (address) {
           const data = await searchByAddress(address);
           return JSON.stringify({ success: true, source: "ČÚZK", data });
@@ -170,7 +203,7 @@ async function executeTool(
         }
         return JSON.stringify({
           success: false,
-          error: "Zadej adresu nebo parcelní číslo",
+          error: "Zadej cislo_domovni + kod_casti_obce, adresu nebo parcelní číslo.",
         });
       }
 

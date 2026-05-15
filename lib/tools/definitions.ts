@@ -82,21 +82,35 @@ export const agentTools: Anthropic.Tool[] = [
   {
     name: "search_cuzk",
     description:
-      "Vyhledá informace o nemovitosti v Katastru nemovitostí (ČÚZK). Vrátí data o vlastníkovi, parcelním čísle, výměře a právních vztazích. Používej pro ověření katastrálních dat.",
+      "Vyhledá informace o stavbě v Katastru nemovitostí (ČÚZK). " +
+      "Vrátí: typ stavby, způsob využití (bytový dům / rodinný dům...), památkovou ochranu, " +
+      "počet bytových jednotek a stav právních řízení (plomby — prázdné = čisté, neprázdné = POZOR). " +
+      "Pro přesné vyhledání použij cislo_domovni + kod_casti_obce. " +
+      "POZOR: API limit 500 volání/den — volej max 2× na jeden dotaz.",
     input_schema: {
       type: "object",
       properties: {
+        cislo_domovni: {
+          type: "number",
+          description:
+            "Číslo popisné budovy jako celé číslo, např. 32. Použij spolu s kod_casti_obce.",
+        },
+        kod_casti_obce: {
+          type: "number",
+          description:
+            "Kód části obce dle ČÚZK: Holešovice=490067, Vinohrady=490229, Žižkov=490261, Smíchov=400301, Dejvice=400459, Karlín=400637.",
+        },
         address: {
           type: "string",
-          description: "Adresa nemovitosti, např. 'Holešovická 15, Praha 7'",
+          description: "Adresa nemovitosti — záložní varianta pokud nemáš cislo_domovni.",
         },
         parcel_number: {
           type: "string",
-          description: "Katastrální číslo parcely",
+          description: "Katastrální číslo parcely.",
         },
         cadastral_area: {
           type: "string",
-          description: "Název katastrálního území",
+          description: "Název katastrálního území.",
         },
       },
       required: [],
