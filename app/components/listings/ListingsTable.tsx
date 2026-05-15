@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-
 interface CuzkDetail {
   typStavby: string;
   zpusobVyuziti: string;
@@ -47,8 +45,25 @@ function formatPriceM2(p?: number) {
   return p.toLocaleString("cs-CZ") + " Kč/m²";
 }
 
+function buildNote(l: Listing): string {
+  if (l.cuzk_status === "unknown") return "Neověřeno — chybí č.p.";
+  if (!l.cuzk_detail) return "—";
+
+  const d = l.cuzk_detail;
+  const parts: string[] = [];
+
+  if (d.pocetJednotek > 0) parts.push(`${d.pocetJednotek} jednotek`);
+  if (d.maRizeni) {
+    parts.push("⚠ aktivní řízení");
+  } else {
+    parts.push("bez právních řízení");
+  }
+  if (d.zpusobyOchrany.length > 0) parts.push(d.zpusobyOchrany.join(", "));
+
+  return parts.join(", ");
+}
+
 export function ListingsTable({ data }: { data: ListingsData }) {
-  const [expanded, setExpanded] = useState<number | null>(null);
   const { summary, listings, locality } = data;
 
   const summaryParts: string[] = [];
@@ -58,7 +73,7 @@ export function ListingsTable({ data }: { data: ListingsData }) {
   if (summary.unknown > 0) summaryParts.push(`${summary.unknown} neověřeno`);
 
   return (
-    <div className="mt-3 rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+    <div className="mt-3 rounded-xl overflow-hidden w-full" style={{ border: "1px solid var(--border)" }}>
       {/* Header */}
       <div
         className="px-4 py-2.5 flex items-center justify-between"
@@ -83,105 +98,43 @@ export function ListingsTable({ data }: { data: ListingsData }) {
               <th className="text-right px-3 py-2 font-medium" style={{ color: "var(--muted)" }}>Cena</th>
               <th className="text-right px-3 py-2 font-medium" style={{ color: "var(--muted)" }}>Kč/m²</th>
               <th className="text-center px-3 py-2 font-medium" style={{ color: "var(--muted)" }}>Katastr</th>
+              <th className="text-left px-3 py-2 font-medium" style={{ color: "var(--muted)" }}>Poznámka</th>
             </tr>
           </thead>
           <tbody>
             {listings.map((l, i) => (
-              <>
-                <tr
-                  key={i}
-                  onClick={() => setExpanded(expanded === i ? null : i)}
-                  className="cursor-pointer transition-colors"
-                  style={{
-                    borderBottom: "1px solid var(--border)",
-                    background: expanded === i ? "rgba(255,214,0,0.05)" : "transparent",
-                  }}
-                  onMouseEnter={(e) => { if (expanded !== i) e.currentTarget.style.background = "var(--surface-elevated)"; }}
-                  onMouseLeave={(e) => { if (expanded !== i) e.currentTarget.style.background = "transparent"; }}
-                >
-                  <td className="px-3 py-2.5">
-                    <a
-                      href={l.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="hover:underline"
-                      style={{ color: "var(--yellow)" }}
-                    >
-                      {l.address || "—"}
-                    </a>
-                  </td>
-                  <td className="px-3 py-2.5" style={{ color: "var(--muted)" }}>{l.type}</td>
-                  <td className="px-3 py-2.5 text-right" style={{ color: "var(--text)" }}>
-                    {l.area_m2 ? `${l.area_m2} m²` : "—"}
-                  </td>
-                  <td className="px-3 py-2.5 text-right font-medium" style={{ color: "var(--text)" }}>
-                    {formatPrice(l.price)}
-                  </td>
-                  <td className="px-3 py-2.5 text-right" style={{ color: "var(--muted)" }}>
-                    {formatPriceM2(l.price_per_m2)}
-                  </td>
-                  <td className="px-3 py-2.5 text-center">
-                    <div className="flex items-center justify-center gap-1">
-                      <StatusBadge status={l.cuzk_status} />
-                      {l.cuzk_warnings && l.cuzk_warnings.length > 0 && (
-                        <span className="text-xs" style={{ color: "var(--muted)" }}>
-                          {l.cuzk_warnings[0]}
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-
-                {/* Expanded detail row */}
-                {expanded === i && l.cuzk_detail && (
-                  <tr key={`${i}-detail`} style={{ borderBottom: "1px solid var(--border)" }}>
-                    <td colSpan={6} className="px-4 py-3" style={{ background: "rgba(255,214,0,0.04)" }}>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1 text-xs">
-                        <div>
-                          <span style={{ color: "var(--muted)" }}>Typ stavby: </span>
-                          <span style={{ color: "var(--text)" }}>{l.cuzk_detail.zpusobVyuziti || l.cuzk_detail.typStavby || "—"}</span>
-                        </div>
-                        <div>
-                          <span style={{ color: "var(--muted)" }}>Počet jednotek: </span>
-                          <span style={{ color: "var(--text)" }}>{l.cuzk_detail.pocetJednotek}</span>
-                        </div>
-                        <div>
-                          <span style={{ color: "var(--muted)" }}>Část obce: </span>
-                          <span style={{ color: "var(--text)" }}>{l.cuzk_detail.castObce || "—"}</span>
-                        </div>
-                        <div>
-                          <span style={{ color: "var(--muted)" }}>Památková ochrana: </span>
-                          <span style={{ color: "var(--text)" }}>
-                            {l.cuzk_detail.zpusobyOchrany.length > 0 ? l.cuzk_detail.zpusobyOchrany.join(", ") : "bez ochrany"}
-                          </span>
-                        </div>
-                        <div>
-                          <span style={{ color: "var(--muted)" }}>Právní řízení: </span>
-                          <span style={{ color: l.cuzk_detail.maRizeni ? "#f87171" : "#4ade80" }}>
-                            {l.cuzk_detail.maRizeni ? "⚠️ Aktivní řízení" : "✓ Čisté"}
-                          </span>
-                        </div>
-                        {l.cuzk_detail.lv && (
-                          <div>
-                            <span style={{ color: "var(--muted)" }}>List vlastnictví: </span>
-                            <span style={{ color: "var(--text)" }}>LV {l.cuzk_detail.lv.cislo}, k.ú. {l.cuzk_detail.lv.katastralniUzemi}</span>
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                )}
-
-                {/* Expanded — no ČÚZK data */}
-                {expanded === i && !l.cuzk_detail && l.cuzk_status === "unknown" && (
-                  <tr key={`${i}-nodata`} style={{ borderBottom: "1px solid var(--border)" }}>
-                    <td colSpan={6} className="px-4 py-2 text-xs" style={{ color: "var(--muted)", background: "var(--surface-elevated)" }}>
-                      Katastrální data nejsou k dispozici (číslo popisné nebylo nalezeno).
-                    </td>
-                  </tr>
-                )}
-              </>
+              <tr
+                key={i}
+                style={{ borderBottom: "1px solid var(--border)" }}
+              >
+                <td className="px-3 py-2.5">
+                  <a
+                    href={l.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:underline"
+                    style={{ color: "var(--yellow)" }}
+                  >
+                    {l.address || "—"}
+                  </a>
+                </td>
+                <td className="px-3 py-2.5" style={{ color: "var(--muted)" }}>{l.type}</td>
+                <td className="px-3 py-2.5 text-right" style={{ color: "var(--text)" }}>
+                  {l.area_m2 ? `${l.area_m2} m²` : "—"}
+                </td>
+                <td className="px-3 py-2.5 text-right font-medium" style={{ color: "var(--text)" }}>
+                  {formatPrice(l.price)}
+                </td>
+                <td className="px-3 py-2.5 text-right" style={{ color: "var(--muted)" }}>
+                  {formatPriceM2(l.price_per_m2)}
+                </td>
+                <td className="px-3 py-2.5 text-center">
+                  <StatusBadge status={l.cuzk_status} />
+                </td>
+                <td className="px-3 py-2.5" style={{ color: l.cuzk_detail?.maRizeni ? "#f87171" : "var(--muted)" }}>
+                  {buildNote(l)}
+                </td>
+              </tr>
             ))}
           </tbody>
         </table>

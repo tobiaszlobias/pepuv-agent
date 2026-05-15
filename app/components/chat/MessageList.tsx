@@ -270,17 +270,6 @@ export function MessageList({ messages, dark, onSend }: { messages: Message[]; d
                     </ErrorBoundary>
                   )}
 
-                  {msg.listings && (
-                    <ErrorBoundary
-                      fallback={
-                        <div className="text-xs py-2" style={{ color: "var(--error)" }}>
-                          Tabulku nabídek se nepodařilo zobrazit.
-                        </div>
-                      }
-                    >
-                      <ListingsTable data={msg.listings} />
-                    </ErrorBoundary>
-                  )}
                 </>
               )}
             </div>
@@ -294,6 +283,21 @@ export function MessageList({ messages, dark, onSend }: { messages: Message[]; d
               />
             )}
           </div>
+
+          {/* Listings table — full width, below bubble, indented past avatar */}
+          {!msg.loading && msg.listings && msg.role === "assistant" && (
+            <div className="w-full pl-10">
+              <ErrorBoundary
+                fallback={
+                  <div className="text-xs py-2" style={{ color: "var(--error)" }}>
+                    Tabulku nabídek se nepodařilo zobrazit.
+                  </div>
+                }
+              >
+                <ListingsTable data={msg.listings} />
+              </ErrorBoundary>
+            </div>
+          )}
 
           {/* Copy button — always below the full message, aligned to bubble edge */}
           {!msg.loading && msg.content && (
