@@ -686,37 +686,18 @@ export function DashboardView({ onChatPrompt }: { onChatPrompt?: (prompt: string
                   </button>
                 )}
 
-                {/* Property type pill — dropdown opens upward (safe on mobile) */}
-                <div className="relative">
-                  <button
-                    onClick={() => setEditingField(editingField === "type" ? null : "type")}
-                    className="text-xs px-2.5 py-1 rounded-full hover:opacity-75 transition-opacity"
-                    style={{ background: "var(--surface-elevated)", color: "var(--muted)", border: "1px solid var(--border)" }}
-                  >
-                    {PROPERTY_TYPES.find(t => t.value === config.propertyType)?.label || "Jakýkoliv typ"}
-                  </button>
-                  {editingField === "type" && (
-                    <div
-                      className="absolute left-0 bottom-full mb-1 z-20 rounded-xl overflow-hidden flex flex-col"
-                      style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)", minWidth: 140, boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }}
-                    >
-                      {PROPERTY_TYPES.map((t) => (
-                        <button
-                          key={t.value}
-                          onClick={() => applyField("propertyType", t.value)}
-                          className="text-xs px-3 py-2 text-left transition-colors hover:opacity-80"
-                          style={{
-                            color: config.propertyType === t.value ? YELLOW : "var(--text)",
-                            fontWeight: config.propertyType === t.value ? 600 : 400,
-                            background: config.propertyType === t.value ? "rgba(255,214,0,0.08)" : "transparent",
-                          }}
-                        >
-                          {t.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                {/* Property type pill */}
+                <button
+                  onClick={() => setEditingField(editingField === "type" ? null : "type")}
+                  className="text-xs px-2.5 py-1 rounded-full hover:opacity-75 transition-opacity"
+                  style={{
+                    background: editingField === "type" ? "rgba(255,214,0,0.10)" : "var(--surface-elevated)",
+                    color: editingField === "type" ? YELLOW : "var(--muted)",
+                    border: `1px solid ${editingField === "type" ? YELLOW : "var(--border)"}`,
+                  }}
+                >
+                  {PROPERTY_TYPES.find(t => t.value === config.propertyType)?.label || "Jakýkoliv typ"}
+                </button>
 
                 {/* Max price */}
                 {editingField === "price" ? (
@@ -738,6 +719,26 @@ export function DashboardView({ onChatPrompt }: { onChatPrompt?: (prompt: string
                 )}
               </div>
             </div>
+
+            {/* Property type picker — inline, appears below pills */}
+            {editingField === "type" && (
+              <div className="flex flex-wrap gap-1.5 pt-0.5">
+                {PROPERTY_TYPES.map((t) => (
+                  <button
+                    key={t.value}
+                    onClick={() => applyField("propertyType", t.value)}
+                    className="text-xs px-2.5 py-1 rounded-full transition-colors"
+                    style={
+                      config.propertyType === t.value
+                        ? { background: YELLOW, color: "#000", fontWeight: 600 }
+                        : { background: "var(--surface-elevated)", color: "var(--muted)", border: "1px solid var(--border)" }
+                    }
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Loading skeleton */}
             {loadingSreality && (
