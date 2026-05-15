@@ -686,7 +686,7 @@ export function DashboardView({ onChatPrompt }: { onChatPrompt?: (prompt: string
                   </button>
                 )}
 
-                {/* Property type pill — opens dropdown BELOW */}
+                {/* Property type pill — dropdown opens upward (safe on mobile) */}
                 <div className="relative">
                   <button
                     onClick={() => setEditingField(editingField === "type" ? null : "type")}
@@ -697,7 +697,7 @@ export function DashboardView({ onChatPrompt }: { onChatPrompt?: (prompt: string
                   </button>
                   {editingField === "type" && (
                     <div
-                      className="absolute left-0 top-full mt-1 z-20 rounded-xl overflow-hidden flex flex-col"
+                      className="absolute left-0 bottom-full mb-1 z-20 rounded-xl overflow-hidden flex flex-col"
                       style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)", minWidth: 140, boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }}
                     >
                       {PROPERTY_TYPES.map((t) => (
@@ -739,8 +739,23 @@ export function DashboardView({ onChatPrompt }: { onChatPrompt?: (prompt: string
               </div>
             </div>
 
+            {/* Loading skeleton */}
+            {loadingSreality && (
+              <div className="flex flex-col gap-1.5">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg animate-pulse"
+                    style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)" }}>
+                    <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ background: "var(--border)" }} />
+                    <div className="flex-1 h-3 rounded" style={{ background: "var(--border)", opacity: 0.7 - i * 0.15 }} />
+                    <div className="w-14 h-3 rounded flex-shrink-0" style={{ background: "var(--border)" }} />
+                  </div>
+                ))}
+                <p className="text-[10px] text-center mt-0.5" style={{ color: "var(--muted)" }}>Prohledávám nabídky…</p>
+              </div>
+            )}
+
             {/* Results or scan button */}
-            {sreality.length > 0 ? (
+            {!loadingSreality && sreality.length > 0 ? (
               <div className="flex flex-col gap-1.5">
                 {[...sreality]
                   .sort((a, b) => (a.price_per_m2 ?? Infinity) - (b.price_per_m2 ?? Infinity))
@@ -794,7 +809,7 @@ export function DashboardView({ onChatPrompt }: { onChatPrompt?: (prompt: string
                   </button>
                 </div>
               </div>
-            ) : (
+            ) : !loadingSreality ? (
               <div className="flex flex-col gap-2">
                 {srealityError && <p className="text-xs" style={{ color: "#f87171" }}>{srealityError}</p>}
                 {srealityScanned && !srealityError && (
@@ -804,14 +819,13 @@ export function DashboardView({ onChatPrompt }: { onChatPrompt?: (prompt: string
                 )}
                 <button
                   onClick={runSreality}
-                  disabled={loadingSreality}
-                  className="w-full text-xs py-2 rounded-lg font-bold transition-opacity disabled:opacity-40"
+                  className="w-full text-xs py-2 rounded-lg font-bold"
                   style={{ background: YELLOW, color: "#000" }}
                 >
-                  {loadingSreality ? "Scanuji..." : srealityScanned ? "Zkusit znovu" : "Spustit scan"}
+                  {srealityScanned ? "Zkusit znovu" : "Spustit scan"}
                 </button>
               </div>
-            )}
+            ) : null}
           </div>
         </Section>
       </div>
