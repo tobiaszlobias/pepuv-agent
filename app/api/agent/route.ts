@@ -74,22 +74,10 @@ Dotaz: "Nové nabídky", "Co je na Sreality", "Monitoring Praha"
 ### ŠABLONA: Nabídky Sreality + ověření v ČÚZK
 Dotaz: "Ukáž nabídky v X a ověř v katastru", "Zkontroluj katastr pro nabídky", "Co je na Sreality a jak to stojí v katastru"
 1. Zavolej search_sreality(locality, property_type?)
-2. Výsledky obsahují pole cislo_domovni a kod_casti_obce — vyber max 2 nabídky kde cislo_domovni není null
-3. Pro každou vybranou: zavolej search_cuzk(cislo_domovni, kod_casti_obce) — hodnoty vezmi přímo z výsledku
-   - NIKDY více než 2 volání ČÚZK na jeden dotaz (API limit 500/den)
-   - Pokud žádná nabídka nemá cislo_domovni → uveď "katastrální ověření není k dispozici"
-4. Výstup:
-   ## Nabídky — [lokalita]
-   | Adresa | Typ | Cena | Odkaz |
-   (všechny Sreality nabídky)
-
-   ## Katastrální ověření
-   ### [adresa]
-   - **Typ stavby:** [zpusobVyuziti]
-   - **Památková ochrana:** [zpusobyOchrany nebo "bez ochrany"]
-   - **Počet jednotek v domě:** [pocetJednotek]
-   - **Právní řízení:** [pokud maRizeni: "⚠️ POZOR — aktivní řízení!" jinak "čisté, bez plomb"]
-   - **List vlastnictví:** LV [lv.cislo], k.ú. [lv.katastralniUzemi]
+2. Zavolej verify_sreality_cadastre(listings: [celý výsledek ze search_sreality], locality_label: "[lokalita]")
+   - Tento nástroj ověří VŠECHNY nabídky paralelně a vrátí je obohacené o katastrální status
+   - NEPOUŽÍVEJ search_cuzk manuálně — verify_sreality_cadastre to udělá za tebe
+3. Text odpovědi: pouze krátká věta shrnutí (summary z výsledku nástroje). Tabulku a detail NEPIŠ — frontend je zobrazí automaticky.
 
 ### ŠABLONA: Dotaz na makléře / výkon
 Dotaz: "Kdo má nejvíc leadů", "Výkon makléřů", "Srovnání makléřů"
@@ -222,6 +210,76 @@ async function executeTool(
           success: true,
           count: data.length,
           listings: data,
+        });
+      }
+
+      case "verify_sreality_cadastre": {
+        const { listings, locality_label } = input as {
+          listings: {
+            address: string;
+            price: number;
+            price_per_m2?: number;
+            area_m2?: number;
+            type: string;
+            url: string;
+            cislo_domovni?: number;
+            kod_casti_obce?: number;
+          }[];
+          locality_label?: string;
+        };
+
+        // Paralelně ověř ČÚZK pro všechny s číslem domovním
+        const verified = await Promise.all(
+          listings.map(async (l) => {
+            if (!l.cislo_domovni || !l.kod_casti_obce) {
+              return { ...l, cuzk_status: "unknown" as const, cuzk_detail: null };
+            }
+            try {
+              const info = await searchBuilding(l.cislo_domovni, l.kod_casti_obce);
+              if (!info) {
+                return { ...l, cuzk_status: "unknown" as const, cuzk_detail: null };
+              }
+
+              // Určí status
+              let status: "ok" | "warning" | "problem" = "ok";
+              const warnings: string[] = [];
+
+              if (info.maRizeni) {
+                status = "problem";
+                warnings.push("Aktivní právní řízení (plomba)");
+              }
+              if (info.zpusobyOchrany.length > 0) {
+                if (status === "ok") status = "warning";
+                warnings.push(...info.zpusobyOchrany);
+              }
+              if (info.zpusobVyuziti && !["bytový dům", "rodinný dům", "stavba pro bydlení"].includes(info.zpusobVyuziti)) {
+                if (status === "ok") status = "warning";
+                warnings.push(`Způsob využití: ${info.zpusobVyuziti}`);
+              }
+
+              return {
+                ...l,
+                cuzk_status: status,
+                cuzk_warnings: warnings,
+                cuzk_detail: info,
+              };
+            } catch {
+              return { ...l, cuzk_status: "unknown" as const, cuzk_detail: null };
+            }
+          })
+        );
+
+        const total = verified.length;
+        const ok = verified.filter((l) => l.cuzk_status === "ok").length;
+        const warning = verified.filter((l) => l.cuzk_status === "warning").length;
+        const problem = verified.filter((l) => l.cuzk_status === "problem").length;
+        const unknown = verified.filter((l) => l.cuzk_status === "unknown").length;
+
+        return JSON.stringify({
+          success: true,
+          locality: locality_label ?? "",
+          summary: { total, ok, warning, problem, unknown },
+          listings: verified,
         });
       }
 
@@ -612,9 +670,28 @@ export async function POST(req: NextRequest) {
     .filter(Boolean)
     .flat();
 
+  // Hledej listings data (verify_sreality_cadastre)
+  const listingsData = allMessages
+    .flatMap((m) => (Array.isArray(m.content) ? m.content : []))
+    .filter(
+      (b): b is Anthropic.ToolResultBlockParam =>
+        typeof b === "object" && "tool_use_id" in b
+    )
+    .map((b) => {
+      try {
+        const parsed = JSON.parse(b.content as string);
+        return parsed.listings && parsed.summary ? parsed : null;
+      } catch {
+        return null;
+      }
+    })
+    .filter(Boolean)
+    .at(-1); // vezmi poslední (nejnovější volání)
+
   return NextResponse.json({
     text: textBlock?.text || "",
     charts: chartData,
     slides: slideData,
+    listings: listingsData ?? null,
   });
 }

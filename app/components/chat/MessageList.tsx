@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { AgentChart } from "@/app/components/charts/AgentChart";
 import { ReportSlides } from "@/app/components/slides/ReportSlides";
+import { ListingsTable } from "@/app/components/listings/ListingsTable";
 import { ErrorBoundary } from "@/app/components/ErrorBoundary";
 
 interface ChartData {
@@ -29,12 +30,41 @@ interface Slide {
   next_steps?: string[];
 }
 
+interface CuzkDetailData {
+  typStavby: string;
+  zpusobVyuziti: string;
+  zpusobyOchrany: string[];
+  pocetJednotek: number;
+  castObce: string;
+  lv: { cislo: number; katastralniUzemi: string } | null;
+  maRizeni: boolean;
+}
+
+interface ListingItem {
+  address: string;
+  price: number;
+  price_per_m2?: number;
+  area_m2?: number;
+  type: string;
+  url: string;
+  cuzk_status?: "ok" | "warning" | "problem" | "unknown";
+  cuzk_warnings?: string[];
+  cuzk_detail?: CuzkDetailData | null;
+}
+
+interface ListingsData {
+  locality: string;
+  summary: { total: number; ok: number; warning: number; problem: number; unknown: number };
+  listings: ListingItem[];
+}
+
 export interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   charts?: ChartData[];
   slides?: Slide[];
+  listings?: ListingsData | null;
   loading?: boolean;
   loadingText?: string;
 }
@@ -237,6 +267,18 @@ export function MessageList({ messages, dark, onSend }: { messages: Message[]; d
                       }
                     >
                       <ReportSlides slides={msg.slides} />
+                    </ErrorBoundary>
+                  )}
+
+                  {msg.listings && (
+                    <ErrorBoundary
+                      fallback={
+                        <div className="text-xs py-2" style={{ color: "var(--error)" }}>
+                          Tabulku nabídek se nepodařilo zobrazit.
+                        </div>
+                      }
+                    >
+                      <ListingsTable data={msg.listings} />
                     </ErrorBoundary>
                   )}
                 </>

@@ -192,6 +192,28 @@ export const agentTools: Anthropic.Tool[] = [
     },
   },
   {
+    name: "verify_sreality_cadastre",
+    description:
+      "Vezme seznam Sreality nabídek (výstup ze search_sreality) a pro každou která má cislo_domovni ověří katastr (ČÚZK). " +
+      "Volání ČÚZK probíhají paralelně. Vrátí obohacená data vhodná pro zobrazení tabulky se statusem. " +
+      "Používej VŽDY když uživatel chce vidět nabídky + katastrální ověření zároveň — místo ručního volání search_cuzk.",
+    input_schema: {
+      type: "object",
+      properties: {
+        listings: {
+          type: "array",
+          description: "Pole nabídek ze search_sreality — předej celý výsledek beze změny.",
+          items: { type: "object" },
+        },
+        locality_label: {
+          type: "string",
+          description: "Název lokality pro nadpis, např. 'Holešovice'",
+        },
+      },
+      required: ["listings"],
+    },
+  },
+  {
     name: "get_calendar_events",
     description:
       "Načte nadcházející události z Pepova kalendáře. Použij pro dotazy jako 'kdy mám volno', 'co mám tento týden', 'jaké prohlídky mám naplánované'. Vrátí seznam událostí s daty a časy.",

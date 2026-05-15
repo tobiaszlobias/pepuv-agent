@@ -316,6 +316,7 @@ export default function Home() {
           content: data.text,
           charts: data.charts || [],
           slides: data.slides || [],
+          listings: data.listings || null,
         };
 
         setMessages((prev) =>
