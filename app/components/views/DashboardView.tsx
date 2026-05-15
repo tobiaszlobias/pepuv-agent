@@ -80,6 +80,37 @@ function saveMonitoringConfig(cfg: MonitoringConfig) {
 const YELLOW = "#FFD600";
 const COLORS = ["#FFD600", "#888880", "#F0EDE8", "#444440", "#BBBAB6"];
 
+function InlineTextInput({ defaultValue, placeholder, yellow, inputMode, onCommit, onCancel }: {
+  defaultValue: string;
+  placeholder?: string;
+  yellow?: boolean;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  onCommit: (v: string) => void;
+  onCancel: () => void;
+}) {
+  const ref = React.useRef<HTMLInputElement>(null);
+  React.useEffect(() => { ref.current?.focus(); ref.current?.select(); }, []);
+  return (
+    <input
+      ref={ref}
+      type="text"
+      inputMode={inputMode}
+      defaultValue={defaultValue}
+      placeholder={placeholder}
+      className="text-xs px-2.5 py-1 rounded-full focus:outline-none"
+      style={yellow
+        ? { background: "rgba(255,214,0,0.15)", border: `1px solid ${YELLOW}`, color: YELLOW, minWidth: 120 }
+        : { background: "var(--surface-elevated)", border: `1px solid ${YELLOW}`, color: "var(--text)", minWidth: 100 }
+      }
+      onBlur={(e) => onCommit(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") onCommit(e.currentTarget.value);
+        if (e.key === "Escape") { e.preventDefault(); onCancel(); }
+      }}
+    />
+  );
+}
+
 // Sémantické barvy pro statusy leadů
 const STATUS_COLORS: Record<string, string> = {
   prohlídka:   "#FFD600", // žlutá — akce
@@ -604,116 +635,141 @@ export function DashboardView({ onChatPrompt }: { onChatPrompt?: (prompt: string
 
         {/* Monitoring panel */}
         <Section title="Ranní monitoring">
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 h-full">
             <p className="text-xs" style={{ color: "var(--muted)" }}>
-              Každé ráno v 7:00 automaticky sledujeme nové nabídky v tvé lokalitě.
+              Každé ráno v 7:00 automaticky sledujeme nové nabídky podle zadaných preferencí.
             </p>
 
             {/* Inline-editable config pills */}
             <div className="flex flex-wrap gap-1.5 items-center">
-              {/* Locality */}
+              {/* Locality — text input on click */}
               {editingField === "locality" ? (
-                <input
-                  autoFocus
-                  type="text"
+                <InlineTextInput
                   defaultValue={config.locality}
                   placeholder="Praha Holešovice"
-                  className="text-xs px-2.5 py-1 rounded-full focus:outline-none"
-                  style={{ background: "rgba(255,214,0,0.15)", border: `1px solid ${YELLOW}`, color: YELLOW, minWidth: 120 }}
-                  onBlur={(e) => applyField("locality", e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") applyField("locality", e.currentTarget.value);
-                    if (e.key === "Escape") setEditingField(null);
-                  }}
+                  yellow
+                  onCommit={(v) => applyField("locality", v)}
+                  onCancel={() => setEditingField(null)}
                 />
               ) : (
                 <button
                   onClick={() => setEditingField("locality")}
                   className="text-xs px-2.5 py-1 rounded-full font-medium transition-opacity hover:opacity-75"
                   style={{ background: "rgba(255,214,0,0.15)", color: YELLOW }}
-                  title="Klikni pro úpravu"
                 >
                   {config.locality || "Lokalita"}
                 </button>
               )}
 
-              {/* Property type */}
+              {/* Property type — pill list on click */}
               {editingField === "type" ? (
-                <select
-                  autoFocus
-                  defaultValue={config.propertyType}
-                  className="text-xs px-2.5 py-1 rounded-full focus:outline-none"
-                  style={{ background: "var(--surface-elevated)", border: `1px solid ${YELLOW}`, color: "var(--text)" }}
-                  onChange={(e) => applyField("propertyType", e.target.value)}
-                  onBlur={(e) => applyField("propertyType", e.target.value)}
-                >
+                <div className="flex flex-wrap gap-1">
                   {PROPERTY_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
+                    <button
+                      key={t.value}
+                      onClick={() => applyField("propertyType", t.value)}
+                      className="text-xs px-2.5 py-1 rounded-full transition-colors"
+                      style={
+                        config.propertyType === t.value
+                          ? { background: YELLOW, color: "#000", fontWeight: 600 }
+                          : { background: "var(--surface-elevated)", color: "var(--muted)", border: "1px solid var(--border)" }
+                      }
+                    >
+                      {t.label}
+                    </button>
                   ))}
-                </select>
+                </div>
               ) : (
                 <button
                   onClick={() => setEditingField("type")}
                   className="text-xs px-2.5 py-1 rounded-full transition-opacity hover:opacity-75"
                   style={{ background: "var(--surface-elevated)", color: "var(--muted)", border: "1px solid var(--border)" }}
-                  title="Klikni pro úpravu"
                 >
                   {PROPERTY_TYPES.find(t => t.value === config.propertyType)?.label || "Jakýkoliv typ"}
                 </button>
               )}
 
-              {/* Max price */}
+              {/* Max price — text input, numeric keyboard */}
               {editingField === "price" ? (
-                <input
-                  autoFocus
-                  type="number"
+                <InlineTextInput
                   defaultValue={config.maxPrice}
                   placeholder="bez limitu"
-                  className="text-xs px-2.5 py-1 rounded-full focus:outline-none"
-                  style={{ background: "var(--surface-elevated)", border: `1px solid ${YELLOW}`, color: "var(--text)", width: 120 }}
-                  onBlur={(e) => applyField("maxPrice", e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") applyField("maxPrice", e.currentTarget.value);
-                    if (e.key === "Escape") setEditingField(null);
-                  }}
+                  inputMode="numeric"
+                  onCommit={(v) => applyField("maxPrice", v)}
+                  onCancel={() => setEditingField(null)}
                 />
               ) : (
                 <button
                   onClick={() => setEditingField("price")}
                   className="text-xs px-2.5 py-1 rounded-full transition-opacity hover:opacity-75"
                   style={{ background: "var(--surface-elevated)", color: "var(--muted)", border: "1px solid var(--border)" }}
-                  title="Klikni pro úpravu"
                 >
                   {config.maxPrice ? `max ${formatPrice(Number(config.maxPrice))}` : "bez cenového limitu"}
                 </button>
               )}
             </div>
 
-            {/* Scan results or scan button */}
+            {/* Results: top 3 cards + summary row */}
             {sreality.length > 0 ? (
-              <div className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.2)" }}>
-                <span className="text-xs flex-1" style={{ color: "#4ade80" }}>
-                  ✓ Nalezeno {sreality.length} nabídek
-                </span>
-                <button
-                  onClick={runSreality}
-                  disabled={loadingSreality}
-                  className="text-xs px-2 py-1 rounded-md transition-opacity disabled:opacity-40"
-                  style={{ background: "var(--surface-elevated)", color: "var(--muted)", border: "1px solid var(--border)" }}
-                >
-                  {loadingSreality ? "..." : "Obnovit"}
-                </button>
-                <button
-                  onClick={() => setShowModal(true)}
-                  className="text-xs px-2.5 py-1 rounded-md font-semibold"
-                  style={{ background: YELLOW, color: "#000" }}
-                >
-                  Zobrazit →
-                </button>
+              <div className="flex flex-col gap-2 flex-1">
+                {/* Top 3 best-value listings */}
+                <div className="flex flex-col gap-1.5">
+                  {[...sreality]
+                    .sort((a, b) => (a.price_per_m2 ?? Infinity) - (b.price_per_m2 ?? Infinity))
+                    .slice(0, 3)
+                    .map((l, i) => (
+                      <a
+                        key={i}
+                        href={l.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors"
+                        style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)", textDecoration: "none" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.borderColor = YELLOW)}
+                        onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+                      >
+                        <span className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0" style={{ background: i === 0 ? YELLOW : "var(--border)", color: i === 0 ? "#000" : "var(--muted)" }}>
+                          {i + 1}
+                        </span>
+                        <span className="flex-1 truncate font-medium" style={{ color: "var(--text)" }}>
+                          {l.address || l.description || "—"}
+                        </span>
+                        {l.price_per_m2 && (
+                          <span className="flex-shrink-0 text-[10px]" style={{ color: "var(--muted)" }}>
+                            {l.price_per_m2.toLocaleString("cs-CZ")} Kč/m²
+                          </span>
+                        )}
+                        <span className="flex-shrink-0 font-semibold" style={{ color: YELLOW }}>
+                          {l.price > 0 ? formatPrice(l.price) : "—"}
+                        </span>
+                      </a>
+                    ))}
+                </div>
+                {/* Footer row */}
+                <div className="flex items-center justify-between mt-auto pt-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs" style={{ color: "#4ade80" }}>✓ {sreality.length} nabídek</span>
+                    <button
+                      onClick={runSreality}
+                      disabled={loadingSreality}
+                      className="text-xs px-2 py-0.5 rounded-md transition-opacity disabled:opacity-40"
+                      style={{ background: "var(--surface-elevated)", color: "var(--muted)", border: "1px solid var(--border)" }}
+                    >
+                      {loadingSreality ? "..." : "Obnovit"}
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => setShowModal(true)}
+                    className="text-xs px-2.5 py-1 rounded-md font-semibold"
+                    style={{ background: YELLOW, color: "#000" }}
+                  >
+                    Všechny →
+                  </button>
+                </div>
               </div>
             ) : (
-              <div className="flex flex-col gap-2">
-                {srealityError && <p className="text-xs" style={{ color: "var(--error, #f87171)" }}>{srealityError}</p>}
+              <div className="flex flex-col gap-2 flex-1 justify-end">
+                {srealityError && <p className="text-xs" style={{ color: "#f87171" }}>{srealityError}</p>}
                 {srealityScanned && !srealityError && (
                   <p className="text-xs" style={{ color: "var(--muted)" }}>
                     Pro lokalitu „{config.locality}" nebyly nalezeny žádné nabídky. Zkus širší lokalitu.
@@ -722,7 +778,7 @@ export function DashboardView({ onChatPrompt }: { onChatPrompt?: (prompt: string
                 <button
                   onClick={runSreality}
                   disabled={loadingSreality}
-                  className="w-full text-xs py-2 rounded-lg font-bold transition-opacity disabled:opacity-40"
+                  className="w-full text-xs py-2 rounded-lg font-bold transition-opacity disabled:opacity-40 mt-auto"
                   style={{ background: YELLOW, color: "#000" }}
                 >
                   {loadingSreality ? "Scanuji..." : srealityScanned ? "Zkusit znovu" : "Spustit scan"}
