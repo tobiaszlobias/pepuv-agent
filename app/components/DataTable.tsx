@@ -32,10 +32,13 @@ export function DataTable({ columns, rows, loading, searchQuery, isMobile, rowSt
     );
   }
 
+  const normalize = (s: string) =>
+    s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+
   const filtered = searchQuery
     ? rows.filter((row) =>
         columns.some((col) =>
-          (row[col.key] ?? "").toLowerCase().includes(searchQuery.toLowerCase())
+          normalize(row[col.key] ?? "").includes(normalize(searchQuery))
         )
       )
     : rows;
