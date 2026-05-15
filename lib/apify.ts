@@ -185,13 +185,46 @@ async function fetchListingDetail(
     const lat = data.map?.lat;
     const lon = data.map?.lon;
     if (!lat || !lon) return null;
-    const areaItem = (data.items ?? []).find((i) =>
-      i.name.toLowerCase().includes("užitn")
-    );
-    const area_m2 = areaItem ? Number(areaItem.value) || undefined : undefined;
+
+    // Match "Užitná plocha", "Plocha bytu", "Plocha pozemku", "Podlahová plocha"…
+    const areaItem = (data.items ?? []).find((i) => {
+      const n = i.name.toLowerCase();
+      return n.includes("užitn") || n.includes("plocha") || n.includes("podlahov");
+    });
+    // value may be a number or a string like "88 m²" — strip units
+    const rawVal = areaItem?.value;
+    const area_m2 = rawVal != null
+      ? Number(String(rawVal).replace(/[^\d.]/g, "")) || undefined
+      : undefined;
+
     return { lat, lon, area_m2 };
   } catch {
     return null;
+  }
+}
+
+// Načte pouze plochu z detailu (bez GPS) — pro listings 6+
+async function fetchAreaOnly(hashId: number): Promise<number | undefined> {
+  try {
+    const res = await fetch(
+      `https://www.sreality.cz/api/cs/v2/estates/${hashId}`,
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+          "Accept": "application/json",
+        },
+      }
+    );
+    if (!res.ok) return undefined;
+    const data = await res.json() as { items?: { name: string; value: unknown }[] };
+    const areaItem = (data.items ?? []).find((i) => {
+      const n = i.name.toLowerCase();
+      return n.includes("užitn") || n.includes("plocha") || n.includes("podlahov");
+    });
+    if (!areaItem) return undefined;
+    return Number(String(areaItem.value).replace(/[^\d.]/g, "")) || undefined;
+  } catch {
+    return undefined;
   }
 }
 
@@ -287,11 +320,19 @@ export async function scrapeSreality(params: {
     } as SrealityListing;
   });
 
-  // Pro prvních 5 výsledků: fetch detailu → GPS → RUIAN → číslo domovní
-  // Ostatní se přeskočí aby byl response rychlý
+  // Prvních 5: full detail (GPS → RUIAN → číslo domovní + plocha)
+  // Ostatní: pouze plocha (rychlejší, bez GPS/RUIAN)
   const enriched = await Promise.all(
     baseListings.map(async (listing, idx) => {
-      if (idx >= 5 || !listing.hash_id) return listing;
+      if (!listing.hash_id) return listing;
+
+      if (idx >= 5) {
+        const area_m2 = await fetchAreaOnly(listing.hash_id);
+        const price_per_m2 = area_m2 && listing.price > 0
+          ? Math.round(listing.price / area_m2)
+          : undefined;
+        return { ...listing, area_m2, price_per_m2 };
+      }
 
       const detail = await fetchListingDetail(listing.hash_id);
       const lat = detail?.lat ?? listing.lat;

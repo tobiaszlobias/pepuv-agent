@@ -78,6 +78,7 @@ Dotaz: "Ukáž nabídky v X a ověř v katastru", "Zkontroluj katastr pro nabíd
    - Tento nástroj ověří VŠECHNY nabídky paralelně a vrátí je obohacené o katastrální status
    - NEPOUŽÍVEJ search_cuzk manuálně — verify_sreality_cadastre to udělá za tebe
 3. Text odpovědi: pouze krátká věta shrnutí (summary z výsledku nástroje). Tabulku a detail NEPIŠ — frontend je zobrazí automaticky.
+   Pokud zmiňuješ upozornění z katastru, piš vždy "UPOZORNĚNÍ Z KATASTRU" (ne "NA KATASTR").
 
 ### ŠABLONA: Dotaz na makléře / výkon
 Dotaz: "Kdo má nejvíc leadů", "Výkon makléřů", "Srovnání makléřů"
