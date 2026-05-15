@@ -276,13 +276,20 @@ export async function scrapeSreality(params: {
     }
   }
 
-  // Try district ID first; if 0 results fall back to text region search
+  // Strategy: district ID only works for Praha čtvrti (3xxx IDs)
+  // For cities (Olomouc, Brno…) use region=<lowercase name> — Sreality is case-sensitive
+  const isPrahaDistrict = regionId && regionId.startsWith("3");
   let items: Record<string, unknown>[] = [];
-  if (regionId) {
+  if (isPrahaDistrict) {
     items = await fetchEstates({ locality_district_id: regionId });
   }
   if (items.length === 0) {
-    items = await fetchEstates({ region: params.locality });
+    // region param must be lowercase — Sreality API is case-sensitive
+    items = await fetchEstates({ region: localityKey });
+  }
+  // Last resort: try the original locality string (might work for Praha X districts)
+  if (items.length === 0 && regionId && !isPrahaDistrict) {
+    items = await fetchEstates({ locality_region_id: regionId });
   }
 
   const baseListings = items.map((item) => {
