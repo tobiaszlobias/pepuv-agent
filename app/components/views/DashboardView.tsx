@@ -327,14 +327,13 @@ export function DashboardView({ onChatPrompt }: { onChatPrompt?: (prompt: string
   const [chartMetric, setChartMetric] = useState<ChartMetric>("leady");
 
   const [config, setConfig] = useState<MonitoringConfig>(DEFAULT_CONFIG);
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState<MonitoringConfig>(DEFAULT_CONFIG);
   const [showModal, setShowModal] = useState(false);
+  // Inline editing state per field
+  const [editingField, setEditingField] = useState<"locality" | "type" | "price" | null>(null);
 
   useEffect(() => {
     const loaded = loadMonitoringConfig();
     setConfig(loaded);
-    setDraft(loaded);
   }, []);
 
   useEffect(() => {
@@ -370,11 +369,11 @@ export function DashboardView({ onChatPrompt }: { onChatPrompt?: (prompt: string
       .catch(() => { setSrealityError("Scan selhal, zkus to znovu."); setLoadingSreality(false); });
   }
 
-  function saveConfig() {
-    setConfig(draft);
-    saveMonitoringConfig(draft);
-    setEditing(false);
-    // Clear old results when config changes
+  function applyField(field: keyof MonitoringConfig, value: string) {
+    const next = { ...config, [field]: value };
+    setConfig(next);
+    saveMonitoringConfig(next);
+    setEditingField(null);
     setSreality([]);
     setCached("sreality_latest", null);
   }
@@ -467,14 +466,14 @@ export function DashboardView({ onChatPrompt }: { onChatPrompt?: (prompt: string
       )}
 
       {/* Charts row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 md:items-stretch">
 
         {/* Area chart */}
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 flex flex-col">
           <Section
             title=""
             stackOnMobile
-            className="pb-1"
+            className="pb-1 flex-1"
             action={
               <div className="flex gap-0.5 rounded-lg p-0.5" style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)" }}>
                 {TIME_SLOTS.map((s) => (
@@ -604,142 +603,133 @@ export function DashboardView({ onChatPrompt }: { onChatPrompt?: (prompt: string
         </Section>
 
         {/* Monitoring panel */}
-        <Section
-          title="Ranní monitoring"
-          action={
-            !editing ? (
-              <button
-                onClick={() => { setDraft(config); setEditing(true); }}
-                className="text-xs px-2 py-1 rounded-lg transition-opacity"
-                style={{ background: "var(--surface-elevated)", color: "var(--muted)", border: "1px solid var(--border)" }}
-              >
-                Upravit
-              </button>
-            ) : null
-          }
-        >
-          {editing ? (
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-1">
-                <label className="text-xs" style={{ color: "var(--muted)" }}>Lokalita</label>
+        <Section title="Ranní monitoring">
+          <div className="flex flex-col gap-3">
+            <p className="text-xs" style={{ color: "var(--muted)" }}>
+              Každé ráno v 7:00 automaticky sledujeme nové nabídky v tvé lokalitě.
+            </p>
+
+            {/* Inline-editable config pills */}
+            <div className="flex flex-wrap gap-1.5 items-center">
+              {/* Locality */}
+              {editingField === "locality" ? (
                 <input
+                  autoFocus
                   type="text"
-                  value={draft.locality}
-                  onChange={(e) => setDraft({ ...draft, locality: e.target.value })}
+                  defaultValue={config.locality}
                   placeholder="Praha Holešovice"
-                  className="text-xs px-3 py-2 rounded-lg focus:outline-none"
-                  style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)", color: "var(--text)" }}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = YELLOW)}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+                  className="text-xs px-2.5 py-1 rounded-full focus:outline-none"
+                  style={{ background: "rgba(255,214,0,0.15)", border: `1px solid ${YELLOW}`, color: YELLOW, minWidth: 120 }}
+                  onBlur={(e) => applyField("locality", e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") applyField("locality", e.currentTarget.value);
+                    if (e.key === "Escape") setEditingField(null);
+                  }}
                 />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs" style={{ color: "var(--muted)" }}>Typ nemovitosti</label>
+              ) : (
+                <button
+                  onClick={() => setEditingField("locality")}
+                  className="text-xs px-2.5 py-1 rounded-full font-medium transition-opacity hover:opacity-75"
+                  style={{ background: "rgba(255,214,0,0.15)", color: YELLOW }}
+                  title="Klikni pro úpravu"
+                >
+                  {config.locality || "Lokalita"}
+                </button>
+              )}
+
+              {/* Property type */}
+              {editingField === "type" ? (
                 <select
-                  value={draft.propertyType}
-                  onChange={(e) => setDraft({ ...draft, propertyType: e.target.value })}
-                  className="text-xs px-3 py-2 rounded-lg focus:outline-none"
-                  style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)", color: "var(--text)" }}
+                  autoFocus
+                  defaultValue={config.propertyType}
+                  className="text-xs px-2.5 py-1 rounded-full focus:outline-none"
+                  style={{ background: "var(--surface-elevated)", border: `1px solid ${YELLOW}`, color: "var(--text)" }}
+                  onChange={(e) => applyField("propertyType", e.target.value)}
+                  onBlur={(e) => applyField("propertyType", e.target.value)}
                 >
                   {PROPERTY_TYPES.map((t) => (
                     <option key={t.value} value={t.value}>{t.label}</option>
                   ))}
                 </select>
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs" style={{ color: "var(--muted)" }}>Max cena (Kč)</label>
-                <input
-                  type="number"
-                  value={draft.maxPrice}
-                  onChange={(e) => setDraft({ ...draft, maxPrice: e.target.value })}
-                  placeholder="bez limitu"
-                  className="text-xs px-3 py-2 rounded-lg focus:outline-none"
-                  style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)", color: "var(--text)" }}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = YELLOW)}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
-                />
-              </div>
-              <div className="flex gap-2 mt-1">
-                <button
-                  onClick={saveConfig}
-                  className="flex-1 text-xs py-2 rounded-lg font-bold"
-                  style={{ background: YELLOW, color: "#000" }}
-                >
-                  Uložit
-                </button>
-                <button
-                  onClick={() => setEditing(false)}
-                  className="text-xs px-3 py-2 rounded-lg"
-                  style={{ background: "var(--surface-elevated)", color: "var(--muted)", border: "1px solid var(--border)" }}
-                >
-                  Zrušit
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {/* Description */}
-              <p className="text-xs" style={{ color: "var(--muted)" }}>
-                Každé ráno v 7:00 automaticky sledujeme nové nabídky v tvé lokalitě.
-              </p>
-
-              {/* Config summary as pills */}
-              <div className="flex flex-wrap gap-1.5">
-                <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: "rgba(255,214,0,0.15)", color: YELLOW }}>
-                  {config.locality || "—"}
-                </span>
-                <span className="text-xs px-2.5 py-1 rounded-full" style={{ background: "var(--surface-elevated)", color: "var(--muted)", border: "1px solid var(--border)" }}>
-                  {PROPERTY_TYPES.find(t => t.value === config.propertyType)?.label || "Jakýkoliv typ"}
-                </span>
-                <span className="text-xs px-2.5 py-1 rounded-full" style={{ background: "var(--surface-elevated)", color: "var(--muted)", border: "1px solid var(--border)" }}>
-                  {config.maxPrice ? `max ${formatPrice(Number(config.maxPrice))}` : "bez cenového limitu"}
-                </span>
-              </div>
-
-              {/* Scan results or scan button */}
-              {sreality.length > 0 ? (
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.2)" }}>
-                    <span className="text-xs flex-1" style={{ color: "#4ade80" }}>
-                      ✓ Nalezeno {sreality.length} nabídek
-                    </span>
-                    <button
-                      onClick={runSreality}
-                      disabled={loadingSreality}
-                      className="text-xs px-2 py-1 rounded-md transition-opacity disabled:opacity-40"
-                      style={{ background: "var(--surface-elevated)", color: "var(--muted)", border: "1px solid var(--border)" }}
-                    >
-                      {loadingSreality ? "..." : "Obnovit"}
-                    </button>
-                    <button
-                      onClick={() => setShowModal(true)}
-                      className="text-xs px-2.5 py-1 rounded-md font-semibold"
-                      style={{ background: YELLOW, color: "#000" }}
-                    >
-                      Zobrazit →
-                    </button>
-                  </div>
-                </div>
               ) : (
-                <div className="flex flex-col gap-2">
-                  {srealityError && <p className="text-xs" style={{ color: "var(--error)" }}>{srealityError}</p>}
-                  {srealityScanned && !srealityError && (
-                    <p className="text-xs" style={{ color: "var(--muted)" }}>
-                      Pro lokalitu „{config.locality}" nebyly nalezeny žádné nabídky. Zkus širší lokalitu.
-                    </p>
-                  )}
-                  <button
-                    onClick={runSreality}
-                    disabled={loadingSreality}
-                    className="w-full text-xs py-2 rounded-lg font-bold transition-opacity disabled:opacity-40"
-                    style={{ background: YELLOW, color: "#000" }}
-                  >
-                    {loadingSreality ? "Scanuji..." : srealityScanned ? "Zkusit znovu" : "Spustit scan"}
-                  </button>
-                </div>
+                <button
+                  onClick={() => setEditingField("type")}
+                  className="text-xs px-2.5 py-1 rounded-full transition-opacity hover:opacity-75"
+                  style={{ background: "var(--surface-elevated)", color: "var(--muted)", border: "1px solid var(--border)" }}
+                  title="Klikni pro úpravu"
+                >
+                  {PROPERTY_TYPES.find(t => t.value === config.propertyType)?.label || "Jakýkoliv typ"}
+                </button>
+              )}
+
+              {/* Max price */}
+              {editingField === "price" ? (
+                <input
+                  autoFocus
+                  type="number"
+                  defaultValue={config.maxPrice}
+                  placeholder="bez limitu"
+                  className="text-xs px-2.5 py-1 rounded-full focus:outline-none"
+                  style={{ background: "var(--surface-elevated)", border: `1px solid ${YELLOW}`, color: "var(--text)", width: 120 }}
+                  onBlur={(e) => applyField("maxPrice", e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") applyField("maxPrice", e.currentTarget.value);
+                    if (e.key === "Escape") setEditingField(null);
+                  }}
+                />
+              ) : (
+                <button
+                  onClick={() => setEditingField("price")}
+                  className="text-xs px-2.5 py-1 rounded-full transition-opacity hover:opacity-75"
+                  style={{ background: "var(--surface-elevated)", color: "var(--muted)", border: "1px solid var(--border)" }}
+                  title="Klikni pro úpravu"
+                >
+                  {config.maxPrice ? `max ${formatPrice(Number(config.maxPrice))}` : "bez cenového limitu"}
+                </button>
               )}
             </div>
-          )}
+
+            {/* Scan results or scan button */}
+            {sreality.length > 0 ? (
+              <div className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.2)" }}>
+                <span className="text-xs flex-1" style={{ color: "#4ade80" }}>
+                  ✓ Nalezeno {sreality.length} nabídek
+                </span>
+                <button
+                  onClick={runSreality}
+                  disabled={loadingSreality}
+                  className="text-xs px-2 py-1 rounded-md transition-opacity disabled:opacity-40"
+                  style={{ background: "var(--surface-elevated)", color: "var(--muted)", border: "1px solid var(--border)" }}
+                >
+                  {loadingSreality ? "..." : "Obnovit"}
+                </button>
+                <button
+                  onClick={() => setShowModal(true)}
+                  className="text-xs px-2.5 py-1 rounded-md font-semibold"
+                  style={{ background: YELLOW, color: "#000" }}
+                >
+                  Zobrazit →
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {srealityError && <p className="text-xs" style={{ color: "var(--error, #f87171)" }}>{srealityError}</p>}
+                {srealityScanned && !srealityError && (
+                  <p className="text-xs" style={{ color: "var(--muted)" }}>
+                    Pro lokalitu „{config.locality}" nebyly nalezeny žádné nabídky. Zkus širší lokalitu.
+                  </p>
+                )}
+                <button
+                  onClick={runSreality}
+                  disabled={loadingSreality}
+                  className="w-full text-xs py-2 rounded-lg font-bold transition-opacity disabled:opacity-40"
+                  style={{ background: YELLOW, color: "#000" }}
+                >
+                  {loadingSreality ? "Scanuji..." : srealityScanned ? "Zkusit znovu" : "Spustit scan"}
+                </button>
+              </div>
+            )}
+          </div>
         </Section>
       </div>
     </div>
@@ -772,33 +762,54 @@ export function DashboardView({ onChatPrompt }: { onChatPrompt?: (prompt: string
               ✕
             </button>
           </div>
-          {/* Modal body */}
-          <div className="overflow-y-auto p-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {sreality.map((l, i) => (
-                <a
-                  key={i}
-                  href={l.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block rounded-xl px-3 py-2.5 text-xs transition-colors"
-                  style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = YELLOW)}
-                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
-                >
-                  <div className="font-medium truncate" style={{ color: "var(--text)" }}>{l.description || l.address}</div>
-                  <div className="flex items-center justify-between mt-1 gap-2">
-                    <span className="truncate" style={{ color: "var(--muted)" }}>{l.address}</span>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {l.price_per_m2 && (
-                        <span className="text-xs" style={{ color: "var(--muted)" }}>{l.price_per_m2.toLocaleString("cs-CZ")} Kč/m²</span>
-                      )}
-                      <span className="font-semibold" style={{ color: YELLOW }}>{l.price > 0 ? formatPrice(l.price) : "—"}</span>
-                    </div>
-                  </div>
-                </a>
-              ))}
-            </div>
+          {/* Modal body — table sorted by Kč/m² ascending (best value first) */}
+          <div className="overflow-y-auto">
+            <table className="w-full text-xs border-collapse">
+              <thead>
+                <tr style={{ borderBottom: "1px solid var(--border)" }}>
+                  {["Adresa", "Typ", "Plocha", "Cena", "Kč/m²", ""].map((h) => (
+                    <th key={h} className="text-left px-4 py-3 font-medium uppercase tracking-wide text-[10px]" style={{ color: "var(--muted)" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {[...sreality]
+                  .sort((a, b) => (a.price_per_m2 ?? Infinity) - (b.price_per_m2 ?? Infinity))
+                  .map((l, i) => (
+                    <tr
+                      key={i}
+                      style={{ borderBottom: "1px solid var(--border)" }}
+                      className="transition-colors hover:bg-[var(--surface-elevated)]"
+                    >
+                      <td className="px-4 py-3 max-w-[200px]">
+                        <div className="truncate font-medium" style={{ color: "var(--text)" }}>{l.address || l.description || "—"}</div>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap" style={{ color: "var(--muted)" }}>
+                        {l.type || "—"}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap" style={{ color: "var(--muted)" }}>
+                        {l.area_m2 ? `${l.area_m2} m²` : "—"}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap font-semibold" style={{ color: YELLOW }}>
+                        {l.price > 0 ? formatPrice(l.price) : "—"}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap" style={{ color: "var(--muted)", fontVariantNumeric: "tabular-nums" }}>
+                        {l.price_per_m2 ? `${l.price_per_m2.toLocaleString("cs-CZ")}` : "—"}
+                      </td>
+                      <td className="px-4 py-3">
+                        {l.url ? (
+                          <a href={l.url} target="_blank" rel="noopener noreferrer"
+                            className="text-xs px-2 py-1 rounded-md transition-colors"
+                            style={{ background: "var(--surface-elevated)", color: "var(--muted)", border: "1px solid var(--border)" }}
+                          >
+                            Sreality ↗
+                          </a>
+                        ) : "—"}
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
