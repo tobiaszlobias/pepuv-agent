@@ -24,8 +24,11 @@ Vlastní strukturu vymýšlej POUZE pokud dotaz nespadá do žádné šablony.
 ### ŠABLONA: Trend leadů / klientů / nemovitostí v čase
 Dotaz: "Ukáž vývoj leadů", "Trend klientů", "Jak se vyvíjely leady"
 1. Zavolej get_leads(months: N) nebo get_clients() nebo get_properties()
-2. Agreguj data po měsících (počty)
-3. Zavolej create_chart(type: "line", title: "Vývoj [entity] za posledních N měsíců", data: [{name: "Led", value: X}, ...], x_key: "name", y_key: "value")
+2. Agreguj data po měsících — použij datum záznamu (datum, datum_pridani) pro zařazení do měsíce
+   - Cutoff pro "posledních 6 měsíců": today minus 6 měsíců — vyřaď záznamy starší než cutoff
+   - Klíč měsíce: "YYYY-MM" formát (např. "2026-01") — umožní správné chronologické řazení
+   - Seřaď výsledné pole VŽDY chronologicky vzestupně (nejstarší vlevo, nejnovější vpravo)
+3. Zavolej create_chart(type: "line", title: "Vývoj [entity] za posledních N měsíců", data: [{name: "2025-11", value: X}, ...], x_key: "name", y_key: "value")
 4. Text odpovědi: 2-3 věty shrnutí trendu (peak, průměr, trend nahoru/dolů). Žádné varování o prázdné databázi pokud jsou alespoň 2 datové body.
 
 ### ŠABLONA: Přehled klientů / nemovitostí / leadů
@@ -521,14 +524,43 @@ async function executeTool(
         const resolvedYKey = y_key || "value";
         const rawItems: Record<string, unknown>[] = data.items || (data as unknown as Record<string, unknown>[]);
 
-        // Horizontal bar: sort ascending so cheapest appears at top (Recharts renders first item at top)
-        // Vertical bar / pie / line: sort descending (highest value first)
+        // Line charts: sort chronologically by x_key (oldest → newest)
+        // Horizontal bar: sort ascending by value (cheapest at top — Recharts renders first item at top)
+        // Vertical bar / pie: sort descending by value (highest first)
         const isHoriz = horizontal ?? false;
-        const sortedItems = [...rawItems].sort((a, b) =>
-          isHoriz
+        const resolvedXKey = x_key || "name";
+        // Czech month abbreviation → 0-based month index
+        const CZ_MONTH: Record<string, number> = {
+          "led":0,"úno":1,"bře":2,"dub":3,"kvě":4,"čvn":5,
+          "čvc":6,"srp":7,"zář":8,"říj":9,"lis":10,"pro":11,
+        };
+        function xKeyToOrdinal(val: unknown): number {
+          const s = String(val ?? "").trim();
+          // "2026-01" ISO month key
+          const iso = s.match(/^(\d{4})-(\d{2})$/);
+          if (iso) return parseInt(iso[1]) * 12 + parseInt(iso[2]) - 1;
+          // "Bře 26", "Říj 25" Czech abbreviated month
+          const cz = s.match(/^(.+?)\s+(\d{2,4})$/);
+          if (cz) {
+            const m = CZ_MONTH[cz[1].toLowerCase()];
+            if (m !== undefined) {
+              const y = parseInt(cz[2]) + (cz[2].length === 2 ? 2000 : 0);
+              return y * 12 + m;
+            }
+          }
+          // Fallback: try Date parse
+          const d = new Date(s).getTime();
+          return isNaN(d) ? 0 : d;
+        }
+
+        const sortedItems = [...rawItems].sort((a, b) => {
+          if (type === "line") {
+            return xKeyToOrdinal(a[resolvedXKey]) - xKeyToOrdinal(b[resolvedXKey]);
+          }
+          return isHoriz
             ? Number(a[resolvedYKey] ?? 0) - Number(b[resolvedYKey] ?? 0)
-            : Number(b[resolvedYKey] ?? 0) - Number(a[resolvedYKey] ?? 0)
-        );
+            : Number(b[resolvedYKey] ?? 0) - Number(a[resolvedYKey] ?? 0);
+        });
 
         // Strip any "label" field Claude may add — labels are rendered by axis/tooltip only
         const cleanedItems = sortedItems.map(({ label: _label, ...rest }) => rest as Record<string, unknown>);
