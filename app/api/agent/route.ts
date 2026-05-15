@@ -72,8 +72,8 @@ Dotaz: "Chybějící data", "Nemovitosti bez rekonstrukce", "Co chybí v databá
 ### ŠABLONA: Týdenní report
 Dotaz: "Shrň výsledky", "Týdenní report", "Co se dělo minulý týden"
 1. Zavolej generate_report(week: "aktuální/minulý")
-2. Slidy se zobrazí automaticky — NEPIŠ jejich obsah znovu do textu
-3. Text odpovědi: pouze 1 věta úvodu, např. "Tady je report za minulý týden:"
+2. Slidy se zobrazí automaticky pod textem
+3. Text odpovědi: POUZE 1 věta úvodu + MAXIMÁLNĚ 2 věty shrnutí. ABSOLUTNĚ NEZAHRNUJ obsah slidů do textu. Žádné odrážky, žádné sekce, žádné "SLIDE 1" v textu.
 
 ### ŠABLONA: Monitoring Sreality
 Dotaz: "Nové nabídky", "Co je na Sreality", "Monitoring Praha"
