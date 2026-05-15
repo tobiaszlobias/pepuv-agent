@@ -34,6 +34,8 @@ interface DashboardData {
 interface SrealityListing {
   address: string;
   price: number;
+  price_per_m2?: number;
+  area_m2?: number;
   type: string;
   url: string;
   description: string;
@@ -326,12 +328,20 @@ export function DashboardView({ onChatPrompt }: { onChatPrompt?: (prompt: string
   const [config, setConfig] = useState<MonitoringConfig>(DEFAULT_CONFIG);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<MonitoringConfig>(DEFAULT_CONFIG);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     const loaded = loadMonitoringConfig();
     setConfig(loaded);
     setDraft(loaded);
   }, []);
+
+  useEffect(() => {
+    if (!showModal) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") setShowModal(false); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [showModal]);
 
   useEffect(() => {
     if (data !== null) return;
@@ -396,6 +406,7 @@ export function DashboardView({ onChatPrompt }: { onChatPrompt?: (prompt: string
   const isEmpty = chartData.length === 0 || chartData.every((d) => d.count === 0);
 
   return (
+    <>
     <div
       className="flex-1 min-h-0 overflow-y-auto px-4 md:px-6 py-4 md:py-5 flex flex-col gap-3 md:gap-4"
       style={{
@@ -551,20 +562,32 @@ export function DashboardView({ onChatPrompt }: { onChatPrompt?: (prompt: string
                 {data.leads.topMakleri.map((m, i) => {
                   const share = Math.round((m.count / totalLeads) * 100);
                   const barW = Math.round((m.count / maxCount) * 100);
+                  const isTop = i === 0;
                   return (
-                    <div key={m.name} className="flex flex-col gap-1">
+                    <div key={m.name} className="flex flex-col gap-1.5">
                       <div className="flex items-center gap-2">
                         <span
                           className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                          style={{ background: i === 0 ? YELLOW : "var(--surface-elevated)", color: i === 0 ? "#000" : "var(--muted)" }}
+                          style={{ background: isTop ? YELLOW : "var(--surface-elevated)", color: isTop ? "#000" : "var(--muted)" }}
                         >
                           {i + 1}
                         </span>
-                        <span className="flex-1 text-sm truncate" style={{ color: "var(--text)" }}>{m.name}</span>
-                        <span className="text-xs font-bold tabular-nums" style={{ color: "var(--muted)" }}>{m.count} <span style={{ color: "var(--border)" }}>·</span> {share}%</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm truncate" style={{ color: "var(--text)" }}>{m.name}</div>
+                          <div className="text-xs tabular-nums" style={{ color: "var(--muted)" }}>{m.count} leadů</div>
+                        </div>
+                        <span
+                          className="text-xs font-bold tabular-nums px-2 py-0.5 rounded-full flex-shrink-0"
+                          style={{
+                            background: isTop ? "rgba(255,214,0,0.15)" : "var(--surface-elevated)",
+                            color: isTop ? YELLOW : "var(--muted)",
+                          }}
+                        >
+                          {share}%
+                        </span>
                       </div>
-                      <div className="ml-7 h-1 rounded-full overflow-hidden" style={{ background: "var(--surface-elevated)" }}>
-                        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${barW}%`, background: i === 0 ? YELLOW : "var(--muted)" }} />
+                      <div className="ml-7 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--surface-elevated)" }}>
+                        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${barW}%`, background: isTop ? YELLOW : "var(--muted)" }} />
                       </div>
                     </div>
                   );
@@ -653,59 +676,46 @@ export function DashboardView({ onChatPrompt }: { onChatPrompt?: (prompt: string
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              {/* Current config summary */}
-              <div className="rounded-lg px-3 py-2.5 flex flex-col gap-1.5" style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)" }}>
-                <div className="flex items-center gap-2 text-xs">
-                  <span style={{ color: "var(--muted)" }}>Lokalita</span>
-                  <span className="ml-auto font-medium truncate" style={{ color: "var(--text)" }}>{config.locality || "—"}</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs">
-                  <span style={{ color: "var(--muted)" }}>Typ</span>
-                  <span className="ml-auto font-medium" style={{ color: "var(--text)" }}>
-                    {PROPERTY_TYPES.find(t => t.value === config.propertyType)?.label || "Jakýkoliv typ"}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-xs">
-                  <span style={{ color: "var(--muted)" }}>Max cena</span>
-                  <span className="ml-auto font-medium" style={{ color: "var(--text)" }}>
-                    {config.maxPrice ? formatPrice(Number(config.maxPrice)) : "bez limitu"}
-                  </span>
-                </div>
+              {/* Description */}
+              <p className="text-xs" style={{ color: "var(--muted)" }}>
+                Každé ráno v 7:00 automaticky sledujeme nové nabídky v tvé lokalitě.
+              </p>
+
+              {/* Config summary as pills */}
+              <div className="flex flex-wrap gap-1.5">
+                <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: "rgba(255,214,0,0.15)", color: YELLOW }}>
+                  {config.locality || "—"}
+                </span>
+                <span className="text-xs px-2.5 py-1 rounded-full" style={{ background: "var(--surface-elevated)", color: "var(--muted)", border: "1px solid var(--border)" }}>
+                  {PROPERTY_TYPES.find(t => t.value === config.propertyType)?.label || "Jakýkoliv typ"}
+                </span>
+                <span className="text-xs px-2.5 py-1 rounded-full" style={{ background: "var(--surface-elevated)", color: "var(--muted)", border: "1px solid var(--border)" }}>
+                  {config.maxPrice ? `max ${formatPrice(Number(config.maxPrice))}` : "bez cenového limitu"}
+                </span>
               </div>
 
-              {/* Scan results or empty */}
+              {/* Scan results or scan button */}
               {sreality.length > 0 ? (
                 <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs" style={{ color: "var(--muted)" }}>{sreality.length} nabídek · {config.locality}</span>
+                  <div className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.2)" }}>
+                    <span className="text-xs flex-1" style={{ color: "#4ade80" }}>
+                      ✓ Nalezeno {sreality.length} nabídek
+                    </span>
                     <button
                       onClick={runSreality}
                       disabled={loadingSreality}
-                      className="text-xs px-2 py-1 rounded-lg font-medium transition-opacity disabled:opacity-40"
-                      style={{ background: "var(--surface-elevated)", color: "var(--text)", border: "1px solid var(--border)" }}
+                      className="text-xs px-2 py-1 rounded-md transition-opacity disabled:opacity-40"
+                      style={{ background: "var(--surface-elevated)", color: "var(--muted)", border: "1px solid var(--border)" }}
                     >
                       {loadingSreality ? "..." : "Obnovit"}
                     </button>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {sreality.slice(0, 6).map((l, i) => (
-                      <a
-                        key={i}
-                        href={l.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block rounded-lg px-3 py-2 text-xs transition-colors"
-                        style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)" }}
-                        onMouseEnter={(e) => (e.currentTarget.style.borderColor = YELLOW)}
-                        onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
-                      >
-                        <div className="font-medium truncate" style={{ color: "var(--text)" }}>{l.description || l.address}</div>
-                        <div className="flex justify-between mt-0.5">
-                          <span style={{ color: "var(--muted)" }} className="truncate max-w-[60%]">{l.address}</span>
-                          <span style={{ color: YELLOW }}>{l.price > 0 ? formatPrice(l.price) : "—"}</span>
-                        </div>
-                      </a>
-                    ))}
+                    <button
+                      onClick={() => setShowModal(true)}
+                      className="text-xs px-2.5 py-1 rounded-md font-semibold"
+                      style={{ background: YELLOW, color: "#000" }}
+                    >
+                      Zobrazit →
+                    </button>
                   </div>
                 </div>
               ) : (
@@ -714,11 +724,6 @@ export function DashboardView({ onChatPrompt }: { onChatPrompt?: (prompt: string
                   {srealityScanned && !srealityError && (
                     <p className="text-xs" style={{ color: "var(--muted)" }}>
                       Pro lokalitu „{config.locality}" nebyly nalezeny žádné nabídky. Zkus širší lokalitu.
-                    </p>
-                  )}
-                  {!srealityScanned && !srealityError && (
-                    <p className="text-xs" style={{ color: "var(--muted)" }}>
-                      Automaticky každé ráno v 7:00. Nebo spusť ručně:
                     </p>
                   )}
                   <button
@@ -736,5 +741,66 @@ export function DashboardView({ onChatPrompt }: { onChatPrompt?: (prompt: string
         </Section>
       </div>
     </div>
+
+    {/* Modal — výsledky monitoringu */}
+    {showModal && (
+      <div
+        className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-16 pb-8"
+        style={{ background: "rgba(0,0,0,0.75)" }}
+        onClick={() => setShowModal(false)}
+      >
+        <div
+          className="w-full max-w-3xl rounded-2xl flex flex-col overflow-hidden"
+          style={{ background: "var(--surface)", border: "1px solid var(--border)", maxHeight: "80vh" }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Modal header */}
+          <div className="flex items-center justify-between px-5 py-4 flex-shrink-0" style={{ borderBottom: "1px solid var(--border)" }}>
+            <div>
+              <h3 className="font-semibold text-sm" style={{ color: "var(--text)" }}>
+                Výsledky monitoringu — {config.locality}
+              </h3>
+              <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>{sreality.length} nabídek</p>
+            </div>
+            <button
+              onClick={() => setShowModal(false)}
+              className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+              style={{ background: "var(--surface-elevated)", color: "var(--muted)", border: "1px solid var(--border)" }}
+            >
+              ✕
+            </button>
+          </div>
+          {/* Modal body */}
+          <div className="overflow-y-auto p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {sreality.map((l, i) => (
+                <a
+                  key={i}
+                  href={l.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block rounded-xl px-3 py-2.5 text-xs transition-colors"
+                  style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = YELLOW)}
+                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+                >
+                  <div className="font-medium truncate" style={{ color: "var(--text)" }}>{l.description || l.address}</div>
+                  <div className="flex items-center justify-between mt-1 gap-2">
+                    <span className="truncate" style={{ color: "var(--muted)" }}>{l.address}</span>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {l.price_per_m2 && (
+                        <span className="text-xs" style={{ color: "var(--muted)" }}>{l.price_per_m2.toLocaleString("cs-CZ")} Kč/m²</span>
+                      )}
+                      <span className="font-semibold" style={{ color: YELLOW }}>{l.price > 0 ? formatPrice(l.price) : "—"}</span>
+                    </div>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
