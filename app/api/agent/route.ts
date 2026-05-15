@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { agentTools } from "@/lib/tools/definitions";
 import { getClients, getProperties, getLeads } from "@/lib/sheets";
-import { searchByAddress, searchByParcel, searchBuilding } from "@/lib/cuzk";
+import { searchByAddress, searchByParcel, searchBuilding, KOD_CASTI_OBCE } from "@/lib/cuzk";
 import { scrapeSreality } from "@/lib/apify";
 import { getUpcomingEvents, getFreeSlotsForNextDays, createCalendarEvent } from "@/lib/calendar";
 
@@ -228,14 +228,47 @@ async function executeTool(
           locality_label?: string;
         };
 
+        // Try to extract číslo domovní + kód části obce from address string.
+        // Sreality address: "U papírny 314, Praha 7" or "Komunardů 32, Holešovice"
+        function resolveFromAddress(address: string): { cisloDomovni: number; kodCastiObce: number } | null {
+          const lower = address.toLowerCase();
+
+          // Derive kód části obce from known district names in the address
+          const kodCastiObce = Object.entries(KOD_CASTI_OBCE).find(
+            ([nazev]) => lower.includes(nazev)
+          )?.[1];
+          if (!kodCastiObce) return null;
+
+          // Split on comma — the street part is typically before the first comma
+          const streetPart = address.split(",")[0].trim();
+
+          // Extract trailing number: "U papírny 314" → 314, "Kostelní 20/5" → 20
+          const match = streetPart.match(/^.+?\s+(\d+)/);
+          if (!match) return null;
+
+          const cisloDomovni = parseInt(match[1], 10);
+          if (!cisloDomovni) return null;
+
+          return { cisloDomovni, kodCastiObce };
+        }
+
         // Paralelně ověř ČÚZK pro všechny s číslem domovním
         const verified = await Promise.all(
           listings.map(async (l) => {
-            if (!l.cislo_domovni || !l.kod_casti_obce) {
-              return { ...l, cuzk_status: "unknown" as const, cuzk_detail: null };
+            // Use pre-resolved values from RUIAN, or fall back to address parsing
+            const cisloDomovni = l.cislo_domovni ?? resolveFromAddress(l.address)?.cisloDomovni;
+            const kodCastiObce = l.kod_casti_obce ?? resolveFromAddress(l.address)?.kodCastiObce;
+
+            if (!cisloDomovni || !kodCastiObce) {
+              return {
+                ...l,
+                cuzk_status: "unknown" as const,
+                cuzk_warnings: ["Chybí číslo popisné"],
+                cuzk_detail: null,
+              };
             }
             try {
-              const info = await searchBuilding(l.cislo_domovni, l.kod_casti_obce);
+              const info = await searchBuilding(cisloDomovni, kodCastiObce);
               if (!info) {
                 return { ...l, cuzk_status: "unknown" as const, cuzk_detail: null };
               }
