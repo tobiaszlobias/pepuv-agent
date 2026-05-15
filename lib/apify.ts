@@ -228,15 +228,19 @@ export async function scrapeSreality(params: {
   async function fetchEstates(extraParams: Record<string, string>): Promise<Record<string, unknown>[]> {
     const q = new URLSearchParams(query);
     for (const [k, v] of Object.entries(extraParams)) q.set(k, v);
-    const res = await fetch(`${SREALITY_API}?${q}`, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-        "Accept": "application/json",
-      },
-    });
-    if (!res.ok) throw new Error(`Sreality API error ${res.status}`);
-    const data = await res.json();
-    return data?._embedded?.estates ?? [];
+    try {
+      const res = await fetch(`${SREALITY_API}?${q}`, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+          "Accept": "application/json",
+        },
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return data?._embedded?.estates ?? [];
+    } catch {
+      return [];
+    }
   }
 
   // Try district ID first; if 0 results fall back to text region search
