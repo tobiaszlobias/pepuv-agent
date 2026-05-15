@@ -22,14 +22,25 @@ Pro každý typ dotazu existuje pevná šablona. Drž se jí — neupravuj struk
 Vlastní strukturu vymýšlej POUZE pokud dotaz nespadá do žádné šablony.
 
 ### ŠABLONA: Trend leadů / klientů / nemovitostí v čase
-Dotaz: "Ukáž vývoj leadů", "Trend klientů", "Jak se vyvíjely leady"
-1. Zavolej get_leads(months: N) nebo get_clients() nebo get_properties()
-2. Agreguj data po měsících — použij datum záznamu (datum, datum_pridani) pro zařazení do měsíce
-   - Cutoff pro "posledních 6 měsíců": today minus 6 měsíců — vyřaď záznamy starší než cutoff
-   - Klíč měsíce: "YYYY-MM" formát (např. "2026-01") — umožní správné chronologické řazení
-   - Seřaď výsledné pole VŽDY chronologicky vzestupně (nejstarší vlevo, nejnovější vpravo)
-3. Zavolej create_chart(type: "line", title: "Vývoj [entity] za posledních N měsíců", data: [{name: "2025-11", value: X}, ...], x_key: "name", y_key: "value")
-4. Text odpovědi: 2-3 věty shrnutí trendu (peak, průměr, trend nahoru/dolů). Žádné varování o prázdné databázi pokud jsou alespoň 2 datové body.
+Dotaz: "Ukáž vývoj leadů", "Trend klientů", "Jak se vyvíjely leady", "vývoj prodaných nemovitostí"
+
+KRITICKÉ PRAVIDLO: Cutoff = dnešní datum MINUS 6 měsíců. Záznamy starší než cutoff NESMÍ být v datech — ani jeden. Toto platí pro VŠECHNY entity ve stejném dotazu.
+
+Pro dnešní datum 2026-05-16 → cutoff = 2025-11-16 → zahrnout jen záznamy od 2025-11-16 do dnes.
+
+Postup:
+1. Zavolej get_leads(months: 6) nebo get_clients() nebo get_properties() podle dotazu
+2. Vypočítej cutoff = dnešní datum minus 6 měsíců
+3. Pro KAŽDÝ záznam: zkontroluj datum (pole "datum" u leadů, "datum_pridani" u klientů a nemovitostí)
+   - Pokud je datum < cutoff → ZAHOĎ záznam, NESMÍ být v grafu
+   - Pokud je datum >= cutoff → zařaď do příslušného měsíce
+4. Pro prodané nemovitosti: použij STEJNÝ cutoff jako pro leady — datum_pridani >= cutoff
+5. Klíč měsíce: "YYYY-MM" formát (např. "2026-01") — nutné pro správné řazení
+6. Seřaď výsledné pole chronologicky vzestupně (nejstarší vlevo, nejnovější vpravo)
+7. Pokud po filtraci zbyde méně než 3 datové body → NEPIŠ chart, místo toho napiš: "Nedostatek dat pro posledních 6 měsíců"
+8. Zavolej create_chart(type: "line", title: "...", data: [{name: "2025-11", value: X}, ...], x_key: "name", y_key: "value")
+
+Text odpovědi: 2-3 věty shrnutí trendu (peak, průměr, trend nahoru/dolů).
 
 ### ŠABLONA: Přehled klientů / nemovitostí / leadů
 Dotaz: "Noví klienti Q1", "Jaké nemovitosti máme", "Leady tento měsíc"
@@ -553,7 +564,21 @@ async function executeTool(
           return isNaN(d) ? 0 : d;
         }
 
-        const sortedItems = [...rawItems].sort((a, b) => {
+        // For line charts: enforce 6-month cutoff server-side — drop any data points older than 7 months
+        // This catches cases where Claude forgets to filter before passing data to create_chart
+        const cutoffOrdinal = (() => {
+          const d = new Date();
+          d.setMonth(d.getMonth() - 7); // 7 months = 6 months + 1 month buffer
+          return d.getFullYear() * 12 + d.getMonth(); // 0-based month
+        })();
+        const filteredItems = type === "line"
+          ? rawItems.filter((item) => {
+              const ord = xKeyToOrdinal(item[resolvedXKey]);
+              return ord >= cutoffOrdinal;
+            })
+          : rawItems;
+
+        const sortedItems = [...filteredItems].sort((a, b) => {
           if (type === "line") {
             return xKeyToOrdinal(a[resolvedXKey]) - xKeyToOrdinal(b[resolvedXKey]);
           }
