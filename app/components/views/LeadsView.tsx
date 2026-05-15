@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { DataTable } from "@/app/components/DataTable";
+import { DataTable, MobileConfig } from "@/app/components/DataTable";
 import { getCached, setCached } from "@/lib/cache";
 
 interface Lead {
@@ -53,6 +53,13 @@ function StatusBadge({ status }: { status: string | undefined }) {
     </span>
   );
 }
+
+const MOBILE_CONFIG: MobileConfig = {
+  primary: "makler",
+  badge: "status",
+  row1: ["budget", "typ_nemovitosti", "zdroj"],
+  row2: ["datum"],
+};
 
 const STATUS_FILTERS = ["vše", "nový", "kontaktován", "prohlídka", "nabídka", "uzavřen", "ztracen"];
 const ZDROJ_FILTERS  = ["vše", "web", "sreality", "inzerce", "doporučení"];
@@ -200,6 +207,7 @@ export function LeadsView() {
           searchQuery={search}
           isMobile={isMobile}
           rowStyle={rowStyle}
+          mobileConfig={MOBILE_CONFIG}
         />
       </div>
     </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { DataTable } from "@/app/components/DataTable";
+import { DataTable, MobileConfig } from "@/app/components/DataTable";
 import { getCached, setCached } from "@/lib/cache";
 
 interface Client {
@@ -44,6 +44,13 @@ function StatusBadge({ status }: { status: string | undefined }) {
     </span>
   );
 }
+
+const MOBILE_CONFIG: MobileConfig = {
+  primary: "jmeno",
+  badge: "status",
+  row1: ["makler", "zdroj"],
+  row2: ["email", "datum_pridani"],
+};
 
 const STATUS_FILTERS = ["vše", "aktivní", "lead", "uzavřen", "neaktivní"];
 const ZDROJ_FILTERS  = ["vše", "web", "sreality", "inzerce", "doporučení"];
@@ -186,6 +193,7 @@ export function ClientsView() {
           searchQuery={search}
           isMobile={isMobile}
           rowStyle={rowStyle}
+          mobileConfig={MOBILE_CONFIG}
         />
       </div>
     </div>

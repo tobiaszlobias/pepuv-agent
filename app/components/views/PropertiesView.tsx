@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { DataTable } from "@/app/components/DataTable";
+import { DataTable, MobileConfig } from "@/app/components/DataTable";
 import { getCached, setCached } from "@/lib/cache";
 
 interface Property {
@@ -59,6 +59,13 @@ function StavBadge({ stav }: { stav: string | undefined }) {
     </span>
   );
 }
+
+const MOBILE_CONFIG: MobileConfig = {
+  primary: "adresa",
+  badge: "stav",
+  row1: ["cena", "typ", "ctvrt"],
+  row2: ["makler", "rok_rekonstrukce", "datum_pridani"],
+};
 
 const STAV_FILTERS = ["vše", "k_prodeji", "prodáno", "rezervováno"];
 const TYP_FILTERS  = ["vše", "byt", "dům", "pozemek"];
@@ -204,6 +211,7 @@ export function PropertiesView() {
           searchQuery={search}
           isMobile={isMobile}
           rowStyle={rowStyle}
+          mobileConfig={MOBILE_CONFIG}
         />
       </div>
     </div>
