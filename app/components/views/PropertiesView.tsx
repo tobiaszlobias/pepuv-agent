@@ -37,24 +37,31 @@ function capitalize(s: string | undefined): string {
   return s.replace(/_/g, " ").replace(/\b\w/, (c) => c.toUpperCase());
 }
 
-const STAV_COLORS: Record<string, { bg: string; color: string }> = {
-  k_prodeji:   { bg: "rgba(255,214,0,0.15)",  color: "#FFD600" },
-  prodáno:     { bg: "rgba(74,222,128,0.12)", color: "#4ade80" },
-  v_nabídce:   { bg: "rgba(96,165,250,0.12)", color: "#60a5fa" },
+const STAV_META: Record<string, { bg: string; color: string; rowBg: string; label: string }> = {
+  k_prodeji:   { bg: "rgba(255,214,0,0.15)",  color: "#FFD600", rowBg: "rgba(255,214,0,0.04)",  label: "K prodeji" },
+  prodáno:     { bg: "rgba(74,222,128,0.12)", color: "#4ade80", rowBg: "rgba(74,222,128,0.04)", label: "Prodáno" },
+  rezervováno: { bg: "rgba(96,165,250,0.12)", color: "#60a5fa", rowBg: "rgba(96,165,250,0.03)", label: "Rezervováno" },
+  v_nabídce:   { bg: "rgba(255,180,0,0.12)",  color: "#ffb400", rowBg: "rgba(255,180,0,0.03)",  label: "V nabídce" },
 };
+
+function matchStav(stav: string): string | null {
+  const k = stav.toLowerCase().replace(/\s/g, "_");
+  return Object.keys(STAV_META).find((key) => k.includes(key) || key.includes(k)) ?? null;
+}
 
 function StavBadge({ stav }: { stav: string | undefined }) {
   if (!stav) return <span style={{ color: "var(--muted)" }}>—</span>;
-  const style = STAV_COLORS[stav.toLowerCase()] ?? { bg: "var(--surface-elevated)", color: "var(--muted)" };
+  const key = matchStav(stav);
+  const s = key ? STAV_META[key] : { bg: "var(--surface-elevated)", color: "var(--muted)" };
   return (
-    <span
-      className="inline-block px-2 py-0.5 rounded-md text-xs font-medium"
-      style={{ background: style.bg, color: style.color }}
-    >
+    <span className="inline-block px-2 py-0.5 rounded-md text-xs font-medium" style={{ background: s.bg, color: s.color }}>
       {capitalize(stav)}
     </span>
   );
 }
+
+const STAV_FILTERS = ["vše", "k_prodeji", "prodáno", "rezervováno"];
+const TYP_FILTERS  = ["vše", "byt", "dům", "pozemek"];
 
 const COLUMNS = [
   { key: "adresa",           label: "Adresa" },
@@ -62,10 +69,15 @@ const COLUMNS = [
   { key: "typ",              label: "Typ",       render: (v: string | undefined) => capitalize(v) },
   { key: "cena",             label: "Cena",      render: (v: string | undefined) => <span style={{ color: "var(--text)", fontVariantNumeric: "tabular-nums" }}>{formatPrice(v)}</span> },
   { key: "stav",             label: "Stav",      render: (v: string | undefined) => <StavBadge stav={v} /> },
-  { key: "rok_rekonstrukce", label: "Rekonstr." },
+  { key: "rok_rekonstrukce", label: "Rekonstr.", render: (v: string | undefined) => <span style={{ color: v ? "var(--text)" : "#f87171" }}>{v || "chybí"}</span> },
   { key: "makler",           label: "Makléř" },
   { key: "datum_pridani",    label: "Přidáno",   render: (v: string | undefined) => <span style={{ color: "var(--muted)" }}>{formatDate(v)}</span> },
 ];
+
+function rowStyle(row: Record<string, string | undefined>): React.CSSProperties {
+  const key = matchStav(row.stav ?? "");
+  return key ? { background: STAV_META[key].rowBg } : {};
+}
 
 function StatCard({ label, value, warn }: { label: string; value: string | number; warn?: boolean }) {
   return (
@@ -76,12 +88,37 @@ function StatCard({ label, value, warn }: { label: string; value: string | numbe
   );
 }
 
+function FilterPills({ options, active, onChange, labelMap }: { options: string[]; active: string; onChange: (v: string) => void; labelMap?: Record<string, string> }) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {options.map((opt) => (
+        <button
+          key={opt}
+          onClick={() => onChange(opt)}
+          className="text-xs px-2.5 py-1 rounded-lg transition-all capitalize"
+          style={{
+            background: active === opt ? "var(--yellow)" : "var(--surface-elevated)",
+            color: active === opt ? "#000" : "var(--muted)",
+            border: `1px solid ${active === opt ? "var(--yellow)" : "var(--border)"}`,
+            fontWeight: active === opt ? 600 : 400,
+          }}
+        >
+          {labelMap?.[opt] ?? opt.replace(/_/g, " ")}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function PropertiesView() {
   const cached = getCached<Property[]>("properties");
   const [properties, setProperties] = useState<Property[]>(cached ?? []);
   const [loading, setLoading] = useState(cached === null);
   const [search, setSearch] = useState("");
+  const [stavFilter, setStavFilter] = useState("vše");
+  const [typFilter, setTypFilter] = useState("vše");
   const [isMobile, setIsMobile] = useState(false);
+
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
     check();
@@ -97,17 +134,20 @@ export function PropertiesView() {
       .catch(() => setLoading(false));
   }, []);
 
-  const prices = properties
-    .map((p) => parseInt(p.cena.replace(/\D/g, ""), 10))
-    .filter((n) => !isNaN(n) && n > 0);
-  const avgPrice = prices.length > 0
-    ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length)
-    : 0;
+  const filtered = properties.filter((p) => {
+    if (stavFilter !== "vše") {
+      const key = matchStav(p.stav);
+      if (key !== stavFilter) return false;
+    }
+    if (typFilter !== "vše" && !p.typ.toLowerCase().includes(typFilter)) return false;
+    return true;
+  });
+
+  const prices = properties.map((p) => parseInt(p.cena.replace(/\D/g, ""), 10)).filter((n) => !isNaN(n) && n > 0);
+  const avgPrice = prices.length > 0 ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length) : 0;
   const avgPriceStr = avgPrice >= 1_000_000
     ? `${(avgPrice / 1_000_000).toFixed(1)} M`
-    : avgPrice > 0 ? `${Math.round(avgPrice / 1000)} tis.`
-    : "—";
-
+    : avgPrice > 0 ? `${Math.round(avgPrice / 1000)} tis.` : "—";
   const missingRek = properties.filter((p) => !p.rok_rekonstrukce || p.rok_rekonstrukce === "").length;
   const typy = new Set(properties.map((p) => p.typ).filter(Boolean)).size;
 
@@ -122,35 +162,48 @@ export function PropertiesView() {
         </div>
       </div>
 
-      <div className="px-4 md:px-6 pb-3 flex items-center gap-2 flex-shrink-0">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Hledat..."
-          className="flex-1 text-sm px-3 py-2 rounded-lg focus:outline-none transition-all"
-          style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)", color: "var(--text)" }}
-          onFocus={(e) => (e.currentTarget.style.borderColor = "var(--yellow)")}
-          onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
-        />
-        {search && (
-          <button
-            onClick={() => setSearch("")}
-            className="text-xs px-3 py-2 rounded-lg flex-shrink-0"
-            style={{ color: "var(--muted)", background: "var(--surface-elevated)", border: "1px solid var(--border)" }}
-          >
-            Zrušit
-          </button>
-        )}
+      <div className="px-4 md:px-6 pb-3 flex flex-col gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Hledat..."
+            className="flex-1 text-sm px-3 py-2 rounded-lg focus:outline-none transition-all"
+            style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)", color: "var(--text)" }}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--yellow)")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="text-xs px-3 py-2 rounded-lg flex-shrink-0"
+              style={{ color: "var(--muted)", background: "var(--surface-elevated)", border: "1px solid var(--border)" }}
+            >
+              Zrušit
+            </button>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-x-4 gap-y-1.5 items-center">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs" style={{ color: "var(--muted)" }}>Stav:</span>
+            <FilterPills options={STAV_FILTERS} active={stavFilter} onChange={setStavFilter} labelMap={{ k_prodeji: "K prodeji", prodáno: "Prodáno", rezervováno: "Rezervováno" }} />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs" style={{ color: "var(--muted)" }}>Typ:</span>
+            <FilterPills options={TYP_FILTERS} active={typFilter} onChange={setTypFilter} />
+          </div>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto" style={{ borderTop: "1px solid var(--border)" }}>
         <DataTable
           columns={COLUMNS}
-          rows={properties as unknown as Record<string, string | undefined>[]}
+          rows={filtered as unknown as Record<string, string | undefined>[]}
           loading={loading}
           searchQuery={search}
           isMobile={isMobile}
+          rowStyle={rowStyle}
         />
       </div>
     </div>

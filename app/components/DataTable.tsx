@@ -16,9 +16,10 @@ interface DataTableProps {
   loading: boolean;
   searchQuery?: string;
   isMobile?: boolean;
+  rowStyle?: (row: Record<string, string | undefined>) => React.CSSProperties;
 }
 
-export function DataTable({ columns, rows, loading, searchQuery, isMobile }: DataTableProps) {
+export function DataTable({ columns, rows, loading, searchQuery, isMobile, rowStyle }: DataTableProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -54,7 +55,7 @@ export function DataTable({ columns, rows, loading, searchQuery, isMobile }: Dat
     return (
       <div className="divide-y" style={{ borderColor: "var(--border)" }}>
         {filtered.map((row, i) => (
-          <div key={i} className="px-4 py-3 flex flex-col gap-1.5">
+          <div key={i} className="px-4 py-3 flex flex-col gap-1.5" style={rowStyle?.(row)}>
             <div className="text-sm font-medium" style={{ color: "var(--text)" }}>
               {primaryCol.render
                 ? primaryCol.render(row[primaryCol.key], row)
@@ -98,10 +99,10 @@ export function DataTable({ columns, rows, loading, searchQuery, isMobile }: Dat
         {filtered.map((row, i) => (
           <tr
             key={i}
-            style={{ borderBottom: "1px solid var(--border)" }}
+            style={{ borderBottom: "1px solid var(--border)", ...rowStyle?.(row) }}
             className="transition-colors"
             onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-elevated)")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+            onMouseLeave={(e) => { const base = rowStyle?.(row)?.background as string | undefined; e.currentTarget.style.background = base ?? "transparent"; }}
           >
             {columns.map((col) => (
               <td key={col.key} className="px-4 py-3" style={{ color: "var(--text)" }}>
