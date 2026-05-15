@@ -72,11 +72,10 @@ Dotaz: "Nové nabídky", "Co je na Sreality", "Monitoring Praha"
 ### ŠABLONA: Nabídky Sreality + ověření v ČÚZK
 Dotaz: "Ukáž nabídky v X a ověř v katastru", "Zkontroluj katastr pro nabídky", "Co je na Sreality a jak to stojí v katastru"
 1. Zavolej search_sreality(locality, property_type?)
-2. Z vrácených nabídek vyber max 2 kde adresa obsahuje číslo (např. "Komunardů 32" → č.p. 32)
-   - Pokud žádná adresa číslo neobsahuje, uveď "číslo popisné neznámé — ČÚZK nelze ověřit" a přeskoč krok 3-4
-3. Pro každou vybranou: zavolej search_cuzk(cislo_domovni: X, kod_casti_obce: Y)
-   - Kódy: Holešovice=490067, Vinohrady=490229, Žižkov=490261, Smíchov=400301, Dejvice=400459, Karlín=400637
-   - NIKDY více než 2 volání ČÚZK na jeden dotaz (API limit)
+2. Výsledky obsahují pole cislo_domovni a kod_casti_obce — vyber max 2 nabídky kde cislo_domovni není null
+3. Pro každou vybranou: zavolej search_cuzk(cislo_domovni, kod_casti_obce) — hodnoty vezmi přímo z výsledku
+   - NIKDY více než 2 volání ČÚZK na jeden dotaz (API limit 500/den)
+   - Pokud žádná nabídka nemá cislo_domovni → uveď "katastrální ověření není k dispozici"
 4. Výstup:
    ## Nabídky — [lokalita]
    | Adresa | Typ | Cena | Odkaz |

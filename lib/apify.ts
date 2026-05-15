@@ -95,6 +95,95 @@ interface SrealityListing {
   url: string;
   description: string;
   scraped_at: string;
+  hash_id?: number;
+  lat?: number;
+  lon?: number;
+  cislo_domovni?: number;
+  kod_casti_obce?: number;
+}
+
+// Mapa názvu části obce (z RUIAN adresy) → kód části obce pro ČÚZK
+const CAST_OBCE_NAZEV_KOD: Record<string, number> = {
+  "holešovice": 490067,
+  "vinohrady":  490229,
+  "žižkov":     490261,
+  "smíchov":    400301,
+  "dejvice":    400459,
+  "karlín":     400637,
+};
+
+// Převede WGS84 lat/lon na číslo domovní + kód části obce přes RUIAN MapServer
+async function resolveCisloDomovni(
+  lat: number,
+  lon: number
+): Promise<{ cisloDomovni: number; kodCastiObce: number } | null> {
+  const margin = 0.002;
+  const params = new URLSearchParams({
+    geometry: `${lon},${lat}`,
+    geometryType: "esriGeometryPoint",
+    sr: "4326",
+    layers: "all",
+    tolerance: "20",
+    mapExtent: `${lon - margin},${lat - margin},${lon + margin},${lat + margin}`,
+    imageDisplay: "500,500,96",
+    returnGeometry: "false",
+    f: "json",
+  });
+
+  try {
+    const res = await fetch(
+      `https://ags.cuzk.cz/arcgis/rest/services/RUIAN/MapServer/identify?${params}`,
+      { headers: { "Accept": "application/json" } }
+    );
+    if (!res.ok) return null;
+
+    const data = await res.json() as { results?: Record<string, unknown>[] };
+    const adresni = (data.results ?? []).find(
+      (r) => (r.layerName as string) === "AdresniMisto"
+    );
+    if (!adresni) return null;
+
+    const attrs = adresni.attributes as Record<string, string>;
+    const cisloDomovni = parseInt(attrs["Číslo domovní"] ?? "", 10);
+    if (!cisloDomovni) return null;
+
+    // "Adresa": "Veverkova 1280/13, Holešovice, 17000 Praha 7"
+    // Parsuj část obce z adresy
+    const adresa = (attrs["Adresa"] ?? "").toLowerCase();
+    const kodCastiObce = Object.entries(CAST_OBCE_NAZEV_KOD).find(
+      ([nazev]) => adresa.includes(nazev)
+    )?.[1] ?? 0;
+
+    if (!kodCastiObce) return null;
+    return { cisloDomovni, kodCastiObce };
+  } catch {
+    return null;
+  }
+}
+
+// Načte GPS souřadnice z Sreality detailu
+async function fetchListingCoords(
+  hashId: number
+): Promise<{ lat: number; lon: number } | null> {
+  try {
+    const res = await fetch(
+      `https://www.sreality.cz/api/cs/v2/estates/${hashId}`,
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+          "Accept": "application/json",
+        },
+      }
+    );
+    if (!res.ok) return null;
+    const data = await res.json() as { map?: { lat?: number; lon?: number } };
+    const lat = data.map?.lat;
+    const lon = data.map?.lon;
+    if (!lat || !lon) return null;
+    return { lat, lon };
+  } catch {
+    return null;
+  }
 }
 
 export async function scrapeSreality(params: {
@@ -150,7 +239,7 @@ export async function scrapeSreality(params: {
     items = await fetchEstates({ region: params.locality });
   }
 
-  return items.map((item) => {
+  const baseListings = items.map((item) => {
     const hashId = item.hash_id as number;
     const seo = item.seo as Record<string, unknown> | undefined;
     const catMain = seo?.category_main_cb as number;
@@ -161,7 +250,6 @@ export async function scrapeSreality(params: {
     const transType = catType === 2 ? "pronajem" : "prodej";
     const propType = catMain === 1 ? "byt" : catMain === 2 ? "dum" : catMain === 3 ? "pozemek" : "nemovitost";
     const subSlug = SUB_SLUG[catSub] || "";
-    // Strip trailing dashes from locality slug (Sreality API returns e.g. "hodslavice-hodslavice-")
     const localityClean = localitySeo.replace(/-+$/, "");
     const detailUrl = hashId && localityClean
       ? `${SREALITY_BASE}/${transType}/${propType}${subSlug ? `/${subSlug}` : ""}/${localityClean}/${hashId}`
@@ -170,14 +258,49 @@ export async function scrapeSreality(params: {
       : "";
 
     const priceRaw = (item.price_czk as { value_raw?: number })?.value_raw ?? 0;
+    const gpsLat = (item.gps as { lat?: number })?.lat ?? (item.map as { lat?: number })?.lat;
+    const gpsLon = (item.gps as { lon?: number })?.lon ?? (item.map as { lon?: number })?.lon;
 
     return {
       address: (item.locality as string) || "",
       price: priceRaw,
       type: (item.name as string) || "",
-      url: detailUrl || `https://www.sreality.cz`,
+      url: detailUrl || "https://www.sreality.cz",
       description: (item.name as string) || "",
       scraped_at: new Date().toISOString(),
-    };
+      hash_id: hashId,
+      lat: gpsLat,
+      lon: gpsLon,
+    } as SrealityListing;
   });
+
+  // Pro prvních 5 výsledků: fetch detailu → GPS → RUIAN → číslo domovní
+  // Ostatní se přeskočí aby byl response rychlý
+  const enriched = await Promise.all(
+    baseListings.map(async (listing, idx) => {
+      if (idx >= 5 || !listing.hash_id) return listing;
+
+      // Pokud GPS není v listu, fetchni detail
+      let lat = listing.lat;
+      let lon = listing.lon;
+      if (!lat || !lon) {
+        const coords = await fetchListingCoords(listing.hash_id);
+        if (coords) { lat = coords.lat; lon = coords.lon; }
+      }
+      if (!lat || !lon) return listing;
+
+      const resolved = await resolveCisloDomovni(lat, lon);
+      if (!resolved) return { ...listing, lat, lon };
+
+      return {
+        ...listing,
+        lat,
+        lon,
+        cislo_domovni: resolved.cisloDomovni,
+        kod_casti_obce: resolved.kodCastiObce,
+      };
+    })
+  );
+
+  return enriched;
 }
