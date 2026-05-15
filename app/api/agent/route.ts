@@ -669,6 +669,25 @@ export async function POST(req: NextRequest) {
     (b): b is Anthropic.TextBlock => b.type === "text"
   );
 
+  // Odstraní markdown tabulky z textu — používá se když frontend zobrazuje
+  // strukturovanou tabulku (listings), aby nevznikla duplicita
+  function stripMarkdownTables(text: string): string {
+    // Remove contiguous blocks of lines that are markdown table rows (contain |)
+    return text
+      .split("\n")
+      .reduce<string[]>((acc, line) => {
+        if (line.trim().match(/^\|.+\|/) || line.trim().match(/^\|[-| :]+\|/)) {
+          // Skip table row and separator lines
+          return acc;
+        }
+        acc.push(line);
+        return acc;
+      }, [])
+      .join("\n")
+      .replace(/\n{3,}/g, "\n\n") // collapse extra blank lines left behind
+      .trim();
+  }
+
   // Hledej chart data v posledních tool výsledcích
   const chartData = allMessages
     .flatMap((m) => (Array.isArray(m.content) ? m.content : []))
@@ -722,8 +741,11 @@ export async function POST(req: NextRequest) {
     .filter(Boolean)
     .at(-1); // vezmi poslední (nejnovější volání)
 
+  const rawText = textBlock?.text || "";
+  const finalText = listingsData ? stripMarkdownTables(rawText) : rawText;
+
   return NextResponse.json({
-    text: textBlock?.text || "",
+    text: finalText,
     charts: chartData,
     slides: slideData,
     listings: listingsData ?? null,
