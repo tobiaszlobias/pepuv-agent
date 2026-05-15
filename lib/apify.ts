@@ -91,6 +91,8 @@ const LOCALITY_ID_MAP: Record<string, string> = {
 interface SrealityListing {
   address: string;
   price: number;
+  price_per_m2?: number;
+  area_m2?: number;
   type: string;
   url: string;
   description: string;
@@ -161,10 +163,10 @@ async function resolveCisloDomovni(
   }
 }
 
-// Načte GPS souřadnice z Sreality detailu
-async function fetchListingCoords(
+// Načte GPS souřadnice + užitnou plochu z Sreality detailu
+async function fetchListingDetail(
   hashId: number
-): Promise<{ lat: number; lon: number } | null> {
+): Promise<{ lat: number; lon: number; area_m2?: number } | null> {
   try {
     const res = await fetch(
       `https://www.sreality.cz/api/cs/v2/estates/${hashId}`,
@@ -176,11 +178,18 @@ async function fetchListingCoords(
       }
     );
     if (!res.ok) return null;
-    const data = await res.json() as { map?: { lat?: number; lon?: number } };
+    const data = await res.json() as {
+      map?: { lat?: number; lon?: number };
+      items?: { name: string; value: unknown }[];
+    };
     const lat = data.map?.lat;
     const lon = data.map?.lon;
     if (!lat || !lon) return null;
-    return { lat, lon };
+    const areaItem = (data.items ?? []).find((i) =>
+      i.name.toLowerCase().includes("užitn")
+    );
+    const area_m2 = areaItem ? Number(areaItem.value) || undefined : undefined;
+    return { lat, lon, area_m2 };
   } catch {
     return null;
   }
@@ -280,24 +289,24 @@ export async function scrapeSreality(params: {
     baseListings.map(async (listing, idx) => {
       if (idx >= 5 || !listing.hash_id) return listing;
 
-      // Pokud GPS není v listu, fetchni detail
-      let lat = listing.lat;
-      let lon = listing.lon;
-      if (!lat || !lon) {
-        const coords = await fetchListingCoords(listing.hash_id);
-        if (coords) { lat = coords.lat; lon = coords.lon; }
-      }
-      if (!lat || !lon) return listing;
+      const detail = await fetchListingDetail(listing.hash_id);
+      const lat = detail?.lat ?? listing.lat;
+      const lon = detail?.lon ?? listing.lon;
+      const area_m2 = detail?.area_m2;
+      const price_per_m2 = area_m2 && listing.price > 0
+        ? Math.round(listing.price / area_m2)
+        : undefined;
+
+      if (!lat || !lon) return { ...listing, area_m2, price_per_m2 };
 
       const resolved = await resolveCisloDomovni(lat, lon);
-      if (!resolved) return { ...listing, lat, lon };
-
       return {
         ...listing,
         lat,
         lon,
-        cislo_domovni: resolved.cisloDomovni,
-        kod_casti_obce: resolved.kodCastiObce,
+        area_m2,
+        price_per_m2,
+        ...(resolved ? { cislo_domovni: resolved.cisloDomovni, kod_casti_obce: resolved.kodCastiObce } : {}),
       };
     })
   );
