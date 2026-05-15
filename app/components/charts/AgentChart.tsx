@@ -36,6 +36,25 @@ const ZONE_COLORS: Record<string, string> = {
 const PIE_COLORS  = ["#FFD600", "#888880", "#F0EDE8", "#444440", "#BBBAB6", "#555550"];
 const YELLOW = "#FFD600";
 
+const CZECH_MONTHS = ["Led","Úno","Bře","Dub","Kvě","Čvn","Čvc","Srp","Zář","Říj","Lis","Pro"];
+
+function formatMonthLabel(val: unknown): string {
+  const s = String(val ?? "");
+  // "2026-01" → "Led 26"
+  const iso = s.match(/^(\d{4})-(\d{2})$/);
+  if (iso) {
+    const month = parseInt(iso[2], 10) - 1;
+    const year = iso[1].slice(2);
+    return `${CZECH_MONTHS[month] ?? iso[2]} ${year}`;
+  }
+  // "Prosinec 2026" → "Pro 26"
+  const parts = s.split(" ");
+  if (parts.length === 2 && parts[1].length === 4) {
+    return `${parts[0].slice(0, 3)} ${parts[1].slice(2)}`;
+  }
+  return s.slice(0, 7);
+}
+
 function formatYTick(value: number): string {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
   if (value >= 1_000) return `${Math.round(value / 1_000)}k`;
@@ -137,12 +156,17 @@ export function AgentChart({ chart, index = 0 }: { chart: ChartData; index?: num
   const tooltipLabelStyle = { color: "var(--text)", fontWeight: 500 };
   const tooltipItemStyle = { color: "var(--muted)" };
 
+  // Detect YYYY-MM month keys (line charts from trend queries)
+  const isMonthKeys = chart.type === "line" && chart.data.length > 0 &&
+    String(chart.data[0][xKey] ?? "").match(/^\d{4}-\d{2}$/) !== null;
+
   // For line charts and bar charts with long labels: shorten tick text instead of rotating
-  const needsShortLabels = longLabels && !isHorizontal;
-  const shortTickFormatter = needsShortLabels
+  const needsShortLabels = (longLabels && !isHorizontal) || isMonthKeys;
+  const shortTickFormatter = isMonthKeys
+    ? formatMonthLabel
+    : needsShortLabels
     ? (val: unknown) => {
         const s = String(val ?? "");
-        // "Prosinec 2026" → "Pro 26", "Leden 2026" → "Led 26"
         const parts = s.split(" ");
         if (parts.length === 2 && parts[1].length === 4) {
           return `${parts[0].slice(0, 3)} ${parts[1].slice(2)}`;
