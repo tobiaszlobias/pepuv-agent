@@ -478,7 +478,15 @@ export default function Home() {
         </header>
 
         {/* Content */}
-        <div className="flex-1 flex flex-col overflow-hidden" style={{ background: "var(--bg)" }}>
+        <div
+          className="flex-1 flex flex-col overflow-hidden"
+          style={{
+            background: "var(--bg)",
+            backgroundImage: dark
+              ? "radial-gradient(ellipse 70% 55% at 100% 0%, rgba(255,214,0,0.08) 0%, transparent 65%)"
+              : "radial-gradient(ellipse 70% 55% at 100% 0%, rgba(255,180,0,0.06) 0%, transparent 65%)",
+          }}
+        >
           {activePage === "dashboard" && (
             <DashboardView
               onChatPrompt={(prompt) => {

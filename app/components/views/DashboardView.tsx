@@ -443,7 +443,6 @@ export function DashboardView({ onChatPrompt }: { onChatPrompt?: (prompt: string
     <div
       className="flex-1 min-h-0 overflow-y-auto px-4 md:px-6 py-4 md:py-5 flex flex-col gap-3 md:gap-4"
       style={{
-        background: "var(--bg)",
         userSelect: "none",
         WebkitUserSelect: "none",
       }}
