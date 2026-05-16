@@ -143,25 +143,25 @@ export function MessageList({ messages, dark, onSend }: { messages: Message[]; d
 
   if (messages.length === 0) {
     return (
-      <div className="flex-1 overflow-y-auto flex flex-col items-center justify-end px-4 pb-4 gap-4">
+      <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center px-4 py-6 gap-5">
         {/* Welcome heading */}
         <div className="text-center">
           <p className="text-sm font-semibold" style={{ color: "var(--text)" }}>Jak ti dnes mohu pomoci?</p>
-          <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>Vyber dotaz nebo napiš vlastní</p>
+          <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>Vyber dotaz nebo napiš vlastní</p>
         </div>
         {/* Prompt grid */}
-        <div className="w-full max-w-lg grid grid-cols-2 gap-2">
+        <div className="w-full max-w-md grid grid-cols-2 gap-2">
           {QUICK_PROMPTS.map((item) => (
             <button
               key={item.label}
               onClick={() => onSend?.(item.prompt)}
-              className="text-left px-3 py-2.5 rounded-xl text-xs transition-all flex flex-col gap-0.5"
+              className="text-left px-3 py-3 rounded-xl text-xs transition-all flex flex-col gap-1"
               style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
               onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--yellow)")}
               onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
             >
               <span className="font-semibold" style={{ color: "var(--yellow)" }}>{item.label}</span>
-              <span className="line-clamp-2" style={{ color: "var(--muted)", lineHeight: 1.35 }}>{item.prompt}</span>
+              <span className="line-clamp-2" style={{ color: "var(--muted)", lineHeight: 1.4 }}>{item.prompt}</span>
             </button>
           ))}
         </div>
