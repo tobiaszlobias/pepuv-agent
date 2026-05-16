@@ -171,7 +171,8 @@ function buildChartData(dates: string[], slot: TimeSlot) {
   const cur = new Date(start);
   while (cur <= end) {
     const key = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}`;
-    const label = cur.toLocaleString("cs-CZ", { month: "short", year: "2-digit" });
+    const MONTHS_SHORT = ["led","úno","bře","dub","kvě","čvn","čvc","srp","zář","říj","lis","pro"];
+    const label = `${MONTHS_SHORT[cur.getMonth()]} ${String(cur.getFullYear()).slice(2)}`;
     result.push({ month: label, count: map[key] || 0 });
     cur.setMonth(cur.getMonth() + 1);
   }
