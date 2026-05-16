@@ -103,9 +103,7 @@ function InlineModelPicker({ model, setModel, disabled }: { model: ModelId; setM
 
 export function ChatInput({ onSend, disabled, hasMessages, model, setModel }: ChatInputProps) {
   const [value, setValue] = useState("");
-  const [promptOpen, setPromptOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const promptRef = useRef<HTMLDivElement>(null);
 
   function handleSend() {
     const trimmed = value.trim();
@@ -131,61 +129,56 @@ export function ChatInput({ onSend, disabled, hasMessages, model, setModel }: Ch
     el.style.height = Math.min(el.scrollHeight, 160) + "px";
   }
 
-  useEffect(() => {
-    function handler(e: MouseEvent) {
-      if (promptRef.current && !promptRef.current.contains(e.target as Node)) {
-        setPromptOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
   return (
     <div
       className="px-4 pt-2 pb-3 flex-shrink-0 flex flex-col gap-2"
       style={{ background: "var(--surface)", borderTop: "1px solid var(--border)" }}
     >
-      {/* Quick prompts dropdown */}
-      {hasMessages && (
-        <div ref={promptRef} className="relative">
-          <button
-            onClick={() => setPromptOpen((o) => !o)}
-            disabled={disabled}
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-all disabled:opacity-40"
-            style={{
-              background: "var(--surface-elevated)",
-              border: `1px solid ${promptOpen ? "var(--yellow)" : "var(--border)"}`,
-              color: "var(--muted)",
-            }}
-          >
-            <span>Návrhy dotazů</span>
-            <span style={{ transform: promptOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s" }}>
-              <ChevronDown />
-            </span>
-          </button>
-
-          {promptOpen && (
-            <div
-              className="absolute bottom-full left-0 mb-1.5 rounded-xl overflow-hidden z-10 min-w-[280px] max-w-[90vw]"
-              style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)", boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }}
+      {/* Before first message: vertical scrollable list */}
+      {!hasMessages && (
+        <div className="flex flex-col gap-1 max-h-[40vh] overflow-y-auto">
+          <p className="text-xs px-1 pb-0.5" style={{ color: "var(--muted)" }}>Návrhy dotazů</p>
+          {QUICK_PROMPTS.map((item) => (
+            <button
+              key={item.label}
+              onClick={() => onSend(item.prompt)}
+              disabled={disabled}
+              className="w-full text-left px-3 py-2.5 rounded-xl text-xs transition-colors flex flex-col gap-0.5 disabled:opacity-40"
+              style={{ background: "var(--surface-elevated)", border: "1px solid var(--border)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--yellow)")}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
             >
-              {QUICK_PROMPTS.map((item) => (
-                <button
-                  key={item.label}
-                  onClick={() => { onSend(item.prompt); setPromptOpen(false); }}
-                  disabled={disabled}
-                  className="w-full text-left px-4 py-3 text-xs transition-colors flex flex-col gap-0.5"
-                  style={{ borderBottom: "1px solid var(--border)", color: "var(--text)" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                >
-                  <span className="font-semibold text-xs" style={{ color: "var(--yellow)" }}>{item.label}</span>
-                  <span style={{ color: "var(--muted)", lineHeight: 1.4 }}>{item.prompt}</span>
-                </button>
-              ))}
-            </div>
-          )}
+              <span className="font-semibold" style={{ color: "var(--yellow)" }}>{item.label}</span>
+              <span style={{ color: "var(--muted)", lineHeight: 1.4 }}>{item.prompt}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* After first message: horizontal scrollable chip bar — always visible */}
+      {hasMessages && (
+        <div
+          className="flex gap-2 overflow-x-auto pb-0.5"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
+          {QUICK_PROMPTS.map((item) => (
+            <button
+              key={item.label}
+              onClick={() => onSend(item.prompt)}
+              disabled={disabled}
+              className="flex-shrink-0 text-xs px-3 py-1.5 rounded-lg transition-all disabled:opacity-40 font-semibold"
+              style={{
+                background: "var(--surface-elevated)",
+                border: "1px solid var(--border)",
+                color: "var(--yellow)",
+                whiteSpace: "nowrap",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--yellow)")}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
       )}
 
