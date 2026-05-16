@@ -397,9 +397,14 @@ export function DashboardView({ onChatPrompt }: { onChatPrompt?: (prompt: string
     fetch(`/api/sreality/scan?${params}`)
       .then((r) => r.json())
       .then((d: { listings: SrealityListing[] }) => {
-        setCached("sreality_latest", d.listings);
-        setSreality(d.listings);
-        setSrealityScanned(true);
+        if (d.listings.length > 0) {
+          setCached("sreality_latest", d.listings);
+          setSreality(d.listings);
+          setSrealityScanned(true);
+        } else {
+          // Keep previous results, just show a transient warning
+          setSrealityError("Sreality momentálně nevrátilo žádné výsledky — zobrazuji poslední úspěšný scan.");
+        }
         setLoadingSreality(false);
       })
       .catch(() => { setSrealityError("Scan selhal, zkus to znovu."); setLoadingSreality(false); });
@@ -791,6 +796,9 @@ export function DashboardView({ onChatPrompt }: { onChatPrompt?: (prompt: string
                       </span>
                     </a>
                   ))}
+                {srealityError && (
+                  <p className="text-xs" style={{ color: "#f59e0b" }}>{srealityError}</p>
+                )}
                 <div className="flex items-center justify-between pt-1">
                   <div className="flex items-center gap-2">
                     <span className="text-xs" style={{ color: "#4ade80" }}>✓ {sreality.length} nabídek</span>
