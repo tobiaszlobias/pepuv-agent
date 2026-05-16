@@ -41,19 +41,12 @@ KRITICKÉ PRAVIDLO: Cutoff = dnešní datum MINUS 6 měsíců. Záznamy starší
 Pro dnešní datum ${todayStr} → cutoff = ${cutoffStr} → zahrnout jen záznamy od ${cutoffStr} do dnes.
 
 Postup:
-1. Zavolej get_leads(months: 6) nebo get_clients() nebo get_properties() podle dotazu
-2. Vypočítej cutoff = dnešní datum minus 6 měsíců
-3. Pro KAŽDÝ záznam: zkontroluj datum (pole "datum" u leadů, "datum_pridani" u klientů a nemovitostí)
-   - Pokud je datum < cutoff → ZAHOĎ záznam, NESMÍ být v grafu
-   - Pokud je datum >= cutoff → zařaď do příslušného měsíce
-4. Pro prodané nemovitosti: použij datum_pridani (pole "datum_pridani") se STEJNÝM cutoffem.
-   POKUD po filtraci není žádný záznam se statusem "prodáno": stále zobraz chart — spočítej všechny
-   nemovitosti přidané do portfolia za dané měsíce a pojmenuj chart "Nemovitosti přidané do portfolia".
-   Je lepší zobrazit přibližná data než prázdný chart.
-5. Klíč měsíce: "YYYY-MM" formát (např. "2026-01") — nutné pro správné řazení
-6. Seřaď výsledné pole chronologicky vzestupně (nejstarší vlevo, nejnovější vpravo)
-7. Pokud po filtraci zbyde méně než 3 datové body → NEPIŠ chart, místo toho napiš: "Nedostatek dat pro posledních 6 měsíců"
-8. Zavolej create_chart(type: "line", title: "...", data: [{name: "2025-11", value: X}, ...], x_key: "name", y_key: "value")
+1. Zavolej get_leads(months: 6) nebo get_properties() podle dotazu
+2. V odpovědi nástroje je pole "monthly_aggregated": [{month: "YYYY-MM", count: N}, ...] — POUŽIJ PŘÍMO.
+   NIKDY nepočítej leady nebo nemovitosti sám z pole "leads"/"properties" — vždy ber "monthly_aggregated".
+3. Pro kombinovaný chart leadů + nemovitostí: zavolej oba nástroje, spoj monthly_aggregated do společného pole.
+4. Pokud monthly_aggregated má méně než 3 záznamy → napiš: "Nedostatek dat pro posledních 6 měsíců"
+5. Zavolej create_chart(type: "line", title: "...", data: [{name: "YYYY-MM", leady: X, prodano: Y}, ...], x_key: "name")
 
 Text odpovědi: 2-3 věty shrnutí trendu (peak, průměr, trend nahoru/dolů).
 
@@ -179,23 +172,47 @@ async function executeTool(
         const propInput = input as Parameters<typeof getProperties>[0];
         const data = await getProperties(propInput);
         console.log("get_properties called:", JSON.stringify(propInput), "→", data.length, "records");
+
+        // Server-side monthly aggregation by datum_pridani
+        const propMonthlyCounts: Record<string, number> = {};
+        for (const p of data) {
+          if (!p.datum_pridani) continue;
+          const month = p.datum_pridani.slice(0, 7);
+          propMonthlyCounts[month] = (propMonthlyCounts[month] ?? 0) + 1;
+        }
+        const monthly_aggregated = Object.entries(propMonthlyCounts)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([month, count]) => ({ month, count }));
+
         return JSON.stringify({
           success: true,
           count: data.length,
           properties: data,
+          monthly_aggregated,
         });
       }
 
       case "get_leads": {
         const leadsInput = input as Parameters<typeof getLeads>[0];
-        // Enforce months=6 default when Claude omits it for trend queries,
-        // preventing full-dataset returns that vary based on aggregation in Claude's head
         const data = await getLeads(leadsInput);
         console.log("get_leads called:", JSON.stringify(leadsInput), "→", data.length, "records");
+
+        // Server-side monthly aggregation — prevents Claude from counting differently each call
+        const monthlyCounts: Record<string, number> = {};
+        for (const lead of data) {
+          if (!lead.datum) continue;
+          const month = lead.datum.slice(0, 7); // "YYYY-MM"
+          monthlyCounts[month] = (monthlyCounts[month] ?? 0) + 1;
+        }
+        const monthly_aggregated = Object.entries(monthlyCounts)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([month, count]) => ({ month, count }));
+
         return JSON.stringify({
           success: true,
           count: data.length,
           leads: data,
+          monthly_aggregated,
         });
       }
 
