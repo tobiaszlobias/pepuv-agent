@@ -124,6 +124,16 @@ function TypingIndicator({ text }: { text?: string }) {
 }
 
 
+const QUICK_PROMPTS = [
+  { label: "Noví klienti Q1", prompt: "Jaké nové klienty máme za 1. kvartál? Odkud přišli? Můžeš to znázornit graficky?" },
+  { label: "Vývoj leadů a prodejů", prompt: "Vytvoř graf vývoje počtu leadů a prodaných nemovitostí za posledních 6 měsíců." },
+  { label: "Email zájemci", prompt: "Napiš e-mail pro Jana Nováka, který má zájem o byt na Náměstí Míru 5, Praha. Doporuč mu termín prohlídky na základě mé aktuální dostupnosti v kalendáři." },
+  { label: "Chybějící rekonstrukce", prompt: "Najdi nemovitosti, u kterých nám v systému chybí data o rekonstrukci a stavebních úpravách a připrav jejich seznam k doplnění." },
+  { label: "Týdenní report", prompt: "Shrň výsledky tohoto pracovního týdne (týden 20, 11.–16. května 2026) do krátkého reportu pro vedení a připrav k tomu prezentaci se třemi slidy." },
+  { label: "Sreality Holešovice", prompt: "Ukáž mi aktuální nabídky bytů na Sreality v lokalitě Praha Holešovice a ověř jejich katastr." },
+  { label: "Kdy mám volno?", prompt: "Kdy mám volno tento týden? Ukaž mi volné termíny z mého kalendáře." },
+];
+
 export function MessageList({ messages, dark, onSend }: { messages: Message[]; dark: boolean; onSend?: (text: string) => void }) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -132,7 +142,31 @@ export function MessageList({ messages, dark, onSend }: { messages: Message[]; d
   }, [messages]);
 
   if (messages.length === 0) {
-    return <div className="flex-1" />;
+    return (
+      <div className="flex-1 overflow-y-auto flex flex-col items-center justify-end px-4 pb-4 gap-4">
+        {/* Welcome heading */}
+        <div className="text-center">
+          <p className="text-sm font-semibold" style={{ color: "var(--text)" }}>Jak ti dnes mohu pomoci?</p>
+          <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>Vyber dotaz nebo napiš vlastní</p>
+        </div>
+        {/* Prompt grid */}
+        <div className="w-full max-w-lg grid grid-cols-2 gap-2">
+          {QUICK_PROMPTS.map((item) => (
+            <button
+              key={item.label}
+              onClick={() => onSend?.(item.prompt)}
+              className="text-left px-3 py-2.5 rounded-xl text-xs transition-all flex flex-col gap-0.5"
+              style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--yellow)")}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+            >
+              <span className="font-semibold" style={{ color: "var(--yellow)" }}>{item.label}</span>
+              <span className="line-clamp-2" style={{ color: "var(--muted)", lineHeight: 1.35 }}>{item.prompt}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
