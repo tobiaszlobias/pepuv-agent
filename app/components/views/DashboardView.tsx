@@ -99,10 +99,11 @@ function InlineTextInput({ defaultValue, placeholder, yellow, inputMode, onCommi
       inputMode={inputMode}
       defaultValue={defaultValue}
       placeholder={placeholder}
+      size={Math.max((defaultValue || placeholder || "").length, 6)}
       className="text-xs px-2.5 py-1 rounded-full focus:outline-none"
       style={yellow
-        ? { background: "rgba(255,214,0,0.15)", border: `1px solid ${YELLOW}`, color: YELLOW, minWidth: 120 }
-        : { background: "var(--surface-elevated)", border: `1px solid ${YELLOW}`, color: "var(--text)", minWidth: 100 }
+        ? { background: "rgba(255,214,0,0.15)", border: `1px solid ${YELLOW}`, color: YELLOW }
+        : { background: "var(--surface-elevated)", border: `1px solid ${YELLOW}`, color: "var(--text)" }
       }
       onBlur={(e) => onCommit(e.target.value)}
       onKeyDown={(e) => {
