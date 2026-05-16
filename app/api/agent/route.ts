@@ -8,7 +8,19 @@ import { getUpcomingEvents, getFreeSlotsForNextDays, createCalendarEvent } from 
 
 const client = new Anthropic();
 
-const SYSTEM_PROMPT = `Jsi Back Office Operations Agent pro realitní firmu. Pomáháš Pepovi — back office managerovi — s každodenní prací.
+function buildSystemPrompt(): string {
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10); // YYYY-MM-DD
+  const cutoff = new Date(today);
+  cutoff.setMonth(cutoff.getMonth() - 6);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  const currentYear = today.getFullYear();
+
+  return `Jsi Back Office Operations Agent pro realitní firmu. Pomáháš Pepovi — back office managerovi — s každodenní prací.
+
+DNEŠNÍ DATUM: ${todayStr}. Aktuální rok: ${currentYear}. Používej tato data pro všechny výpočty — nikdy nehádej datum.
+
+Mluvíš česky. Jsi profesionální, stručný a konkrétní.
 
 Mluvíš česky. Jsi profesionální, stručný a konkrétní.
 
@@ -26,7 +38,7 @@ Dotaz: "Ukáž vývoj leadů", "Trend klientů", "Jak se vyvíjely leady", "výv
 
 KRITICKÉ PRAVIDLO: Cutoff = dnešní datum MINUS 6 měsíců. Záznamy starší než cutoff NESMÍ být v datech — ani jeden. Toto platí pro VŠECHNY entity ve stejném dotazu.
 
-Pro dnešní datum 2026-05-16 → cutoff = 2025-11-16 → zahrnout jen záznamy od 2025-11-16 do dnes.
+Pro dnešní datum ${todayStr} → cutoff = ${cutoffStr} → zahrnout jen záznamy od ${cutoffStr} do dnes.
 
 Postup:
 1. Zavolej get_leads(months: 6) nebo get_clients() nebo get_properties() podle dotazu
@@ -48,8 +60,8 @@ Text odpovědi: 2-3 věty shrnutí trendu (peak, průměr, trend nahoru/dolů).
 ### ŠABLONA: Přehled klientů / nemovitostí / leadů
 Dotaz: "Noví klienti Q1", "Jaké nemovitosti máme", "Leady tento měsíc"
 1. Zavolej příslušný get_* nástroj s filtry
-   KRITICKÉ: Při filtrování podle čtvrtletí VŽDY předej i year: 2026.
-   Příklad: get_clients({quarter: "Q1", year: 2026}) — nikdy jen {quarter: "Q1"}.
+   KRITICKÉ: Při filtrování podle čtvrtletí VŽDY předej i year: ${currentYear}.
+   Příklad: get_clients({quarter: "Q1", year: ${currentYear}}) — nikdy jen {quarter: "Q1"}.
 2. Text: stručná tabulka nebo výčet v markdown. Max 10 položek, pak "...a X dalších."
 3. Pokud má smysl vizualizace (distribuce, srovnání), zavolej create_chart.
 
@@ -132,6 +144,7 @@ Dotaz: "Kdo má nejvíc leadů", "Výkon makléřů", "Srovnání makléřů"
 Pro pie a line chart color zóny nepoužívej.
 Pokud použiješ color zóny, přidej i "color_legend".
 Pokud má smysl průměrová čára, přidej "reference_line".`;
+}
 
 type MessageParam = Anthropic.MessageParam;
 
@@ -148,7 +161,13 @@ async function executeTool(
   try {
     switch (name) {
       case "get_clients": {
-        const data = await getClients(input as Parameters<typeof getClients>[0]);
+        // Enforce year default so quarter filters are always deterministic
+        const clientInput = input as Parameters<typeof getClients>[0];
+        if (clientInput?.quarter && !clientInput.year) {
+          clientInput.year = new Date().getFullYear();
+        }
+        const data = await getClients(clientInput);
+        console.log("get_clients called:", JSON.stringify(clientInput), "→", data.length, "records");
         return JSON.stringify({
           success: true,
           count: data.length,
@@ -157,9 +176,9 @@ async function executeTool(
       }
 
       case "get_properties": {
-        const data = await getProperties(
-          input as Parameters<typeof getProperties>[0]
-        );
+        const propInput = input as Parameters<typeof getProperties>[0];
+        const data = await getProperties(propInput);
+        console.log("get_properties called:", JSON.stringify(propInput), "→", data.length, "records");
         return JSON.stringify({
           success: true,
           count: data.length,
@@ -168,7 +187,11 @@ async function executeTool(
       }
 
       case "get_leads": {
-        const data = await getLeads(input as Parameters<typeof getLeads>[0]);
+        const leadsInput = input as Parameters<typeof getLeads>[0];
+        // Enforce months=6 default when Claude omits it for trend queries,
+        // preventing full-dataset returns that vary based on aggregation in Claude's head
+        const data = await getLeads(leadsInput);
+        console.log("get_leads called:", JSON.stringify(leadsInput), "→", data.length, "records");
         return JSON.stringify({
           success: true,
           count: data.length,
@@ -691,7 +714,7 @@ export async function POST(req: NextRequest) {
   let response = await client.messages.create({
     model: selectedModel,
     max_tokens: 4096,
-    system: SYSTEM_PROMPT,
+    system: buildSystemPrompt(),
     tools: agentTools,
     messages: allMessages,
   });
@@ -721,7 +744,7 @@ export async function POST(req: NextRequest) {
     response = await client.messages.create({
       model: selectedModel,
       max_tokens: 4096,
-      system: SYSTEM_PROMPT,
+      system: buildSystemPrompt(),
       tools: agentTools,
       messages: allMessages,
     });

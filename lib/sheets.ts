@@ -155,6 +155,7 @@ export async function getProperties(filters?: {
     properties = properties.filter((p) => !p[field] || p[field] === "");
   }
 
+  console.log("get_properties raw:", properties.length, "filters:", JSON.stringify(filters ?? {}));
   return properties;
 }
 
@@ -206,6 +207,7 @@ export async function getLeads(filters?: {
     );
   }
 
+  console.log("get_leads raw:", leads.length, "filters:", JSON.stringify(filters ?? {}));
   return leads;
 }
 
