@@ -131,8 +131,8 @@ export function ChatInput({ onSend, disabled, hasMessages, model, setModel }: Ch
 
   return (
     <div
-      className={`px-4 pt-2 pb-3 flex flex-col gap-2 ${hasMessages ? "flex-shrink-0" : "flex-1 min-h-0"}`}
-      style={{ background: "var(--surface)", borderTop: "1px solid var(--border)" }}
+      className={`px-4 pt-2 flex flex-col gap-2 ${hasMessages ? "flex-shrink-0" : "flex-1 min-h-0"}`}
+      style={{ background: "var(--surface)", borderTop: "1px solid var(--border)", paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}
     >
       {/* Before first message: vertically scrollable prompt list fills available space */}
       {!hasMessages && (

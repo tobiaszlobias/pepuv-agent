@@ -136,11 +136,11 @@ export function MessageList({ messages, dark, onSend }: { messages: Message[]; d
   }
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+    <div className="flex-1 overflow-y-auto px-3 py-4 space-y-4">
       {messages.map((msg) => (
         <div key={msg.id} className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}>
           {/* Bubble row */}
-          <div className={`flex w-full ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+          <div className={`flex w-full min-w-0 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
             {msg.role === "assistant" && (
               <div
                 className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center mr-2 mt-1 font-display font-extrabold text-sm text-black"
@@ -151,7 +151,7 @@ export function MessageList({ messages, dark, onSend }: { messages: Message[]; d
             )}
 
             <div
-              className={`max-w-[85%] px-4 py-3 text-sm ${
+              className={`min-w-0 w-full max-w-[88%] px-3 py-3 text-sm ${
                 msg.role === "user"
                   ? "rounded-2xl rounded-tr-sm"
                   : "rounded-2xl rounded-tl-sm"
@@ -175,8 +175,8 @@ export function MessageList({ messages, dark, onSend }: { messages: Message[]; d
                       msg.role === "user"
                         ? "text-sm font-medium"
                         : dark
-                        ? "prose prose-sm prose-invert max-w-none prose-p:my-0.5 prose-headings:my-1 prose-li:my-0 prose-table:text-xs"
-                        : "prose prose-sm max-w-none prose-p:my-0.5 prose-headings:my-1 prose-li:my-0 prose-table:text-xs"
+                        ? "prose prose-sm prose-invert max-w-none prose-p:my-0.5 prose-headings:my-1 prose-li:my-0 prose-table:text-xs [&_table]:block [&_table]:overflow-x-auto [&_table]:w-full"
+                        : "prose prose-sm max-w-none prose-p:my-0.5 prose-headings:my-1 prose-li:my-0 prose-table:text-xs [&_table]:block [&_table]:overflow-x-auto [&_table]:w-full"
                     }
                   >
                     {msg.role === "user" ? (
@@ -242,7 +242,7 @@ export function MessageList({ messages, dark, onSend }: { messages: Message[]; d
 
           {/* Listings table — full width, below bubble, indented past avatar */}
           {!msg.loading && msg.listings && msg.role === "assistant" && (
-            <div className="w-full pl-10">
+            <div className="w-full pl-0 sm:pl-10">
               <ErrorBoundary
                 fallback={
                   <div className="text-xs py-2" style={{ color: "var(--error)" }}>
@@ -257,7 +257,7 @@ export function MessageList({ messages, dark, onSend }: { messages: Message[]; d
 
           {/* Copy button — always below the full message, aligned to bubble edge */}
           {!msg.loading && msg.content && (
-            <div className={msg.role === "user" ? "mr-10" : "ml-10"}>
+            <div className={msg.role === "user" ? "mr-2 sm:mr-10" : "ml-2 sm:ml-10"}>
               <CopyButton text={msg.content} />
             </div>
           )}

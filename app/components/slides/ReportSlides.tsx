@@ -71,7 +71,7 @@ export function ReportSlides({ slides }: { slides: Slide[] }) {
 
           {/* Metrics */}
           {slide.metrics && slide.metrics.length > 0 && (
-            <div className="grid grid-cols-2 gap-px p-px" style={{ background: "var(--border)" }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-px p-px" style={{ background: "var(--border)" }}>
               {slide.metrics.map((metric, j) => (
                 <div
                   key={j}
