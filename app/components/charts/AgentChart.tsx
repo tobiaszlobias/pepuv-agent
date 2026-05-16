@@ -156,9 +156,22 @@ export function AgentChart({ chart, index = 0 }: { chart: ChartData; index?: num
   const tooltipLabelStyle = { color: "var(--text)", fontWeight: 500 };
   const tooltipItemStyle = { color: "var(--muted)" };
 
-  // Detect YYYY-MM month keys (line charts from trend queries)
-  const isMonthKeys = chart.type === "line" && chart.data.length > 0 &&
+  // Detect YYYY-MM month keys (line/bar charts from trend queries)
+  const isMonthKeys = chart.data.length > 0 &&
     String(chart.data[0][xKey] ?? "").match(/^\d{4}-\d{2}$/) !== null;
+
+  // Tooltip label: "2026-02" → "Únor 2026"
+  const CZECH_MONTHS_FULL = ["Leden","Únor","Březen","Duben","Květen","Červen","Červenec","Srpen","Září","Říjen","Listopad","Prosinec"];
+  function formatTooltipLabel(val: unknown): string {
+    const s = String(val ?? "");
+    const iso = s.match(/^(\d{4})-(\d{2})$/);
+    if (iso) {
+      const month = parseInt(iso[2], 10) - 1;
+      return `${CZECH_MONTHS_FULL[month] ?? iso[2]} ${iso[1]}`;
+    }
+    return s;
+  }
+  const tooltipLabelFormatter = isMonthKeys ? formatTooltipLabel : undefined;
 
   // For line charts and bar charts with long labels: shorten tick text instead of rotating
   const needsShortLabels = (longLabels && !isHorizontal) || isMonthKeys;
@@ -222,7 +235,7 @@ export function AgentChart({ chart, index = 0 }: { chart: ChartData; index?: num
               {chart.reference_line && (
                 <ReferenceLine x={chart.reference_line.value} stroke="var(--muted)" strokeDasharray="4 4" strokeWidth={1.5} />
               )}
-              <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={{ fill: "var(--border)", opacity: 0.25 }} formatter={(value: unknown) => [milionChart ? `${Number(value)}M Kč` : priceChart ? formatPriceTick(Number(value)) : formatTooltipValue(Number(value)), null]} />
+              <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={{ fill: "var(--border)", opacity: 0.25 }} formatter={(value: unknown) => [milionChart ? `${Number(value)}M Kč` : priceChart ? formatPriceTick(Number(value)) : formatTooltipValue(Number(value)), null]} labelFormatter={tooltipLabelFormatter} />
               <Bar dataKey={yKey} radius={[0, 4, 4, 0]} animationDuration={0}>
                 {chart.data.map((item, i) => <Cell key={i} fill={getCellColor(item, i)} />)}
               </Bar>
@@ -235,7 +248,7 @@ export function AgentChart({ chart, index = 0 }: { chart: ChartData; index?: num
               {chart.reference_line && (
                 <ReferenceLine y={chart.reference_line.value} stroke="var(--muted)" strokeDasharray="4 4" strokeWidth={1.5} label={{ value: chart.reference_line.label, position: "insideTopRight", fontSize: 10, fill: "var(--muted)" }} />
               )}
-              <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={{ fill: "var(--border)", opacity: 0.4 }} formatter={(value: unknown) => [formatTooltipValue(Number(value)), null]} />
+              <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={{ fill: "var(--border)", opacity: 0.4 }} formatter={(value: unknown) => [formatTooltipValue(Number(value)), null]} labelFormatter={tooltipLabelFormatter} />
               <Bar dataKey={yKey} radius={[4, 4, 0, 0]} animationDuration={0}>
                 {chart.data.map((item, i) => <Cell key={i} fill={getCellColor(item, i)} />)}
               </Bar>
@@ -255,7 +268,7 @@ export function AgentChart({ chart, index = 0 }: { chart: ChartData; index?: num
             {chart.reference_line && (
               <ReferenceLine y={chart.reference_line.value} stroke="var(--muted)" strokeDasharray="4 4" strokeWidth={1.5} label={{ value: chart.reference_line.label, position: "insideTopRight", fontSize: 10, fill: "var(--muted)" }} />
             )}
-            <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={{ stroke: "var(--border)", strokeWidth: 1 }} formatter={(value: unknown) => [formatTooltipValue(Number(value)), null]} />
+            <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={{ stroke: "var(--border)", strokeWidth: 1 }} formatter={(value: unknown) => [formatTooltipValue(Number(value)), null]} labelFormatter={tooltipLabelFormatter} />
             <Area type="linear" dataKey={yKey} stroke={YELLOW} strokeWidth={2} fill={`url(#${gradientId})`} dot={false} activeDot={{ r: 4, fill: YELLOW, strokeWidth: 0 }} animationDuration={500} animationEasing="ease-out" />
           </AreaChart>
         ) : (

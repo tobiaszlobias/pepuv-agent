@@ -34,7 +34,10 @@ Postup:
 3. Pro KAŽDÝ záznam: zkontroluj datum (pole "datum" u leadů, "datum_pridani" u klientů a nemovitostí)
    - Pokud je datum < cutoff → ZAHOĎ záznam, NESMÍ být v grafu
    - Pokud je datum >= cutoff → zařaď do příslušného měsíce
-4. Pro prodané nemovitosti: použij STEJNÝ cutoff jako pro leady — datum_pridani >= cutoff
+4. Pro prodané nemovitosti: použij datum_pridani (pole "datum_pridani") se STEJNÝM cutoffem.
+   POKUD po filtraci není žádný záznam se statusem "prodáno": stále zobraz chart — spočítej všechny
+   nemovitosti přidané do portfolia za dané měsíce a pojmenuj chart "Nemovitosti přidané do portfolia".
+   Je lepší zobrazit přibližná data než prázdný chart.
 5. Klíč měsíce: "YYYY-MM" formát (např. "2026-01") — nutné pro správné řazení
 6. Seřaď výsledné pole chronologicky vzestupně (nejstarší vlevo, nejnovější vpravo)
 7. Pokud po filtraci zbyde méně než 3 datové body → NEPIŠ chart, místo toho napiš: "Nedostatek dat pro posledních 6 měsíců"
