@@ -482,6 +482,7 @@ async function executeTool(
         const reportData = {
           success: true,
           week,
+          instruction: "SLIDES ARE RENDERED AUTOMATICALLY. Write ONLY 1 sentence intro + max 2 sentences summary in text. DO NOT list slide contents, DO NOT use bullet points, DO NOT write '## SLIDE' headings in text.",
           slides: [
             {
               title: "Přehled leadů",
@@ -798,8 +799,22 @@ export async function POST(req: NextRequest) {
     .filter(Boolean)
     .at(-1); // vezmi poslední (nejnovější volání)
 
+  // When slides are present, strip duplicate slide content Claude wrote into text.
+  // Keep only intro lines before the first slide marker.
+  function stripSlideContent(text: string): string {
+    const lines = text.split("\n");
+    const firstSlideIdx = lines.findIndex((l) =>
+      /^\*?\*?SLIDE\s*\d/i.test(l.trim()) ||
+      /^#+\s*SLIDE\s*\d/i.test(l.trim()) ||
+      /^---+$/.test(l.trim())
+    );
+    const kept = firstSlideIdx > 0 ? lines.slice(0, firstSlideIdx) : lines;
+    return kept.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  }
+
   const rawText = textBlock?.text || "";
-  const finalText = listingsData ? stripMarkdownTables(rawText) : rawText;
+  const withSlidesStripped = slideData.length > 0 ? stripSlideContent(rawText) : rawText;
+  const finalText = listingsData ? stripMarkdownTables(withSlidesStripped) : withSlidesStripped;
 
   return NextResponse.json({
     text: finalText,
