@@ -261,19 +261,25 @@ export async function scrapeSreality(params: {
   async function fetchEstates(extraParams: Record<string, string>): Promise<Record<string, unknown>[]> {
     const q = new URLSearchParams(query);
     for (const [k, v] of Object.entries(extraParams)) q.set(k, v);
-    try {
-      const res = await fetch(`${SREALITY_API}?${q}`, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-          "Accept": "application/json",
-        },
-      });
-      if (!res.ok) return [];
-      const data = await res.json();
-      return data?._embedded?.estates ?? [];
-    } catch {
-      return [];
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt > 0) await new Promise((r) => setTimeout(r, attempt * 1000));
+      try {
+        const res = await fetch(`${SREALITY_API}?${q}`, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+            "Accept": "application/json",
+          },
+        });
+        if (!res.ok) continue;
+        const data = await res.json();
+        const estates = data?._embedded?.estates ?? [];
+        if (estates.length > 0) return estates;
+      } catch {
+        // retry
+      }
     }
+    return [];
   }
 
   // Strategy: district ID only works for Praha čtvrti (3xxx IDs)
