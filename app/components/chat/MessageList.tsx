@@ -123,14 +123,6 @@ function TypingIndicator({ text }: { text?: string }) {
   );
 }
 
-const QUICK_PROMPTS = [
-  { label: "Noví klienti Q1", prompt: "Jaké nové klienty máme za 1. kvartál? Odkud přišli? Můžeš to znázornit graficky?" },
-  { label: "Vývoj leadů a prodejů", prompt: "Vytvoř graf vývoje počtu leadů a prodaných nemovitostí za posledních 6 měsíců." },
-  { label: "Email zájemci", prompt: "Napiš e-mail pro zájemce o moji nemovitost a doporuč mu termín prohlídky na základě mé dostupnosti v kalendáři." },
-  { label: "Chybějící rekonstrukce", prompt: "Najdi nemovitosti, u kterých nám v systému chybí data o rekonstrukci a stavebních úpravách a připrav jejich seznam k doplnění." },
-  { label: "Týdenní report", prompt: "Shrň výsledky minulého týdne do krátkého reportu pro vedení a připrav k tomu prezentaci se třemi slidy." },
-  { label: "Sreality Holešovice", prompt: "Sleduj všechny hlavní realitní servery a každé ráno mě informuj o nových nabídkách v lokalitě Praha Holešovice." },
-];
 
 export function MessageList({ messages, dark, onSend }: { messages: Message[]; dark: boolean; onSend?: (text: string) => void }) {
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -140,43 +132,7 @@ export function MessageList({ messages, dark, onSend }: { messages: Message[]; d
   }, [messages]);
 
   if (messages.length === 0) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center px-4 md:px-6 py-8 gap-6">
-        {/* Hero */}
-        <div className="flex flex-col items-center text-center gap-2">
-          <div
-            className="w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center"
-            style={{ background: "var(--yellow)" }}
-          >
-            <span className="font-display font-extrabold text-xl md:text-2xl text-black">P</span>
-          </div>
-          <h2 className="font-display font-bold text-xl md:text-2xl" style={{ color: "var(--text)" }}>
-            Pepův Agent
-          </h2>
-        </div>
-
-        {/* Quick prompt grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 w-full max-w-xl">
-          {QUICK_PROMPTS.map((item) => (
-            <button
-              key={item.prompt}
-              onClick={() => onSend?.(item.prompt)}
-              className="text-left px-3 md:px-4 py-3 rounded-xl text-sm transition-all"
-              style={{
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
-                color: "var(--text)",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--yellow)")}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
-            >
-              <span className="font-medium block text-xs mb-0.5" style={{ color: "var(--yellow)" }}>{item.label}</span>
-              <span className="text-xs leading-snug" style={{ color: "var(--muted)" }}>{item.prompt}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-    );
+    return <div className="flex-1" />;
   }
 
   return (

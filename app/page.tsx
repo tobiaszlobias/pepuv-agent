@@ -497,17 +497,15 @@ export default function Home() {
             />
           )}
           {activePage === "chat" && (
-            <MessageList messages={messages} dark={dark} onSend={sendMessage} />
+            <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+              <MessageList messages={messages} dark={dark} onSend={sendMessage} />
+              <ChatInput onSend={sendMessage} disabled={loading} dark={dark} hasMessages={messages.length > 0} model={model} setModel={setModel} />
+            </div>
           )}
           {activePage === "klienti" && <ClientsView />}
           {activePage === "nemovitosti" && <PropertiesView />}
           {activePage === "leady" && <LeadsView />}
         </div>
-
-        {/* Chat input — above bottom nav */}
-        {activePage === "chat" && (
-          <ChatInput onSend={sendMessage} disabled={loading} dark={dark} hasMessages={messages.length > 0} model={model} setModel={setModel} />
-        )}
 
         {/* Bottom nav — mobile only */}
         <nav
