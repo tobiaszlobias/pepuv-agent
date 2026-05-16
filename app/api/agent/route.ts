@@ -48,6 +48,8 @@ Text odpovědi: 2-3 věty shrnutí trendu (peak, průměr, trend nahoru/dolů).
 ### ŠABLONA: Přehled klientů / nemovitostí / leadů
 Dotaz: "Noví klienti Q1", "Jaké nemovitosti máme", "Leady tento měsíc"
 1. Zavolej příslušný get_* nástroj s filtry
+   KRITICKÉ: Při filtrování podle čtvrtletí VŽDY předej i year: 2026.
+   Příklad: get_clients({quarter: "Q1", year: 2026}) — nikdy jen {quarter: "Q1"}.
 2. Text: stručná tabulka nebo výčet v markdown. Max 10 položek, pak "...a X dalších."
 3. Pokud má smysl vizualizace (distribuce, srovnání), zavolej create_chart.
 

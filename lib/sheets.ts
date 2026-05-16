@@ -72,10 +72,13 @@ export async function getClients(filters?: {
   }
 
   if (filters?.year || filters?.quarter) {
+    // When filtering by quarter, always require an explicit year.
+    // If no year given, default to current year so results are deterministic.
+    const targetYear = filters.year ?? new Date().getFullYear();
     clients = clients.filter((c) => {
       if (!c.datum_pridani) return false;
       const date = new Date(c.datum_pridani);
-      if (filters.year && date.getFullYear() !== filters.year) return false;
+      if (date.getFullYear() !== targetYear) return false;
       if (filters.quarter) {
         const q = Math.ceil((date.getMonth() + 1) / 3);
         const qNum = parseInt(filters.quarter.replace("Q", ""));
@@ -85,6 +88,7 @@ export async function getClients(filters?: {
     });
   }
 
+  console.log("get_clients raw:", clients.length, "filters:", JSON.stringify(filters ?? {}), "sources:", clients.map((c) => c.zdroj));
   return clients;
 }
 
