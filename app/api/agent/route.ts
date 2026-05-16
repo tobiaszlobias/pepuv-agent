@@ -42,11 +42,13 @@ Pro dnešní datum ${todayStr} → cutoff = ${cutoffStr} → zahrnout jen zázna
 
 Postup:
 1. Zavolej get_leads(months: 6) nebo get_properties() podle dotazu
-2. V odpovědi nástroje je pole "monthly_aggregated": [{month: "YYYY-MM", count: N}, ...] — POUŽIJ PŘÍMO.
+2. V odpovědi nástroje je pole "monthly_aggregated": [{name: "YYYY-MM", count: N}, ...] — POUŽIJ PŘÍMO.
    NIKDY nepočítej leady nebo nemovitosti sám z pole "leads"/"properties" — vždy ber "monthly_aggregated".
-3. Pro kombinovaný chart leadů + nemovitostí: zavolej oba nástroje, spoj monthly_aggregated do společného pole.
+   NIKDY nepřejmenovávej klíče — klíč je vždy "name" (ne "měsíc", ne "month", ne "datum").
+3. Pro kombinovaný chart leadů + nemovitostí: zavolej oba nástroje a spoj do: [{name: "YYYY-MM", leady: X, prodano: Y}]
+   Kde leady = count z get_leads.monthly_aggregated, prodano = count z get_properties.monthly_aggregated pro stejný měsíc.
 4. Pokud monthly_aggregated má méně než 3 záznamy → napiš: "Nedostatek dat pro posledních 6 měsíců"
-5. Zavolej create_chart(type: "line", title: "...", data: [{name: "YYYY-MM", leady: X, prodano: Y}, ...], x_key: "name")
+5. create_chart(type:"line", x_key:"name", y_key:"count") — nebo y_key:"leady" pro kombinovaný chart
 
 Text odpovědi: 2-3 věty shrnutí trendu (peak, průměr, trend nahoru/dolů).
 
@@ -182,13 +184,14 @@ async function executeTool(
         }
         const monthly_aggregated = Object.entries(propMonthlyCounts)
           .sort(([a], [b]) => a.localeCompare(b))
-          .map(([month, count]) => ({ month, count }));
+          .map(([month, count]) => ({ name: month, count }));
 
         return JSON.stringify({
           success: true,
           count: data.length,
           properties: data,
           monthly_aggregated,
+          chart_hint: 'Use monthly_aggregated directly. x_key must be "name", y_key "count". Do NOT rename keys.',
         });
       }
 
@@ -204,15 +207,17 @@ async function executeTool(
           const month = lead.datum.slice(0, 7); // "YYYY-MM"
           monthlyCounts[month] = (monthlyCounts[month] ?? 0) + 1;
         }
+        // Use "name" as the key so Claude can pass x_key:"name" directly to create_chart
         const monthly_aggregated = Object.entries(monthlyCounts)
           .sort(([a], [b]) => a.localeCompare(b))
-          .map(([month, count]) => ({ month, count }));
+          .map(([month, count]) => ({ name: month, count }));
 
         return JSON.stringify({
           success: true,
           count: data.length,
           leads: data,
           monthly_aggregated,
+          chart_hint: 'Use monthly_aggregated directly. x_key must be "name", y_key "count". Do NOT rename keys.',
         });
       }
 
