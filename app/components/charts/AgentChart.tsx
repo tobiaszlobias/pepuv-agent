@@ -192,6 +192,15 @@ export function AgentChart({ chart, index = 0 }: { chart: ChartData; index?: num
     ? { tick: { fontSize: 10, fill: "var(--muted)" }, axisLine: false, tickLine: false, tickFormatter: shortTickFormatter }
     : { tick: { fontSize: 11, fill: "var(--muted)" }, axisLine: false, tickLine: false };
 
+  // For line/vertical-bar charts: ensure minimum width so all data points are legible.
+  // On desktop containerWidth is large enough; on mobile this forces horizontal scroll.
+  const PX_PER_POINT = 72;
+  const minChartWidth = (!isHorizontal && chart.type !== "pie")
+    ? Math.max(containerWidth, chart.data.length * PX_PER_POINT + 60)
+    : containerWidth;
+  const needsScroll = minChartWidth > containerWidth;
+  const chartHeight = chart.type === "pie" ? 200 : (isHorizontal ? horizontalHeight : (longLabels ? 260 : 220));
+
   return (
     <div
       ref={containerRef}
@@ -225,7 +234,10 @@ export function AgentChart({ chart, index = 0 }: { chart: ChartData; index?: num
         </div>
       )}
 
-      <ResponsiveContainer width="100%" height={chart.type === "pie" ? 200 : (isHorizontal ? horizontalHeight : (longLabels ? 260 : 220))}>
+      <div
+        style={needsScroll ? { overflowX: "auto", WebkitOverflowScrolling: "touch" } : undefined}
+      >
+      <ResponsiveContainer width={needsScroll ? minChartWidth : "100%"} height={chartHeight}>
         {chart.type === "bar" ? (
           isHorizontal ? (
             <BarChart data={chart.data} layout="vertical" margin={{ top: 4, right: priceChart ? 80 : 52, left: 4, bottom: 4 }}>
@@ -282,6 +294,7 @@ export function AgentChart({ chart, index = 0 }: { chart: ChartData; index?: num
           </PieChart>
         )}
       </ResponsiveContainer>
+      </div>
 
       {chart.type === "pie" && (
         <div className="flex flex-col gap-1 mt-2">
