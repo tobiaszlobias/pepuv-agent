@@ -479,7 +479,7 @@ export default function Home() {
             background: "var(--bg)",
             backgroundImage: dark
               ? "radial-gradient(ellipse 85% 65% at 100% 0%, rgba(255,214,0,0.13) 0%, transparent 70%)"
-              : "radial-gradient(ellipse 85% 65% at 100% 0%, rgba(255,180,0,0.09) 0%, transparent 70%)",
+              : "radial-gradient(ellipse 85% 65% at 100% 0%, rgba(255,160,0,0.22) 0%, transparent 70%)",
           }}
         >
           {activePage === "dashboard" && (
