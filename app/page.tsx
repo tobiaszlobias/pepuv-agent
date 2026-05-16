@@ -8,6 +8,7 @@ import { PropertiesView } from "@/app/components/views/PropertiesView";
 import { LeadsView } from "@/app/components/views/LeadsView";
 import { DashboardView } from "@/app/components/views/DashboardView";
 import { getCached, setCached } from "@/lib/cache";
+import { MODEL_TIMEOUTS } from "@/lib/constants";
 
 function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [password, setPassword] = useState("");
@@ -224,6 +225,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [dark, setDark] = useState(true);
   const [model, setModel] = useState<ModelId>("claude-haiku-4-5-20251001");
+  const setModelPersisted = (m: ModelId) => { setModel(m); sessionStorage.setItem("model", m); };
   const loadingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -231,6 +233,8 @@ export default function Home() {
     if (savedPage) setActivePage(savedPage);
     const savedDark = sessionStorage.getItem("dark");
     if (savedDark !== null) setDark(savedDark === "1");
+    const savedModel = sessionStorage.getItem("model") as ModelId | null;
+    if (savedModel) setModel(savedModel);
     const savedMessages = getCached<Message[]>("messages");
     if (savedMessages) setMessages(savedMessages);
   }, []);
@@ -289,7 +293,7 @@ export default function Home() {
       setLoading(true);
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 90_000);
+      const timeoutId = setTimeout(() => controller.abort(), MODEL_TIMEOUTS[model] ?? 90_000);
 
       try {
         const history = [
@@ -494,7 +498,7 @@ export default function Home() {
           {activePage === "chat" && (
             <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
               <MessageList messages={messages} dark={dark} onSend={sendMessage} />
-              <ChatInput onSend={sendMessage} disabled={loading} dark={dark} hasMessages={messages.length > 0} model={model} setModel={setModel} />
+              <ChatInput onSend={sendMessage} disabled={loading} dark={dark} hasMessages={messages.length > 0} model={model} setModel={setModelPersisted} />
             </div>
           )}
           {activePage === "klienti" && <ClientsView />}
