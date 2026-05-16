@@ -197,35 +197,6 @@ export function MessageList({ messages, dark, onSend }: { messages: Message[]; d
                     )}
                   </div>
 
-                  {msg.charts && msg.charts.length > 0 && (
-                    <div className="mt-3 space-y-3">
-                      {msg.charts.map((chart, i) => (
-                        <ErrorBoundary
-                          key={i}
-                          fallback={
-                            <div className="text-xs py-2" style={{ color: "var(--error)" }}>
-                              Graf se nepodařilo zobrazit.
-                            </div>
-                          }
-                        >
-                          <AgentChart chart={chart} index={i} />
-                        </ErrorBoundary>
-                      ))}
-                    </div>
-                  )}
-
-                  {msg.slides && msg.slides.length > 0 && (
-                    <ErrorBoundary
-                      fallback={
-                        <div className="text-xs py-2" style={{ color: "var(--error)" }}>
-                          Report se nepodařilo zobrazit.
-                        </div>
-                      }
-                    >
-                      <ReportSlides slides={msg.slides} />
-                    </ErrorBoundary>
-                  )}
-
                 </>
               )}
             </div>
@@ -240,9 +211,42 @@ export function MessageList({ messages, dark, onSend }: { messages: Message[]; d
             )}
           </div>
 
-          {/* Listings table — full width, below bubble, indented past avatar */}
+          {/* Charts — full width below bubble so they use the entire screen width */}
+          {!msg.loading && msg.charts && msg.charts.length > 0 && msg.role === "assistant" && (
+            <div className="w-full mt-2 space-y-3">
+              {msg.charts.map((chart, i) => (
+                <ErrorBoundary
+                  key={i}
+                  fallback={
+                    <div className="text-xs py-2" style={{ color: "var(--error)" }}>
+                      Graf se nepodařilo zobrazit.
+                    </div>
+                  }
+                >
+                  <AgentChart chart={chart} index={i} />
+                </ErrorBoundary>
+              ))}
+            </div>
+          )}
+
+          {/* Slides — full width below bubble */}
+          {!msg.loading && msg.slides && msg.slides.length > 0 && msg.role === "assistant" && (
+            <div className="w-full mt-2">
+              <ErrorBoundary
+                fallback={
+                  <div className="text-xs py-2" style={{ color: "var(--error)" }}>
+                    Report se nepodařilo zobrazit.
+                  </div>
+                }
+              >
+                <ReportSlides slides={msg.slides} />
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* Listings table — full width below bubble */}
           {!msg.loading && msg.listings && msg.role === "assistant" && (
-            <div className="w-full pl-0 sm:pl-10">
+            <div className="w-full">
               <ErrorBoundary
                 fallback={
                   <div className="text-xs py-2" style={{ color: "var(--error)" }}>
