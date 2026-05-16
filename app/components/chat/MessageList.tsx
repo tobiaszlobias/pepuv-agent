@@ -151,11 +151,11 @@ export function MessageList({ messages, dark, onSend }: { messages: Message[]; d
         </div>
         {/* Prompt grid */}
         <div className="w-full max-w-md grid grid-cols-2 gap-2">
-          {QUICK_PROMPTS.map((item) => (
+          {QUICK_PROMPTS.map((item, i) => (
             <button
               key={item.label}
               onClick={() => onSend?.(item.prompt)}
-              className="text-left px-3 py-3 rounded-xl text-xs transition-all flex flex-col gap-1"
+              className={`text-left px-3 py-3 rounded-xl text-xs transition-all flex flex-col gap-1${i === QUICK_PROMPTS.length - 1 && QUICK_PROMPTS.length % 2 === 1 ? " col-span-2 max-w-[calc(50%-4px)] mx-auto w-full" : ""}`}
               style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
               onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--yellow)")}
               onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}

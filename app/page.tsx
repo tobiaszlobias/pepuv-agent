@@ -218,7 +218,7 @@ function ModelDropdown({ model, setModel }: { model: ModelId; setModel: (m: Mode
 }
 
 export default function Home() {
-  const [authenticated, setAuthenticated] = useState(false);
+  const [authenticated] = useState(true);
   const [activePage, setActivePage] = useState<Page>("chat");
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
@@ -227,7 +227,6 @@ export default function Home() {
   const loadingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (sessionStorage.getItem("auth") === "1") setAuthenticated(true);
     const savedPage = sessionStorage.getItem("activePage") as Page | null;
     if (savedPage) setActivePage(savedPage);
     const savedDark = sessionStorage.getItem("dark");
@@ -341,10 +340,6 @@ export default function Home() {
     },
     [messages, loading]
   );
-
-  if (!authenticated) {
-    return <LoginScreen onLogin={() => setAuthenticated(true)} />;
-  }
 
   return (
     <div className="flex h-[100dvh]" style={{ background: "var(--bg)" }}>
