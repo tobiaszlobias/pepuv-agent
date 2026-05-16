@@ -161,17 +161,18 @@ function buildChartData(dates: string[], slot: TimeSlot) {
     map[key] = (map[key] || 0) + 1;
   });
 
-  const sorted = Object.keys(map).sort();
-  if (sorted.length === 0) return [];
-
-  const start = new Date(sorted[0] + "-01");
+  // start is always the cutoff month (or earliest data for "all"), never the first non-empty bucket
+  const start = cutoff ? new Date(cutoff) : (() => {
+    const sorted = Object.keys(map).sort();
+    return sorted.length > 0 ? new Date(sorted[0] + "-01") : new Date(now.getFullYear(), now.getMonth(), 1);
+  })();
   const end = new Date(now.getFullYear(), now.getMonth(), 1);
   const result: { month: string; count: number }[] = [];
 
+  const MONTHS_SHORT = ["led","úno","bře","dub","kvě","čvn","čvc","srp","zář","říj","lis","pro"];
   const cur = new Date(start);
   while (cur <= end) {
     const key = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}`;
-    const MONTHS_SHORT = ["led","úno","bře","dub","kvě","čvn","čvc","srp","zář","říj","lis","pro"];
     const label = `${MONTHS_SHORT[cur.getMonth()]} ${String(cur.getFullYear()).slice(2)}`;
     result.push({ month: label, count: map[key] || 0 });
     cur.setMonth(cur.getMonth() + 1);
